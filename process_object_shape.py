@@ -21,8 +21,13 @@ def ExportObjShape(obj):
     testShape = pasm_file_def.PASMShape()
     
     if obj.empty_display_type == "CUBE":
-        testShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT
-        
+        if(obj.name.find("start_", 0, 6) != -1):
+            testShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT
+    
+    if testShape.nType == -1:
+        # Couldn't associate empty with shape, just return
+        return
+    
     # Rotation Matrix fun
     testShape.mtxOrientation = pasm_math.BRot2FRot(obj)
     

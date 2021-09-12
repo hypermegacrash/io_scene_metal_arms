@@ -44,7 +44,7 @@ def ExportObjGeo(obj):
     layer.StarCommands.nSurfaceType = -1
     
     
-    # Do a little hack here to get a diffuse texture out of the mesh
+    # Do a little hack here to get a diffuse texture out of the mesh   
     try:
         mat = obj.data.materials[0]
         # Get the nodes in the material node tree
@@ -60,7 +60,6 @@ def ExportObjGeo(obj):
     except:
         #print("Unable to extract texture from", obj.name)
         layer.szTexName[0] = "grid_64_pur"
-    
     
     mat = pasm_file_def.PASMMaterial()
     mat.nLayerCount = 1
@@ -79,7 +78,7 @@ def ExportObjGeo(obj):
     # This returns a new instance of the vertex data
     # Whatever modifed here won't affect the scene
     test = obj.to_mesh()
-    
+        
     # We're gonna triangulate the mesh first before we work with it further
     bm = bmesh.new()
     bm.from_mesh(test)
@@ -88,8 +87,7 @@ def ExportObjGeo(obj):
     bm.free()
     
     UVLAYER = test.uv_layers[0] # Hardcoded reference to UV MAP
-    # We reflect the UVs here BEFORE we flip x axis of verts
-    # b/c Blender freaks out for some reason?
+    # Flip UVs vertically across (0.5, 0.5) point
     reflectionPoint = 0.500
     for uv in UVLAYER.data:
         VBuffer = uv.uv[1]
@@ -117,9 +115,14 @@ def ExportObjGeo(obj):
             tempVertex.Pos[1] = vertPosAfterWTM[2]
             tempVertex.Pos[2] = vertPosAfterWTM[1]
             
-            tempVertex.Norm[0] = test.vertices[face.vertices[index]].normal[0]
-            tempVertex.Norm[1] = test.vertices[face.vertices[index]].normal[2]
-            tempVertex.Norm[2] = test.vertices[face.vertices[index]].normal[1]
+            # This deserves a bit of history...
+            # For the longest time I tried making tempVertex.Norm = "test.vertices[face.vertices[index]].normal" work
+            # But this doesn't work since a single vert can be shared across multiple polygons
+            # However on a whim I decided each of the verts of a single polygon share the same normal...
+            # And it worked!
+            tempVertex.Norm[0] = face.normal[0]
+            tempVertex.Norm[1] = face.normal[2]
+            tempVertex.Norm[2] = face.normal[1]
             
             tempVertex.aUVs[0] = UVLAYER.data[face.loop_indices[index]].uv
     

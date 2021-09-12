@@ -207,7 +207,7 @@ class PASMShapeType_e:
 
 class PASMShape:
     def __init__(self):
-        self.nType = 0
+        self.nType = -1
         self.typeData = bytearray(16) # Always 16 bytes long but contents vary by shape
         self.mtxOrientation = [0.0 for i in range(12)]
         self.nBytesOfUserData = 0

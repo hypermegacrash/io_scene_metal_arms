@@ -11,7 +11,7 @@ from . import pasm_file_def # Get our PASM file classes
 from . import g_class # Get our global variables for the header data
 
 def ExportObjObject(obj):
-    if(obj.name.find("obj_", 0, 4) == -1):
+    if(obj.name.find("obj_", 0, 4) != -1):
         return None
         
     print(obj.name, "is a object object")

@@ -2,7 +2,7 @@
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 0, 1),
+        "version": (0, 2, 0),
         "blender": (2, 80, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",
@@ -12,6 +12,17 @@ bl_info = {
 
 # For working with Blender data
 import bpy
+
+# We need these properties for the export settings config
+from bpy.props import (
+        IntProperty,
+        BoolProperty,
+        EnumProperty,
+        FloatProperty,
+        StringProperty,
+        PointerProperty,
+        FloatVectorProperty
+        )
 
 # We use this when exporting but I have no idea what this does, darn
 from bpy_extras.io_utils import (
@@ -45,10 +56,66 @@ class ExportWLD(Operator, ExportHelper):
         bl_idname = 'export_scene.wld'
         bl_label = 'Export WLD'
         filename_ext = '.wld'
+        
+        m_bUseSelection: BoolProperty(
+            name="Selection Only",
+            description="Export selected objects only",
+            default=False,
+            )
+            
+        m_bExportLights: BoolProperty(
+            name="Export Light Data",
+            description="Export all lights from the scene",
+            default=True,
+            )
+            
+        m_bExportGeo: BoolProperty(
+            name="Export Geometry Data",
+            description="Export all geometry from the scene",
+            default=True,
+            )
+          
+        m_bExportObjects: BoolProperty(
+            name="Export Object Data",
+            description="Export all objects from the scene",
+            default=True,
+            )
 
+        # Draw the export properties which are then stored in self to be accessed later
+        def draw(self, context):
+            layout = self.layout
+            
+            box = layout.box()
+            box.label(text="Wld File Exporter")
+        
+            layout.prop(self, "m_bUseSelection")
+            
+            testA = layout.box()
+            
+            testA.prop(self, "m_bExportLights")
+            testA.prop(self, "m_bExportGeo")
+            testA.prop(self, "m_bExportObjects")
+            
+            fileRevision = layout.row()
+            fileRevision.label(text = "PASM File Version # 1.5.0")
+                      
+            # This might be the worst thing I've ever wrote
+            toolRevision = layout.row()
+            strToolRevision = str(bl_info["version"])
+            strToolRevision = strToolRevision[1:-1]
+            strToolRevision = strToolRevision.replace(",", ".")
+            strToolRevision = strToolRevision.replace(" ", "")
+            strToolRevision = "MA Toolkit Version # " + strToolRevision
+            toolRevision.label(text = strToolRevision)
+                    
         # The Blender Python API's equivalent of C/C++ main()
         def execute(self, context):
-        
+                
+                if (self.m_bUseSelection):
+                    objects = context.selected_objects
+                else:
+                    objects = context.scene.objects
+                
                 # Make sure we're dealing w a fresh header
                 g_class.gWldHeader = pasm_file_def.PASMHeader()
                 
@@ -70,23 +137,25 @@ class ExportWLD(Operator, ExportHelper):
                 # We itterate over the entire scene for each section of the PASM file
                 # One loop for lights, one for geo, one for cells, and so on
 	       
-                for obj in bpy.context.scene.objects:
-                    ExportObjLight(obj)
+                if(self.m_bExportLights):
+                    for obj in objects:
+                        ExportObjLight(obj)
 
-                for obj in bpy.context.scene.objects:
+                for obj in objects:
                     ExportObjObject(obj)
 	
-                for obj in bpy.context.scene.objects:
+                for obj in objects:
                     ExportObjFog(obj)
 	
-                for obj in bpy.context.scene.objects:
+                for obj in objects:
                     ExportObjShape(obj)
 
-                for obj in bpy.context.scene.objects:
+                for obj in objects:
                     ExportObjVolume(obj)
-                    
-                for obj in bpy.context.scene.objects:
-                    ExportObjGeo(obj)
+                
+                if(self.m_bExportGeo):                
+                    for obj in objects:
+                        ExportObjGeo(obj)
                 
                 g_class.file.seek(0)
                 g_class.file.write(g_class.gWldHeader.packBytes())
