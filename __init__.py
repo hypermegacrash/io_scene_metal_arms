@@ -2,7 +2,7 @@
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 2, 0),
+        "version": (0, 4, 6),
         "blender": (2, 80, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",

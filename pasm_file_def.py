@@ -189,6 +189,47 @@ class PASMLight:
         return outBytes
 
 ################# 
+# OBJECT DEFINITIONS
+class PASMObject:
+    def __init__(self):
+        self.szObjectName = ""
+        self.nFlags = 0
+        self.mtxOrientation = [0.0 for i in range(12)]
+        self.nBytesOfUserData = 0
+        self.fCullDistance = 0
+        self.nParentIndex = 0
+        self.TintRGB = [0.0 for i in range(3)]
+        self.PAD = bytearray(20)
+        self.userData = [] # User Data is gonna be an array of string commands
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+        
+        size = bytearray(16)
+        size[0:len(self.szObjectName[0:15])] = bytes(self.szObjectName, "utf-8")[0:15]
+        outBytes += size
+        
+        outBytes += struct.pack("l", self.nFlags)
+        
+        for i in self.mtxOrientation:
+            outBytes += struct.pack("f", i)
+            
+        outBytes += struct.pack("l", self.nBytesOfUserData)
+        outBytes += struct.pack("l", self.fCullDistance)
+        outBytes += struct.pack("l", self.nParentIndex)
+        
+        for i in self.TintRGB:
+            outBytes += struct.pack("f", i)
+        
+        outBytes += self.PAD
+        
+        for data in self.userData:
+            outBytes += bytes(data, "utf-8")
+        
+        return outBytes
+
+################# 
 # SHAPE DEFINITIONS      
 class PASMShapeType_e:
     APE_SHAPE_TYPE_SPHERE            = 0
@@ -196,19 +237,64 @@ class PASMShapeType_e:
     APE_SHAPE_TYPE_BOX               = 2
     APE_SHAPE_TYPE_CAMERA            = 3
     APE_SHAPE_TYPE_SPEAKER           = 4
-    APE_SHAPE_TYPE_SPAWN_POINT       = 5
+    #APE_SHAPE_TYPE_SPAWN_POINT       = 5
     APE_SHAPE_TYPE_START_POINT       = 6
-    APE_SHAPE_TYPE_ROOM              = 7
-    APE_SHAPE_TYPE_ARENA             = 8
+    #APE_SHAPE_TYPE_ROOM              = 7
+    #APE_SHAPE_TYPE_ARENA             = 8
     APE_SHAPE_TYPE_PARTICLE_BOX      = 9
     APE_SHAPE_TYPE_PARTICLE_SPHERE   = 10
     APE_SHAPE_TYPE_PARTICLE_CYLINDER = 11
     APE_SHAPE_TYPE_SPLINE            = 12
+        
+class PASMShapeBox:
+    def __init__(self):
+        self.PAD = bytearray(4)
+        self.fLength = 0
+        self.fWidth = 0
+        self.fHeight = 0
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+   
+        outBytes += self.PAD
+        outBytes += struct.pack("f", self.fLength)
+        outBytes += struct.pack("f", self.fWidth)
+        outBytes += struct.pack("f", self.fHeight)
+        
+        return outBytes
+
+class PASMShapeSphere:
+    def __init__(self):
+        self.fRadius = 0
+        self.PAD = bytearray(12)
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+   
+        outBytes += struct.pack("f", self.fRadius)
+        outBytes += self.PAD
+        
+        return outBytes
+
+class PASMShapeStartPoint:
+    def __init__(self):
+        self.PAD = bytearray(16)
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+   
+        outBytes += self.PAD
+        
+        return outBytes
 
 class PASMShape:
     def __init__(self):
         self.nType = -1
-        self.typeData = bytearray(16) # Always 16 bytes long but contents vary by shape
+        # This type data will become one of the classes defined above based on nType
+        self.typeData = None
         self.mtxOrientation = [0.0 for i in range(12)]
         self.nBytesOfUserData = 0
         self.nParentIndex = 0
@@ -221,7 +307,7 @@ class PASMShape:
         
         outBytes += struct.pack("l", self.nType)
         
-        outBytes += self.typeData
+        outBytes += self.typeData.packBytes()
         
         for i in self.mtxOrientation:
             outBytes += struct.pack("f", i)

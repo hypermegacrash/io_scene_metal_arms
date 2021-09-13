@@ -11,17 +11,23 @@ from . import pasm_file_def # Get our PASM file classes
 from . import g_class # Get our global variables for the header data
 
 def ExportObjGeo(obj):
-    # Validate we're working with mesh data and also not a cell_ mesh 
+    # Validate we're working with mesh data and not other stuff
     if obj.type != "MESH":
         return
+    # We don't do cells
     if(obj.name.find("cell_", 0, 5) != -1):
+        return
+    #objs could be ANY DATATYPE, so check for that
+    if(obj.name.find("obj_", 0, 4) != -1):
         return
         
     print(obj.name, "is a geo object")
 
     outSegment = pasm_file_def.PASMSegment()
     
-    outSegment.szMeshName = obj.name
+    #outSegment.szMeshName = obj.name
+    
+    outSegment.szMeshName = "segment" + str(g_class.gWldHeader.nNumSegments)
     
     # Layer based on Floor & Wall Mesh
     # Would these be good as default values?

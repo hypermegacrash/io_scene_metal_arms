@@ -10,9 +10,41 @@ from . import pasm_file_def # Get our PASM file classes
 
 from . import g_class # Get our global variables for the header data
 
+from . import pasm_math # Need this for the rotation matrix math
+
 def ExportObjObject(obj):
-    if(obj.name.find("obj_", 0, 4) != -1):
-        return None
+    if(obj.name.find("obj_", 0, 4) == -1):
+        return
         
     print(obj.name, "is a object object")
-    return None
+    
+    outObject = pasm_file_def.PASMObject()
+    
+    outObject.szObjectName = obj.name.lower()[4:]
+    
+    # Hard coded flag to this but there are alot more to consider in the future
+    outObject.nFlags = 1
+    
+    outObject.mtxOrientation = pasm_math.BRot2FRot(obj)
+          
+    # Grab custom properties from the object
+    if len(obj.keys()) > 1:
+        # First item is _RNA_UI
+        index = 2
+        for K in obj.keys():        
+            if K not in '_RNA_UI':
+                outObject.userData.append(str(K) + "=" + str(obj[K]))
+                if index < len(obj.keys()):
+                    index += 1
+                    outObject.userData.append(str('\x0D\x0A'))
+     
+    # Go back and patch up userData length
+    dataLen = 0
+    for data in outObject.userData:
+        dataLen = dataLen + len(data)
+    outObject.nBytesOfUserData = dataLen
+                        
+    # Finally, write data to the file, and our header
+    g_class.file.write(outObject.packBytes())
+    g_class.gWldHeader.fileSize += len(outObject.packBytes())
+    g_class.gWldHeader.nNumObjects += 1

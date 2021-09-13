@@ -15,40 +15,59 @@ from . import pasm_math # Need this for the rotation matrix math
 def ExportObjShape(obj):
     if obj.type != "EMPTY":
         return
+    #objs could be ANY DATATYPE, so check for that
+    if(obj.name.find("obj_", 0, 4) != -1):
+        return
         
     print(obj.name, "is a shape object")
     
-    testShape = pasm_file_def.PASMShape()
+    outShape = pasm_file_def.PASMShape()
     
     if obj.empty_display_type == "CUBE":
         if(obj.name.find("start_", 0, 6) != -1):
-            testShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT
+            outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT
+            outShape.typeData = pasm_file_def.PASMShapeStartPoint()
+        else:
+            # Making an assumption by process of elimination it must be a box volume
+            outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_BOX
+            outShape.typeData = pasm_file_def.PASMShapeBox()
+    if obj.empty_display_type == "SPHERE":
+        outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE
+        outShape.typeData = pasm_file_def.PASMShapeSphere()
     
-    if testShape.nType == -1:
+    if outShape.nType == -1:
         # Couldn't associate empty with shape, just return
         return
+        
+    if outShape.nType == pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_BOX:
+        outShape.typeData.fLength = obj.scale[0]
+        outShape.typeData.fWidth = obj.scale[2]
+        outShape.typeData.fHeight = obj.scale[1]
+        
+    if outShape.nType == pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE:
+        outShape.typeData.fRadius = obj.empty_display_size
     
     # Rotation Matrix fun
-    testShape.mtxOrientation = pasm_math.BRot2FRot(obj)
+    outShape.mtxOrientation = pasm_math.BRot2FRot(obj)
     
     # Grab custom properties from the object
     if len(obj.keys()) > 1:
         # First item is _RNA_UI
-        #print(obj.name,"Custom Properties:")
-        for K in obj.keys():
+        index = 2
+        for K in obj.keys():        
             if K not in '_RNA_UI':
-                testShape.userData.append(str(K) + "=" + str(obj[K]))
-                #print( K , "=" ,obj[K] )
-    
-    #print(testShape.userData)
+                outShape.userData.append(str(K) + "=" + str(obj[K]))
+                if index < len(obj.keys()):
+                    index += 1
+                    outShape.userData.append(str('\x0D\x0A'))
+     
+    # Go back and patch up userData length
     dataLen = 0
-    for data in testShape.userData:
+    for data in outShape.userData:
         dataLen = dataLen + len(data)
-    #print(dataLen)
-    
-    testShape.nBytesOfUserData = dataLen
+    outShape.nBytesOfUserData = dataLen
     
     # Finally, write data to the file, and our header
-    g_class.file.write(testShape.packBytes())
-    g_class.gWldHeader.fileSize += len(testShape.packBytes())
+    g_class.file.write(outShape.packBytes())
+    g_class.gWldHeader.fileSize += len(outShape.packBytes())
     g_class.gWldHeader.nNumShapes += 1
