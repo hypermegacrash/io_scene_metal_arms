@@ -26,9 +26,10 @@ def ExportObjLight(obj):
     
     if obj.data.type == "SUN":
         outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_DIR
-        # Sphere is only filled out for point lights
     elif obj.data.type == "POINT":
         outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_OMNI
+    elif obj.data.type == "SPOT":
+        outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT
     else:
         print("Unsupported or Unknown Light detected")
         return
@@ -39,8 +40,6 @@ def ExportObjLight(obj):
     outLight.Color[1] = obj.data.color[1]
     outLight.Color[2] = obj.data.color[2]
     
-    #outLight.Intensity = obj.data.energy
-    #outLight.Intensity = 1
     outLight.Intensity = obj.data.diffuse_factor
     
     # Flag stuff, this needs to be better
@@ -49,27 +48,30 @@ def ExportObjLight(obj):
     if obj.name.find("*castshadows") != -1:
         outLight.nFlags |= pasm_file_def.PASMLightFlag_e.APE_LIGHT_FLAG_CAST_SHADOWS
     if obj.name.find("*onlylm") != -1:
-        #outLight.nFlags |= pasm_file_def.PASMLightFlag_e.APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT
-        outLight.nFlags = 48
+        outLight.nFlags |= pasm_file_def.PASMLightFlag_e.APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT
+        outLight.nFlags |= pasm_file_def.PASMLightFlag_e.APE_LIGHT_FLAG_LIGHTMAP_LIGHT
     
     # Rotation Matrix fun
     outLight.mtxOrientation = pasm_math.BRot2FRot(obj)
     
-    if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_DIR:
+    if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_DIR or outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
         # This is the 3rd row of the rotation matrix
         outLight.Direction[0] =  outLight.mtxOrientation[6]
         outLight.Direction[1] =  outLight.mtxOrientation[7]
         outLight.Direction[2] =  outLight.mtxOrientation[8]
     
-    if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_OMNI:
+    if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_OMNI or outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
         # Blender doesn't give a radius of light
-        # So we're gonna calculate inverse square law to try and approximate one
+        # So we're gonna calculate inverse square law with a distance of 0.02 to try and approximate one
         radius = math.sqrt((( obj.data.energy / 0.02) / ( 4 * math.pi )))
         outLight.Sphere[0] = radius
         outLight.Sphere[1] = outLight.mtxOrientation[9]
         outLight.Sphere[2] = outLight.mtxOrientation[10]
         outLight.Sphere[3] = outLight.mtxOrientation[11]
-
+        
+    if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
+        outLight.fSpotInnerAngle = obj.data.spot_size
+        outLight.fSpotOuterAngle = obj.data.spot_size
     
     # Finally, write data to the file, and our header
     g_class.file.write(outLight.packBytes())

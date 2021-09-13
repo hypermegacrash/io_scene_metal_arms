@@ -40,8 +40,8 @@ def ExportObjShape(obj):
         return
         
     if outShape.nType == pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_BOX:
-        outShape.typeData.fLength = obj.scale[0]
-        outShape.typeData.fWidth = obj.scale[2]
+        outShape.typeData.fLength = obj.scale[2]
+        outShape.typeData.fWidth = obj.scale[0]
         outShape.typeData.fHeight = obj.scale[1]
         
     if outShape.nType == pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE:
