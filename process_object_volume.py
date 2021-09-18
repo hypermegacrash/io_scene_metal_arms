@@ -1,13 +1,6 @@
 # Module that processes a volume object and returns byte data
 
-import struct # Work with bytes
-
-import bpy # Work with Blender data types
-import bmesh # Work with Blender mesh data
-import math # Do we use this again?
-
-# Volume Stuff
-from mathutils import Vector
+from mathutils import Vector # Need Vector for computing bounding box
 
 from . import pasm_file_def # Get our PASM file classes
 

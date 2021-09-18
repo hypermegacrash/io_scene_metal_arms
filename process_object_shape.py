@@ -1,16 +1,10 @@
-# Module that processes a shape object and returns byte data
-
-import struct # Work with bytes
-
-import bpy # Work with Blender data types
-import bmesh # Work with Blender mesh data
-import math # Do we use this again?
+# Module that processes an shape object and returns byte data
 
 from . import pasm_file_def # Get our PASM file classes
 
 from . import g_class # Get our global variables for the header data
 
-from . import pasm_math # Need this for the rotation matrix math
+from . import pasm_math # PASM helper defs
 
 def ExportObjShape(obj):
     if obj.type != "EMPTY":
@@ -40,15 +34,15 @@ def ExportObjShape(obj):
         return
         
     if outShape.nType == pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_BOX:
-        outShape.typeData.fLength = obj.scale[2]
+        outShape.typeData.fLength = obj.scale[1]
         outShape.typeData.fWidth = obj.scale[0]
-        outShape.typeData.fHeight = obj.scale[1]
+        outShape.typeData.fHeight = obj.scale[2]
         
     if outShape.nType == pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE:
         outShape.typeData.fRadius = obj.empty_display_size
     
     # Rotation Matrix fun
-    outShape.mtxOrientation = pasm_math.BRot2FRot(obj)
+    outShape.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
     
     # Grab custom properties from the object
     if len(obj.keys()) > 1:

@@ -7,5 +7,5 @@ gWldHeader = pasm_file_def.PASMHeader()
 
 gApeHeader = pasm_file_def.PASMHeader()
 
-# An empty var which will become a output file
+# An empty var which will become an output file
 file = None

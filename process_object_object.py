@@ -1,16 +1,10 @@
-# Module that processes a object object and returns byte data
-
-import struct # Work with bytes
-
-import bpy # Work with Blender data types
-import bmesh # Work with Blender mesh data
-import math # Do we use this again?
+# Module that processes an object object and returns byte data
 
 from . import pasm_file_def # Get our PASM file classes
 
 from . import g_class # Get our global variables for the header data
 
-from . import pasm_math # Need this for the rotation matrix math
+from . import pasm_math # PASM helper defs
 
 def ExportObjObject(obj):
     if(obj.name.find("obj_", 0, 4) == -1):
@@ -20,12 +14,16 @@ def ExportObjObject(obj):
     
     outObject = pasm_file_def.PASMObject()
     
-    outObject.szObjectName = obj.name.lower()[4:]
+    # Prepare object name by ripping off obj_ prefix and reading only up until first .
+    outName = obj.name.lower()[4:]
+    outName = outName.split(".",1)[0]
+    
+    outObject.szObjectName = outName
     
     # Hard coded flag to this but there are alot more to consider in the future
     outObject.nFlags = 1
     
-    outObject.mtxOrientation = pasm_math.BRot2FRot(obj)
+    outObject.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
           
     # Grab custom properties from the object
     if len(obj.keys()) > 1:

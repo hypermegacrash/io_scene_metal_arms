@@ -1,11 +1,7 @@
 # This file is a collection of classes that represents sections of the PASM file format
 # Each of them contain a function to take the class contents and pack them into an array of bytes
 
-# In the future, we should have some form of assert to validate that the data in the structs doesn't become "dirty"
-# By dirty, I mean cases where there might be additional data introduced by accident and validate data length of the vars remains consistent
-
-# For modifying vars into bytes
-import struct
+import struct # For modifying vars into bytes
 
 #################
 # HEADER DEFINITION
@@ -143,10 +139,8 @@ class PASMLight:
         #init our bytearray
         outBytes = bytearray()
 
-        #uint32_t
         outBytes += struct.pack("l", self.nApeLightType)
 
-        #string
         size = bytearray(16)
         size[0:len(self.szLightName[0:15])] = bytes(self.szLightName, "utf-8")[0:15]
         outBytes += size
