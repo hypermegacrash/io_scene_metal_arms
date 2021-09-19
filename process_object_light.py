@@ -32,6 +32,8 @@ def ExportObjLight(obj):
     outLight.Color[1] = obj.data.color[1]
     outLight.Color[2] = obj.data.color[2]
     
+    # diffuse_factor we introduced in 2.93
+    # Therefore 2.8 - 2.92 no longer work
     outLight.Intensity = obj.data.diffuse_factor
     
     # Flag stuff, this needs to be better

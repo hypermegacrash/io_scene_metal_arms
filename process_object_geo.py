@@ -16,6 +16,9 @@ def ExportObjGeo(obj):
     #objs could be ANY DATATYPE, so check for that
     if(obj.name.find("obj_", 0, 4) != -1):
         return
+    # Special request from Vissova, add support for start_ meshes
+    if(obj.name.find("start_", 0, 6) != -1):
+        return
         
     print(obj.name, "is a geo object")
 
@@ -57,8 +60,8 @@ def ExportObjGeo(obj):
         base_color = bsdf.inputs['Base Color'].links[0]
         # Print the image connecting to this node
         outTex = base_color.from_node.image.name
-        outTex = outTex[:len(outTex)-4]
-        layer.szTexName[0] = outTex
+        outTexB = outTex.split(".",1)[0]
+        layer.szTexName[0] = outTexB
     except:
         #print("Unable to extract texture from", obj.name)
         layer.szTexName[0] = "grid_64_pur"

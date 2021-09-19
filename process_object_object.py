@@ -29,7 +29,7 @@ def ExportObjObject(obj):
     if len(obj.keys()) > 1:
         # First item is _RNA_UI
         index = 2
-        for K in obj.keys():        
+        for K in obj.keys():
             if K not in '_RNA_UI':
                 outObject.userData.append(str(K) + "=" + str(obj[K]))
                 if index < len(obj.keys()):
