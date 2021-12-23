@@ -49,6 +49,15 @@ from .process_object_shape import ExportObjShape
 from .process_object_volume import ExportObjVolume
 from .process_object_fog import ExportObjFog
 
+# Bad code for getting the imgui custom property working
+from .ui_custom_properties import MAImguiExample
+from bpy.types import VIEW3D_MT_object_context_menu # We need access to the context menu struct
+
+def MAGUI(self, context):
+     col = self.layout.column()
+     self.layout.operator_context  = 'INVOKE_DEFAULT'
+     col.operator(MAImguiExample.bl_idname)
+
 # We need this for accessing filepath functions
 import os
 
@@ -180,9 +189,17 @@ def register():
         print("Metal Arms Toolbox Add-On enabled!")
         bpy.utils.register_class(ExportWLD)
         bpy.types.TOPBAR_MT_file_export.append(menu_func)
+        
+        bpy.utils.register_class(MAImguiExample)
+        VIEW3D_MT_object_context_menu.append(MAGUI)
+        print("MA DEAR IMGUI Add-On enabled!")
 
 # When this add-on is disabled in Edit>Preferences>Add-ons, this function is called
 def unregister():
         print("Metal Arms Toolbox Add-On disabled!")
         bpy.utils.unregister_class(ExportWLD)
         bpy.types.TOPBAR_MT_file_export.remove(menu_func)
+        
+        bpy.utils.unregister_class(MAImguiExample)
+        VIEW3D_MT_object_context_menu.remove(MAGUI)
+        print("MA DEAR IMGUI Add-On disabled!")
