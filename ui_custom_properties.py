@@ -4,7 +4,7 @@ from bpy.types import VIEW3D_MT_object_context_menu # We need access to the cont
 from bpy.types import Operator
 
 # Imgui
-from .external import blender_imgui
+from .thirdparty import blender_imgui
 import imgui
 
 class MAImguiExample(Operator,blender_imgui.ImguiBasedOperator):
