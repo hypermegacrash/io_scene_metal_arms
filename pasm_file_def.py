@@ -203,7 +203,7 @@ class PASMObject:
         outBytes = bytearray()
         
         size = bytearray(16)
-        size[0:len(self.szObjectName[0:15])] = bytes(self.szObjectName, "utf-8")[0:15]
+        size[0:len(self.szObjectName[0:11])] = bytes(self.szObjectName, "utf-8")[0:11]
         outBytes += size
         
         outBytes += struct.pack("<i", self.nFlags)[:4]
@@ -387,7 +387,7 @@ class PASMVisFace:
              
         return outBytes
 
-#1240h
+#Size :1240h
 class PASMCell:
     def __init__(self):
         self.szCellName = ""
@@ -597,7 +597,6 @@ class PASMLayer:
         return outBytes
 
 # A Material is a container for the layers in a mesh
-# A mesh can only have 1 material
 class PASMMaterial:
     def __init__(self):
         self.nLayerCount = 0

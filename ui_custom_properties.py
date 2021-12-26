@@ -7,7 +7,7 @@ from bpy.types import Operator
 from .thirdparty import blender_imgui
 import imgui
 
-class MAImguiExample(Operator,blender_imgui.ImguiBasedOperator):
+class MAImgui(Operator,blender_imgui.ImguiBasedOperator):
     """Rercreation of Object Properties window from 3DS MAX 5 using Dear Imgui"""
     bl_idname = "object.ma_imgui_example"
     bl_label = "MA Toolkit Custom Properties"
@@ -62,3 +62,8 @@ class MAImguiExample(Operator,blender_imgui.ImguiBasedOperator):
         # Don't forget to call parent's modal:
         self.modal_imgui(context, event)
         return {'RUNNING_MODAL'}
+
+def MAGUIMenuFunc(self, context):
+     col = self.layout.column()
+     self.layout.operator_context  = 'INVOKE_DEFAULT'
+     col.operator(MAImgui.bl_idname)

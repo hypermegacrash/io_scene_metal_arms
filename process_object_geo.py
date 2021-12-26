@@ -6,6 +6,8 @@ from . import pasm_file_def # Get our PASM file classes
 
 from . import g_class # Get our global variables for the header data
 
+from .process_star_command import CMatStringParser # Import just the Material Star Command Parser
+
 def ExportObjGeo(obj):
     # Validate we're working with mesh data and not other stuff
     if obj.type != "MESH":
@@ -31,9 +33,13 @@ def ExportObjGeo(obj):
     outSegment.szMeshName = obj.name
     #outSegment.szMeshName = "segment" + str(g_class.gWldHeader.nNumSegments)
     
-    # This returns a new instance of the vertex data
+    # This returns a new instance of the vertex data with modifiers applied
     # Whatever modifed here won't affect the scene
-    geo = obj.to_mesh()
+    import bpy
+    dg = bpy.context.evaluated_depsgraph_get()
+    eval_obj = obj.evaluated_get(dg)
+    geo = eval_obj.to_mesh()
+    #geo = obj.to_mesh()
         
     # We're gonna triangulate the mesh first before we work with it further
     bm = bmesh.new()
@@ -53,10 +59,11 @@ def ExportObjGeo(obj):
         uv.uv[1] = VBuffer
         
     aVertexBuffer = [] # Buffer to hold all unique PASMVerts
-    aIndexBuffer = []  # New PASMVertIndex buffer for remapped indices
-    indexIndex = 0     # my brain is melting, 
-    # Above could potentially be optimized out by getting the length of aIndexBuffer + 1    
-    bIndexBuffer = []  # Another index buffer lol
+    aIndexBuffer  = [] # New PASMVertIndex buffer for remapped indices
+    indexIndex    = 0  # my brain is melting 
+    bIndexBuffer  = [] # Another index buffer lol
+    
+    #strParser = CMatStringParser()
     
     # We itterate over each material to append new polygons into the segment   
     for matIndex in range(len(obj.data.materials)):

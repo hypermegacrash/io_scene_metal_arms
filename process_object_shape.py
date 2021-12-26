@@ -29,17 +29,17 @@ def ExportObjShape(obj):
                     i = i - 1
                 while index[j] == " ":
                     j = j + 1
-                outObject.userData.append(index[:i + 1] + "=" + index[j:])
+                outShape.userData.append(index[:i + 1] + "=" + index[j:])
                 if x < len(cmds):
-                    outObject.userData.append(str('\x0D\x0A'))
+                    outShape.userData.append(str('\x0D\x0A'))
         except:
             print("No Custom Properties")
-     
+        
         # Go back and patch up userData length
         dataLen = 0
         for data in outShape.userData:
             dataLen = dataLen + len(data)
-        outShape.nBytesOfUserData = dataLen
+            outShape.nBytesOfUserData = dataLen
     
         # Finally, write data to the file, and our header
         g_class.file.write(outShape.packBytes())
@@ -86,21 +86,29 @@ def ExportObjShape(obj):
     outShape.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
     
     # Grab custom properties from the object
-    if len(obj.keys()) > 1:
-        # First item is _RNA_UI
-        index = 2
-        for K in obj.keys():        
-            if K not in '_RNA_UI':
-                outShape.userData.append(str(K) + "=" + str(obj[K]))
-                if index < len(obj.keys()):
-                    index += 1
-                    outShape.userData.append(str('\x0D\x0A'))
-     
+    try:
+        cmds = obj["ma"].split('\n')
+        x = 0
+        for index in cmds: 
+            x += 1
+            a = index.find("=")
+            i = a - 1
+            j = a + 1
+            while index[i] == " ":
+                i = i - 1
+            while index[j] == " ":
+                j = j + 1
+            outShape.userData.append(index[:i + 1] + "=" + index[j:])
+            if x < len(cmds):
+                outShape.userData.append(str('\x0D\x0A'))
+    except:
+        print("No Custom Properties")
+    
     # Go back and patch up userData length
     dataLen = 0
     for data in outShape.userData:
         dataLen = dataLen + len(data)
-    outShape.nBytesOfUserData = dataLen
+        outShape.nBytesOfUserData = dataLen
     
     # Finally, write data to the file, and our header
     g_class.file.write(outShape.packBytes())
