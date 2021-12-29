@@ -7,56 +7,27 @@ from . import g_class # Get our global variables for the header data
 from . import pasm_math # PASM helper defs
 
 def ExportObjShape(obj):
-    # Ugly temp hack to let Vissova use a mesh of Glitch to represent a player start
-    if(obj.name.find("start_", 0, 6) != -1) and obj.type == "MESH":
-        outShape = pasm_file_def.PASMShape()
-        outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT
-        outShape.typeData = pasm_file_def.PASMShapeStartPoint()
-        
-        # Rotation Matrix fun
-        outShape.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
-    
-        # Grab custom properties from the object
-        try:
-            cmds = obj["ma"].split('\n')
-            x = 0
-            for index in cmds: 
-                x += 1
-                a = index.find("=")
-                i = a - 1
-                j = a + 1
-                while index[i] == " ":
-                    i = i - 1
-                while index[j] == " ":
-                    j = j + 1
-                outShape.userData.append(index[:i + 1] + "=" + index[j:])
-                if x < len(cmds):
-                    outShape.userData.append(str('\x0D\x0A'))
-        except:
-            print("No Custom Properties")
-        
-        # Go back and patch up userData length
-        dataLen = 0
-        for data in outShape.userData:
-            dataLen = dataLen + len(data)
-            outShape.nBytesOfUserData = dataLen
-    
-        # Finally, write data to the file, and our header
-        g_class.file.write(outShape.packBytes())
-        g_class.gWldHeader.fileSize += len(outShape.packBytes())
-        g_class.gWldHeader.nNumShapes += 1
-        
-        return
-
+    bExitEarly = False
     if obj.type != "EMPTY":
-        return
+        bExitEarly = True
     #objs could be ANY DATATYPE, so check for that
     if(obj.name.find("obj_", 0, 4) != -1):
+        bExitEarly = True
+    # Little hack for Vissova so a mesh can represent a player start
+    if(obj.name.find("start_", 0, 6) != -1) and obj.type == "MESH":
+        bExitEarly = False
+        
+    if bExitEarly == True:
         return
         
     print(obj.name, "is a shape object")
     
     outShape = pasm_file_def.PASMShape()
+    
+    # Little hack PT 2 for Vissova so a mesh can represent a player start
+    if(obj.name.find("start_", 0, 6) != -1) and obj.type == "MESH":
+        outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT
+        outShape.typeData = pasm_file_def.PASMShapeStartPoint()
     
     if obj.empty_display_type == "CUBE":
         if(obj.name.find("start_", 0, 6) != -1):

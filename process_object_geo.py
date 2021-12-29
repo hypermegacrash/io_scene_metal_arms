@@ -39,7 +39,6 @@ def ExportObjGeo(obj):
     dg = bpy.context.evaluated_depsgraph_get()
     eval_obj = obj.evaluated_get(dg)
     geo = eval_obj.to_mesh()
-    #geo = obj.to_mesh()
         
     # We're gonna triangulate the mesh first before we work with it further
     bm = bmesh.new()

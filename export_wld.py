@@ -1,4 +1,6 @@
+# Module for exporting a .wld file and adding UI to execute
 
+# For grabbing the Add-On version so we can print it in the exporter menu
 from . import bl_info
 
 # For working with Blender data
@@ -113,8 +115,7 @@ class ExportWLD(Operator, ExportHelper):
                 g_class.gWldHeader.sceneName = filename
                 
                 g_class.gWldHeader.bWld = 1
-                
-                
+                           
                 g_class.file = open(self.filepath, 'wb') # Init our none var in the global g_class
                 g_class.file.write(g_class.gWldHeader.packBytes()) # This will be overwritten at the very end with the correct data
                 
