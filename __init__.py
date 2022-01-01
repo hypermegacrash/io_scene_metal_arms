@@ -4,7 +4,7 @@
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 4, 17),
+        "version": (0, 4, 20),
         "blender": (2, 93, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",
@@ -17,10 +17,12 @@ import bpy # Registering / Unregistering classes
 # Import the classes that do the magic
 from .ui_custom_properties import *
 from .export_wld import *
+from .export_ape import *
 
 # The list of classes we are registering within Blender
 classes = (
     ExportWLD,
+    ExportAPE,
     MAImgui
 )
 
@@ -32,8 +34,9 @@ def register():
         bpy.utils.register_class(cls)
     
     # Update UI
-    bpy.types.TOPBAR_MT_file_export.append(exportWLDMenuFunc)
-    VIEW3D_MT_object_context_menu.append(MAGUIMenuFunc)
+    bpy.types.TOPBAR_MT_file_export.append(exportAPE_MenuFunc)
+    bpy.types.TOPBAR_MT_file_export.append(exportWLD_MenuFunc)
+    VIEW3D_MT_object_context_menu.append(MAGUI_MenuFunc)
 
 # When this add-on is disabled in Edit>Preferences>Add-ons, this function is called
 def unregister():
@@ -43,5 +46,6 @@ def unregister():
         bpy.utils.unregister_class(cls)
     
     # Update UI
-    bpy.types.TOPBAR_MT_file_export.remove(exportWLDMenuFunc)
-    VIEW3D_MT_object_context_menu.remove(MAGUIMenuFunc)
+    bpy.types.TOPBAR_MT_file_export.remove(exportAPE_MenuFunc)
+    bpy.types.TOPBAR_MT_file_export.remove(exportWLD_MenuFunc)
+    VIEW3D_MT_object_context_menu.remove(MAGUI_MenuFunc)

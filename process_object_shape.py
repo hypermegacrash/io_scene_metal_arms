@@ -13,11 +13,14 @@ def ExportObjShape(obj):
     #objs could be ANY DATATYPE, so check for that
     if(obj.name.find("obj_", 0, 4) != -1):
         bExitEarly = True
+    # Ambient cubes are lights, not shapes
+    if obj.name.find("ambient", 0, 7) != -1 and obj.type == "EMPTY":
+        bExitEarly = True
     # Little hack for Vissova so a mesh can represent a player start
     if(obj.name.find("start_", 0, 6) != -1) and obj.type == "MESH":
         bExitEarly = False
         
-    if bExitEarly == True:
+    if(bExitEarly):
         return
         
     print(obj.name, "is a shape object")
@@ -79,7 +82,7 @@ def ExportObjShape(obj):
     dataLen = 0
     for data in outShape.userData:
         dataLen = dataLen + len(data)
-        outShape.nBytesOfUserData = dataLen
+    outShape.nBytesOfUserData = dataLen
     
     # Finally, write data to the file, and our header
     g_class.file.write(outShape.packBytes())

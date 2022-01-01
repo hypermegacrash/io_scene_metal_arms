@@ -1,4 +1,4 @@
-# Module for exporting a .wld file and adding UI to execute
+# Module for exporting a .ape file and adding UI to execute
 
 # For grabbing the Add-On version so we can print it in the exporter menu
 from . import bl_info
@@ -37,21 +37,16 @@ from . import g_class
 # Grab all our defs for exporting Blender data to PASM formatted data
 from .process_object_geo import ExportObjGeo
 from .process_object_light import ExportObjLight
-from .process_object_object import ExportObjObject
-from .process_object_shape import ExportObjShape
-from .process_object_volume import ExportObjVolume
-from .process_object_fog import ExportObjFog
 
 # We need this for accessing filepath functions
 import os
 
-# The MEAT, when this class is executed it returns a PASM compatible .wld file
-class ExportWLD(Operator, ExportHelper):
-        """Export scene to a Pasm compatible .wld file"""
+class ExportAPE(Operator, ExportHelper):
+        """Export scene to a Pasm compatible .ape file"""
         # Should this stuff be in the menu_func func? something to consider
-        bl_idname = 'export_scene.wld'
-        bl_label = 'Export WLD'
-        filename_ext = '.wld'
+        bl_idname = 'export_scene.ape'
+        bl_label = 'Export APE'
+        filename_ext = '.ape'
         
         m_bUseSelection: BoolProperty(
             name="Selection Only",
@@ -71,18 +66,18 @@ class ExportWLD(Operator, ExportHelper):
             default=True,
             )
           
-        m_bExportObjects: BoolProperty(
-            name="Export Object Data",
-            description="Export all objects from the scene",
-            default=True,
-            )
+        #m_bExportHierarchy: BoolProperty(
+        #    name="Export Hierarchy",
+        #    description="Create a bone for every object",
+        #    default=True,
+        #    )
 
         # Draw the export properties which are then stored in self to be accessed later
         def draw(self, context):
             layout = self.layout
             
             box = layout.box()
-            box.label(text="Wld File Exporter")
+            box.label(text="Ape File Exporter")
         
             layout.prop(self, "m_bUseSelection")
             
@@ -90,7 +85,7 @@ class ExportWLD(Operator, ExportHelper):
             
             testA.prop(self, "m_bExportLights")
             testA.prop(self, "m_bExportGeo")
-            testA.prop(self, "m_bExportObjects")
+            testA.prop(self, "m_bExportHierarchy")
             
             fileRevision = layout.row()
             fileRevision.label(text = "PASM File Version # 1.5.0")
@@ -114,7 +109,7 @@ class ExportWLD(Operator, ExportHelper):
                 filename = filename[:len(filename)-4]
                 g_class.gWldHeader.sceneName = filename
                 
-                g_class.gWldHeader.bWld = 1
+                g_class.gWldHeader.bWld = 0
                            
                 g_class.file = open(self.filepath, 'wb') # Init our none var in the global g_class
                 g_class.file.write(g_class.gWldHeader.packBytes()) # This will be overwritten at the very end with the correct data
@@ -132,22 +127,13 @@ class ExportWLD(Operator, ExportHelper):
                 # We itterate over the entire scene for each section of the PASM file
                 # One loop for lights, one for geo, one for cells, and so on
 	       
+                # if(self.m_bExportHierarchy):
+                #     for obj in objects:
+                #         ExportObjBone(obj)
+                        
                 if(self.m_bExportLights):
                     for obj in objects:
                         ExportObjLight(obj)
-                
-                if(self.m_bExportObjects):
-                    for obj in objects:
-                        ExportObjObject(obj)
-	
-                for obj in objects:
-                    ExportObjFog(obj)
-	
-                for obj in objects:
-                    ExportObjShape(obj)
-
-                for obj in objects:
-                    ExportObjVolume(obj)
                 
                 if(self.m_bExportGeo):                
                     for obj in objects:
@@ -161,6 +147,6 @@ class ExportWLD(Operator, ExportHelper):
         
                 return {'FINISHED'}
                 
-def exportWLD_MenuFunc(self, context):
+def exportAPE_MenuFunc(self, context):
     self.layout.operator(
-        ExportWLD.bl_idname, text="Metal Arms Pasm Wld (.wld)")
+    ExportAPE.bl_idname, text="Metal Arms Pasm Ape (.ape)")

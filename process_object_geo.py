@@ -6,7 +6,7 @@ from . import pasm_file_def # Get our PASM file classes
 
 from . import g_class # Get our global variables for the header data
 
-from .process_star_command import CMatStringParser # Import just the Material Star Command Parser
+from .process_star_command import CMaterialStringParser # Import just the Material Star Command Parser
 
 def ExportObjGeo(obj):
     # Validate we're working with mesh data and not other stuff

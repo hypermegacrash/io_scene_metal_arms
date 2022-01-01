@@ -86,6 +86,44 @@ class PASMHeader:
         
         return outBytes
  
+ ################# 
+# BONE DEFINITIONS
+# Bones only exist in .ape files, not in .wld files
+class PASMBone:
+    def __init__(self):
+        self.szBoneName = ""
+        self.nFlags = 0
+        self.nBoneIndex = 0
+        self.nParentIndex = -1
+        self.mtxOrientation = [0.0 for i in range(12)]
+        self.nNumChildren = 0
+        self.auChildIndices = [0 for i in range(64)]
+        self.PAD = bytearray(16)
+        
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+        
+        size = bytearray(32)
+        size[0:len(self.szBoneName[0:31])] = bytes(self.szBoneName, "utf-8")[0:31]
+        outBytes += size
+        
+        outBytes += struct.pack("<i", self.nFlags)[:4]
+        outBytes += struct.pack("<i", self.nBoneIndex)[:4]
+        outBytes += struct.pack("<i", self.nParentIndex)[:4]
+        
+        for i in self.mtxOrientation:
+            outBytes += struct.pack("<f", i)
+            
+        outBytes += struct.pack("<i", self.nNumChildren)[:4]
+        
+        for i in self.auChildIndices:
+            outBytes += struct.pack("<b", i)
+
+        outBytes += self.PAD
+        
+        return outBytes
+        
 ################# 
 # LIGHT DEFINITIONS
 # Flags for special material effect in Layers
@@ -242,6 +280,32 @@ class PASMShapeType_e:
     APE_SHAPE_TYPE_PARTICLE_CYLINDER = 11
     APE_SHAPE_TYPE_SPLINE            = 12
         
+class PASMShapeSphere:
+    def __init__(self):
+        self.fRadius = 0
+        self.PAD = bytearray(12)
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+   
+        outBytes += struct.pack("<f", self.fRadius)
+        outBytes += self.PAD
+        
+        return outBytes
+
+class PASMShapeCylinder:
+    def __init__(self):
+        self.PAD = bytearray(16)
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+   
+        outBytes += self.PAD
+        
+        return outBytes
+        
 class PASMShapeBox:
     def __init__(self):
         self.PAD = bytearray(4)
@@ -259,22 +323,119 @@ class PASMShapeBox:
         outBytes += struct.pack("<f", self.fHeight)
         
         return outBytes
-
-class PASMShapeSphere:
+        
+class PASMShapeCamera:
     def __init__(self):
-        self.fRadius = 0
-        self.PAD = bytearray(12)
+        self.PAD = bytearray(16)
 
     def packBytes(self):
         #init our bytearray
         outBytes = bytearray()
    
-        outBytes += struct.pack("<f", self.fRadius)
+        outBytes += self.PAD
+        
+        return outBytes
+        
+class PASMShapeSpeaker:
+    def __init__(self):
+        self.PAD = bytearray(16)
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+   
+        outBytes += self.PAD
+        
+        return outBytes
+        
+# Deprecated?
+class PASMShapeSpawnPoint:
+    def __init__(self):
+        self.PAD = bytearray(16)
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+   
         outBytes += self.PAD
         
         return outBytes
 
 class PASMShapeStartPoint:
+    def __init__(self):
+        self.PAD = bytearray(16)
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+   
+        outBytes += self.PAD
+        
+        return outBytes
+        
+#Deprecated?
+class PASMShapeRoom:
+    def __init__(self):
+        self.PAD = bytearray(16)
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+   
+        outBytes += self.PAD
+        
+        return outBytes
+        
+#Deprecated?
+class PASMShapeArena:
+    def __init__(self):
+        self.PAD = bytearray(16)
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+   
+        outBytes += self.PAD
+        
+        return outBytes
+        
+class PASMShapeParticleBox:
+    def __init__(self):
+        self.PAD = bytearray(16)
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+   
+        outBytes += self.PAD
+        
+        return outBytes
+        
+class PASMShapeParticleSphere:
+    def __init__(self):
+        self.PAD = bytearray(16)
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+   
+        outBytes += self.PAD
+        
+        return outBytes
+        
+class PASMShapeParticleCylinder:
+    def __init__(self):
+        self.PAD = bytearray(16)
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+   
+        outBytes += self.PAD
+        
+        return outBytes
+        
+class PASMShapeSpline:
     def __init__(self):
         self.PAD = bytearray(16)
 

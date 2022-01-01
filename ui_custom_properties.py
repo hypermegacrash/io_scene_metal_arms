@@ -63,7 +63,7 @@ class MAImgui(Operator,blender_imgui.ImguiBasedOperator):
         self.modal_imgui(context, event)
         return {'RUNNING_MODAL'}
 
-def MAGUIMenuFunc(self, context):
+def MAGUI_MenuFunc(self, context):
      col = self.layout.column()
      self.layout.operator_context  = 'INVOKE_DEFAULT'
      col.operator(MAImgui.bl_idname)

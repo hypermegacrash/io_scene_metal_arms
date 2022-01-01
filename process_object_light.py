@@ -9,34 +9,88 @@ from . import g_class # Get our global variables for the header data
 from . import pasm_math # PASM helper defs
 
 def ExportObjLight(obj):
+    bExitEarly = False
+    
     if obj.type != "LIGHT":
+        bExitEarly = True
+    
+    if obj.name.find("ambient", 0, 7) != -1 and obj.type == "EMPTY":
+        bExitEarly = False
+    
+    if(bExitEarly):
         return
         
     print(obj.name, "is a light object")
 
     outLight = pasm_file_def.PASMLight()
     
-    if obj.data.type == "SUN":
-        outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_DIR
-    elif obj.data.type == "POINT":
-        outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_OMNI
-    elif obj.data.type == "SPOT":
-        outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT
-    else:
-        print("Unsupported or Unknown Light detected")
+    if obj.type == "LIGHT":
+        if obj.data.type == "SUN":
+            outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_DIR
+        elif obj.data.type == "POINT":
+            outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_OMNI
+        elif obj.data.type == "SPOT":
+            outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT
+    if obj.name.find("ambient", 0, 7) != -1 and obj.type == "EMPTY":
+        outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_AMBIENT
+        
+    if outLight.nApeLightType == -1:
+        print("Unable to assign nApeLightType, skipping " + obj.name)
         return
         
     outLight.szLightName = obj.name
     
-    outLight.Color[0] = obj.data.color[0]
-    outLight.Color[1] = obj.data.color[1]
-    outLight.Color[2] = obj.data.color[2]
-    
+    if obj.type == "LIGHT":
+        outLight.Color[0] = obj.data.color[0]
+        outLight.Color[1] = obj.data.color[1]
+        outLight.Color[2] = obj.data.color[2]
+    elif obj.name.find("ambient", 0, 7) != -1 and obj.type == "EMPTY":
+        try:
+            # Grab the custom properties (we only need red green and blue but just grab them all)
+            dictProperties = {}
+            cmds = obj["ma"].split('\n')
+            for index in cmds:   
+                a = index.find("=")
+                i = a - 1
+                j = a + 1
+                while index[i] == " ":
+                    i = i - 1
+                while index[j] == " ":
+                    j = j + 1
+                dictProperties[index[:i + 1]] = int(index[j:])
+            nRed = dictProperties["red"]
+            nGreen = dictProperties["green"]
+            nBlue = dictProperties["blue"]
+            # Floor it
+            nRed = max(0, min(nRed, 255))
+            nGreen = max(0, min(nGreen, 255))
+            nBlue = max(0, min(nBlue, 255))
+            # Convert to float
+            nRed = nRed * float((1/255))
+            nGreen = nGreen * float((1/255))
+            nBlue = nBlue * float((1/255))
+        except:
+            print("Unable to find integer custom property values for red green blue, skipping " + obj.name)
+            return       
+        # Assign it
+        outLight.Color[0] = nRed
+        outLight.Color[1] = nGreen
+        outLight.Color[2] = nBlue
+    else:
+        print("Unable to assign Light color, skipping " + obj.name)
+        return
+         
     # diffuse_factor we introduced in 2.93
     # Therefore 2.8 - 2.92 no longer work
-    outLight.Intensity = obj.data.diffuse_factor
+    if obj.type == "LIGHT":
+        outLight.Intensity = obj.data.diffuse_factor
+    elif obj.name.find("ambient", 0, 7) != -1 and obj.type == "EMPTY":
+        outLight.Intensity = 1.0
+    else:
+        print("Unable to assign Light intensity, skipping " + obj.name)
+        return
     
-    # Flag stuff, this needs to be better
+    # Temporary hack for custom properties
     if obj.name.find("*lm") != -1:
         outLight.nFlags |= pasm_file_def.PASMLightFlag_e.APE_LIGHT_FLAG_LIGHTMAP_LIGHT
     if obj.name.find("*castshadows") != -1:
@@ -44,6 +98,9 @@ def ExportObjLight(obj):
     if obj.name.find("*onlylm") != -1:
         outLight.nFlags |= pasm_file_def.PASMLightFlag_e.APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT
         outLight.nFlags |= pasm_file_def.PASMLightFlag_e.APE_LIGHT_FLAG_LIGHTMAP_LIGHT
+    if obj.name.find("*onlydynamic") != -1:
+        outLight.nFlags |= pasm_file_def.PASMLightFlag_e.APE_LIGHT_FLAG_DYNAMIC_ONLY
+    
     
     # Lights calculate their rotation matrix in a different way to everything else
     outLight.mtxOrientation = pasm_math.BObj2F43MtxLIGHT(obj)
@@ -55,7 +112,7 @@ def ExportObjLight(obj):
         outLight.Direction[2] =  outLight.mtxOrientation[8]
     
     if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_OMNI or outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
-        # Blender doesn't give a radius of light
+        # Blender doesn't give a radius of light that we want
         # So we're gonna calculate inverse square law with a distance of 0.02 to try and approximate one
         # Thx The Science Asylum! https://www.youtube.com/watch?v=2FMx2GDqMo4
         radius = math.sqrt((( obj.data.energy / 0.02) / ( 4 * math.pi )))

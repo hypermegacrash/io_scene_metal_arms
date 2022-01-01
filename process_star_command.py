@@ -20,7 +20,7 @@ class CMaterialStringParser:
         self.Params = None
 
         self.m_ApeCommands = PASMCommands()       
-        self.m_ApeCommands.nMatFlags = APE_LAYER_FLAGS_NONE
+        self.m_ApeCommands.nMatFlags = 0
         self.m_ApeCommands.nAffectAngle = 0
         self.m_ApeCommands.bSort = False
         self.m_ApeCommands.nOrderNum = 0
@@ -35,13 +35,13 @@ class CMaterialStringParser:
         self.m_ApeCommands.fFramesPerSecs = 0.0
         self.m_ApeCommands.fDeltaUPerSec = 0.0
         self.m_ApeCommands.fDeltaVPerSec = 0.0
-        self.m_ApeCommands.fDeltaUVRotationPerSec 0.0
+        self.m_ApeCommands.fDeltaUVRotationPerSec = 0.0
         self.m_ApeCommands.nZTugValue = 0
         self.m_ApeCommands.nID = 255
         self.m_ApeCommands.bNoColl = False
         self.m_ApeCommands.nCollID = 0
-        self.m_ApeCommands.nFlags = APE_MAT_FLAGS_NONE
-        self.m_ApeCommands.nCollMask = APE_MAT_COLL_FLAGS_COLL_WITH_EVERYTHING
+        self.m_ApeCommands.nFlags = 0
+        self.m_ApeCommands.nCollMask = 255
         self.m_ApeCommands.nReactType = 0
         self.m_ApeCommands.nSurfaceType = 0
         self.m_ApeCommands.TintRGB  = [1.0, 1.0, 1.0]
@@ -151,6 +151,14 @@ class CObjectStringParser:
         self.m_TintRGB = [0.0, 0.0, 0.0]
         self.Params = None
         
+    def _GetParamterString2(self, inStr, Cmd):
+        pszCmd = inStr.find(Cmd)            
+        if(pszCmd != -1):
+            if(_GetParameterString(inStr[pszCmd + 1:])):
+                self.nParams = _GetParameterString(inStr[pszCmd + 1:])
+                return True
+        return False
+        
     def Parse(self, pszObjectStr):
         
         if(self._GetParamterString2(pszObjectStr, "*postery")): 
@@ -189,7 +197,7 @@ class CObjectStringParser:
         if(self._GetParamterString2(pszObjectStr, "*vertrad")): 
             print("*vertrad not implimented")
         
-        (self._GetParamterString2(pszObjectStr, "*acceptshadows")): 
+        if(self._GetParamterString2(pszObjectStr, "*acceptshadows")): 
             print("*acceptshadows not implimented")
             
         if(self._GetParamterString2(pszObjectStr, "*castshadows")): 
@@ -209,9 +217,17 @@ class CLightStringParser:
         self.m_ApeLightFlag = 0
         self.Params = None
         
+    def _GetParamterString2(self, inStr, Cmd):
+        pszCmd = inStr.find(Cmd)            
+        if(pszCmd != -1):
+            if(_GetParameterString(inStr[pszCmd + 1:])):
+                self.nParams = _GetParameterString(inStr[pszCmd + 1:])
+                return True
+        return False
+        
     def Parse(self, pszLightStr):
     
-        (self._GetParamterString2(pszLightStr, "*self")): 
+        if(self._GetParamterString2(pszLightStr, "*self")): 
             print("*self not implimented")
             
         if(self._GetParamterString2(pszLightStr, "*castshadows")): 
@@ -257,6 +273,14 @@ class CPortalStringParser:
     def __init__(self):
         self.m_ApePortalFlag = 0
         self.Params = None
+        
+    def _GetParamterString2(self, inStr, Cmd):
+        pszCmd = inStr.find(Cmd)            
+        if(pszCmd != -1):
+            if(_GetParameterString(inStr[pszCmd + 1:])):
+                self.nParams = _GetParameterString(inStr[pszCmd + 1:])
+                return True
+        return False
     
     def ResetRoDefaults():
         self.m_ApePortalFlag = 0
