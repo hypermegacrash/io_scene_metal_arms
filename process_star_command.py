@@ -2,6 +2,8 @@
 
 from .pasm_file_def import PASMCommands # We only need the Star Commands struct
 
+_AUTO_ID = 128
+
 class CMaterialStringParser:
     def __init__(self):
         self.m_ApeCommands = PASMCommands()
@@ -16,10 +18,10 @@ class CMaterialStringParser:
         return False
     
     # This is run before EVERY Material is parsed, it's essentially the default PASMLight.PASMCommands
-    def ResetRoDefaults():
+    def ResetToDefaults(self):
         self.Params = None
 
-        self.m_ApeCommands = PASMCommands()       
+        self.m_ApeCommands = PASMCommands()
         self.m_ApeCommands.nMatFlags = 0
         self.m_ApeCommands.nAffectAngle = 0
         self.m_ApeCommands.bSort = False
@@ -37,11 +39,11 @@ class CMaterialStringParser:
         self.m_ApeCommands.fDeltaVPerSec = 0.0
         self.m_ApeCommands.fDeltaUVRotationPerSec = 0.0
         self.m_ApeCommands.nZTugValue = 0
-        self.m_ApeCommands.nID = 255
+        #self.m_ApeCommands.nID = 255
         self.m_ApeCommands.bNoColl = False
         self.m_ApeCommands.nCollID = 0
         self.m_ApeCommands.nFlags = 0
-        self.m_ApeCommands.nCollMask = 255
+        #self.m_ApeCommands.nCollMask = 255
         self.m_ApeCommands.nReactType = 0
         self.m_ApeCommands.nSurfaceType = 0
         self.m_ApeCommands.TintRGB  = [1.0, 1.0, 1.0]
@@ -78,15 +80,20 @@ class CMaterialStringParser:
         if(self._GetParamterString2(pszMatStr, "*motif")): 
             print("*motif not implimented")
         
-        if(self._GetParamterString2(pszMatStr, "*anim")): 
+        if(self._GetParamterString2(pszMatStr, "*anim")):
             print("*anim not implimented")
         
         if(self._GetParamterString2(pszMatStr, "*rotate")): 
             print("*rotate not implimented")
         
-        if(self._GetParamterString2(pszMatStr, "*scroll")): 
-            print("*scroll not implimented")
+        if(self._GetParamterString2(pszMatStr, "*scroll")):
+            self.nParams[0] = float(self.nParams[0])
+            self.nParams[1] = float(self.nParams[1])
             
+            self.m_ApeCommands.fDeltaUPerSec = self.nParams[0]
+            self.m_ApeCommands.fDeltaVPerSec = self.nParams[1]
+            self.m_ApeCommands.nID = _AUTO_ID
+                  
         if(self._GetParamterString2(pszMatStr, "*nocoll")): 
             print("*nocoll not implimented")
         

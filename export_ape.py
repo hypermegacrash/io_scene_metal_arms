@@ -85,7 +85,7 @@ class ExportAPE(Operator, ExportHelper):
             
             testA.prop(self, "m_bExportLights")
             testA.prop(self, "m_bExportGeo")
-            testA.prop(self, "m_bExportHierarchy")
+            #testA.prop(self, "m_bExportHierarchy")
             
             fileRevision = layout.row()
             fileRevision.label(text = "PASM File Version # 1.5.0")
@@ -144,6 +144,7 @@ class ExportAPE(Operator, ExportHelper):
                 g_class.file.write(g_class.gWldHeader.packBytes())
                              
                 g_class.file.close() # Remember folks, always close your files when your done playing with them
+                print("DONE EXPORTING .APE!")
         
                 return {'FINISHED'}
                 

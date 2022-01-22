@@ -454,7 +454,6 @@ class PASMShape:
         self.typeData = None
         self.mtxOrientation = [0.0 for i in range(12)]
         self.nBytesOfUserData = 0
-        self.nParentIndex = 0
         self.PAD = bytearray(16)
         self.userData = [] # User Data is gonna be an array of string commands
 

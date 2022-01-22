@@ -6,7 +6,7 @@ from . import pasm_file_def # Get our PASM file classes
 
 from . import g_class # Get our global variables for the header data
 
-from .process_star_command import CMaterialStringParser # Import just the Material Star Command Parser
+#from .process_star_command import CMaterialStringParser # Import just the Material Star Command Parser
 
 def ExportObjGeo(obj):
     # Validate we're working with mesh data and not other stuff
@@ -21,8 +21,7 @@ def ExportObjGeo(obj):
     # Special request from Vissova, add support for start_ meshes
     if(obj.name.find("start_", 0, 6) != -1):
         return
-    # Don't work with meshes that have no material... yet
-    # Maybe in the future apply a S2 styled missing material
+    # Don't work with meshes that have no material
     if(len(obj.data.materials) == 0):
         print("The object", obj.name, "has no materials, skipping")
         return
@@ -57,13 +56,10 @@ def ExportObjGeo(obj):
         VBuffer = VBuffer + reflectionPoint
         uv.uv[1] = VBuffer
         
-    aVertexBuffer = [] # Buffer to hold all unique PASMVerts
-    aIndexBuffer  = [] # New PASMVertIndex buffer for remapped indices
-    indexIndex    = 0  # my brain is melting 
-    bIndexBuffer  = [] # Another index buffer lol
-    
-    #strParser = CMatStringParser()
-    
+    aVertexBuffer  = [] # Array buffer for holding every all unique PASMVerts(), used for file export
+    aIndexBuffer   = [] # Array buffer for holding every remapped index as a PASMVertIndex(), used for file export
+    nLargestIndex  = 0  # When adding a new unique vertex index to aIndexBuffer we use this value then increment
+       
     # We itterate over each material to append new polygons into the segment   
     for matIndex in range(len(obj.data.materials)):
         # Check if this material is unused
@@ -78,6 +74,7 @@ def ExportObjGeo(obj):
         
         # Construct our material
         mat = pasm_file_def.PASMMaterial()
+              
         mat.StarCommands.bUseDiffuseColor = 1
         mat.StarCommands.bUseSpecularColor = 1
         mat.StarCommands.TintRGB = [1.0, 1.0, 1.0]
@@ -87,9 +84,8 @@ def ExportObjGeo(obj):
         mat.StarCommands.nCollMask = 255 # Can also be represented as -1
         mat.StarCommands.nReactType = 0
         mat.StarCommands.nSurfaceType = -1
-        
-        nStartingIndex = len(bIndexBuffer)
-        mat.nFirstIndex  = nStartingIndex
+               
+        mat.nFirstIndex = len(aIndexBuffer)
 
         # Construct a layer that will act as our diffuse texture, nothing fancy YET
         # This Layer is based on Floor & Wall Mesh from testwld scene... Are these good default values?
@@ -111,9 +107,6 @@ def ExportObjGeo(obj):
         layer.StarCommands.nReactType = 0
         layer.StarCommands.nSurfaceType = -1
         
-        mat.aMatLayers[0] = layer # Link our base layer with our material
-        mat.nLayerCount += 1
-        
         # Messily get our diffuse texture for this material   
         try:
             # Get the nodes in the material node tree
@@ -129,6 +122,9 @@ def ExportObjGeo(obj):
         except:
             #print("Unable to extract texture from", obj.name)
             layer.szTexName[0] = "grid_64_pur"
+            
+        mat.aMatLayers[0] = layer # Link our base layer with our material
+        mat.nLayerCount += 1
      
         # Get the faces of the mesh
         for face in geo.polygons:
@@ -141,50 +137,49 @@ def ExportObjGeo(obj):
                 #print("VERTEX INDEX:", face.vertices[index], "POS:", geo.vertices[face.vertices[index]].co, "  \tNORMAL:", geo.vertices[face.vertices[index]].normal, "  \tLOOP INDEX:", face.loop_indices[index], "  \tUV:", UVLAYER.data[face.loop_indices[index]].uv)
         
                 # Assemble a PASMVert with this vertex info
-                tempVertex = pasm_file_def.PASMVert()
+                entryVertex = pasm_file_def.PASMVert()
                 
                 # Multiply our world position matrix by the vertex position X Y Z to get world space position of verts
                 vertPosAfterWTM = obj.matrix_world @ geo.vertices[face.vertices[index]].co
-                tempVertex.Pos[0] = vertPosAfterWTM[0]
-                tempVertex.Pos[1] = vertPosAfterWTM[2]
-                tempVertex.Pos[2] = vertPosAfterWTM[1]
+                entryVertex.Pos[0] = vertPosAfterWTM[0]
+                entryVertex.Pos[1] = vertPosAfterWTM[2]
+                entryVertex.Pos[2] = vertPosAfterWTM[1]
                 
                 # This deserves a bit of history...
-                # For the longest time I tried making tempVertex.Norm = "geo.vertices[face.vertices[index]].normal" work
+                # For the longest time I tried making entryVertex.Norm = "geo.vertices[face.vertices[index]].normal" work
                 # But this doesn't work since a single vert can be shared across multiple polygons
                 # However on a whim I decided each of the verts of a single polygon share the same normal...
                 # And it worked!
-                tempVertex.Norm[0] = face.normal[0]
-                tempVertex.Norm[1] = face.normal[2]
-                tempVertex.Norm[2] = face.normal[1]
+                entryVertex.Norm[0] = face.normal[0]
+                entryVertex.Norm[1] = face.normal[2]
+                entryVertex.Norm[2] = face.normal[1]
                 
-                tempVertex.aUVs[0] = UVLAYER.data[face.loop_indices[index]].uv
+                entryVertex.aUVs[0] = UVLAYER.data[face.loop_indices[index]].uv
         
                 # Is this PASMVert unique?
-                if tempVertex not in aVertexBuffer:
-                    aVertexBuffer.append(tempVertex)
-                    #print("ADD NEW PASMVERTEX AT INDEX:", indexIndex)
-                    aIndexBuffer.append(indexIndex)
-                    indexIndex = indexIndex + 1
+                if entryVertex not in aVertexBuffer:
+                    aVertexBuffer.append(entryVertex)
+                    #print("ADD NEW PASMVERTEX AT INDEX:", nLargestIndex)
+                    indexBuf = pasm_file_def.PASMVertIndex()
+                    indexBuf.nVertIndex = nLargestIndex
+                    aIndexBuffer.append(indexBuf)
+                    nLargestIndex = nLargestIndex + 1
                 else:
-                    #print("PASMVERTEX ALREADY EXISTS AT INDEX:", aVertexBuffer.index(tempVertex))
-                    aIndexBuffer.append(aVertexBuffer.index(tempVertex))
-      
-        for entry in aIndexBuffer:
-            indexBuf = pasm_file_def.PASMVertIndex()
-            indexBuf.nVertIndex = entry
-            bIndexBuffer.append(indexBuf)
+                    #print("PASMVERTEX ALREADY EXISTS AT INDEX:", aVertexBuffer.index(entryVertex))
+                    indexBuf = pasm_file_def.PASMVertIndex()
+                    indexBuf.nVertIndex = aVertexBuffer.index(entryVertex)
+                    aIndexBuffer.append(indexBuf)
         
-        mat.nNumIndices = len(bIndexBuffer) - nStartingIndex
+        mat.nNumIndices = len(aIndexBuffer) - mat.nFirstIndex
     
         outSegment.aMaterials.append(mat)
         outSegment.nNumMaterials += 1
     
     # OK, every polygon accounted for, now update outSegment data
     outSegment.aVertices   = aVertexBuffer
-    outSegment.aIndicies   = bIndexBuffer   
+    outSegment.aIndicies   = aIndexBuffer   
     outSegment.nNumVerts   = len(aVertexBuffer)
-    outSegment.nNumIndices = len(bIndexBuffer)
+    outSegment.nNumIndices = len(aIndexBuffer)
     
     # Finally, write data to the file, and our header
     g_class.file.write(outSegment.packBytes())
