@@ -2,7 +2,19 @@
 
 from .pasm_file_def import PASMCommands # We only need the Star Commands struct
 
-_AUTO_ID = 128
+# Dont do this shit, come up with a cleaner solution
+_AUTO_ID = -128
+
+APE_MAT_FLAGS_NO_DRAW			= 0x01	# Polys with this material will not be drawn
+APE_MAT_FLAGS_APPLY_TINT		= 0x02	# This tint is modulated into the texture color in the surface pass
+APE_MAT_FLAGS_DO_NOT_LM			= 0x04	# These polys should not be light mapped, though they can obscure light
+APE_MAT_FLAGS_ZWRITE_ON			= 0x08	# Relevant for translucent materials, only. When rendering this material, write to the zbuffer (default for translucent materials is not to)
+APE_MAT_FLAGS_DO_NOT_TINT		= 0x10	# If tint is applied to the mesh, this material will not receive tint
+APE_MAT_FLAGS_NO_LM_USE			= 0x20	# These polys should not be used in the lightmap phase (to receive or obscure light)
+APE_MAT_FLAGS_DO_NOT_BLOCK_LM	= 0x40	# These polys will not block light during lightmap application
+APE_MAT_FLAGS_VERT_RADIOSITY	= 0x80	# These polys will receive vertex radiosity
+
+APE_MAT_FLAGS_NONE				= 0x00
 
 class CMaterialStringParser:
     def __init__(self):
@@ -22,35 +34,16 @@ class CMaterialStringParser:
         self.Params = None
 
         self.m_ApeCommands = PASMCommands()
-        self.m_ApeCommands.nMatFlags = 0
-        self.m_ApeCommands.nAffectAngle = 0
-        self.m_ApeCommands.bSort = False
-        self.m_ApeCommands.nOrderNum = 0
+        self.m_ApeCommands.bUseDiffuseColor = 1
+        self.m_ApeCommands.bUseSpecularColor = 1
+        self.m_ApeCommands.TintRGB = [1.0, 1.0, 1.0]
         self.m_ApeCommands.nShaderNum = -1
-        self.m_ApeCommands.nEmissiveMotifID = 0
-        self.m_ApeCommands.nSpecularMotifID = 0
-        self.m_ApeCommands.nDiffuseMotifID = 0
-        self.m_ApeCommands.bUseEmissiveColor = True
-        self.m_ApeCommands.bUseSpecularColor = True
-        self.m_ApeCommands.bUseDiffuseColor = False
-        self.m_ApeCommands.nNumTexFrames = 0
-        self.m_ApeCommands.fFramesPerSecs = 0.0
-        self.m_ApeCommands.fDeltaUPerSec = 0.0
-        self.m_ApeCommands.fDeltaVPerSec = 0.0
-        self.m_ApeCommands.fDeltaUVRotationPerSec = 0.0
-        self.m_ApeCommands.nZTugValue = 0
-        #self.m_ApeCommands.nID = 255
-        self.m_ApeCommands.bNoColl = False
-        self.m_ApeCommands.nCollID = 0
-        self.m_ApeCommands.nFlags = 0
-        #self.m_ApeCommands.nCollMask = 255
+        self.m_ApeCommands.fBumpMapTileFactor = 1
+        self.m_ApeCommands.fDetailMapTileFactor = 4
+        self.m_ApeCommands.nCollMask = 255
         self.m_ApeCommands.nReactType = 0
-        self.m_ApeCommands.nSurfaceType = 0
-        self.m_ApeCommands.TintRGB  = [1.0, 1.0, 1.0]
-        self.m_ApeCommands.LightRGBI = [0.0, 0.0, 0.0, 0.0]
-        self.m_ApeCommands.fBumpMapTileFactor = 1.0
-        self.m_ApeCommands.fDetailMapTileFactor = 4.0
-        
+        self.m_ApeCommands.nSurfaceType = -1
+        self.m_ApeCommands.nID = -1
     
     # The meat, takes a Material String Name as input formats the class's Star Command struct
     def Parse(self, pszMatStr):
@@ -75,24 +68,35 @@ class CMaterialStringParser:
         if(self._GetParamterString2(pszMatStr, "*shader")):
             self.nParams[0] = int(self.nParams[0])
             
-            self.m_ApeCommands.nShaderID = max(0, self.nParams[0])
+            self.m_ApeCommands.nShaderNum = max(0, self.nParams[0])
         
         if(self._GetParamterString2(pszMatStr, "*motif")): 
             print("*motif not implimented")
         
         if(self._GetParamterString2(pszMatStr, "*anim")):
-            print("*anim not implimented")
+            # Takes 2 arguments: (NumFrames, FramesPerSec)
+            self.m_ApeCommands.nNumTexFrames = int(self.nParams[0])
+            self.m_ApeCommands.fFramesPerSec = float(self.nParams[1])
+            
+            # AUTO ID
+            if( self.m_ApeCommands.nID == -1 ):
+                self.m_ApeCommands.nID = _AUTO_ID
         
-        if(self._GetParamterString2(pszMatStr, "*rotate")): 
+        if(self._GetParamterString2(pszMatStr, "*rotate")):
             print("*rotate not implimented")
         
         if(self._GetParamterString2(pszMatStr, "*scroll")):
             self.nParams[0] = float(self.nParams[0])
             self.nParams[1] = float(self.nParams[1])
+            self.nParams[2] = float(self.nParams[2])
+            self.nParams[3] = float(self.nParams[3])
             
-            self.m_ApeCommands.fDeltaUPerSec = self.nParams[0]
-            self.m_ApeCommands.fDeltaVPerSec = self.nParams[1]
-            self.m_ApeCommands.nID = _AUTO_ID
+            self.m_ApeCommands.fDeltaUPerSec = self.nParams[0] / self.nParams[1]
+            self.m_ApeCommands.fDeltaVPerSec = self.nParams[2] / self.nParams[3]
+            
+            # AUTO ID
+            if( self.m_ApeCommands.nID == -1 ):
+                self.m_ApeCommands.nID = _AUTO_ID
                   
         if(self._GetParamterString2(pszMatStr, "*nocoll")): 
             print("*nocoll not implimented")
@@ -103,8 +107,8 @@ class CMaterialStringParser:
         if(self._GetParamterString2(pszMatStr, "*noascroll")): 
             print("*noascroll not implimented")
         
-        if(self._GetParamterString2(pszMatStr, "*tint")): 
-            print("*tint not implimented")
+        if(self._GetParamterString2(pszMatStr, "*tint")):
+            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_APPLY_TINT
             
         if(self._GetParamterString2(pszMatStr, "*writez")): 
             print("*writez not implimented")

@@ -6,7 +6,7 @@ from . import pasm_file_def # Get our PASM file classes
 
 from . import g_class # Get our global variables for the header data
 
-#from .process_star_command import CMaterialStringParser # Import just the Material Star Command Parser
+from .process_star_command import CMaterialStringParser # Import just the Material Star Command Parser
 
 def ExportObjGeo(obj):
     # Validate we're working with mesh data and not other stuff
@@ -75,15 +75,14 @@ def ExportObjGeo(obj):
         # Construct our material
         mat = pasm_file_def.PASMMaterial()
               
-        mat.StarCommands.bUseDiffuseColor = 1
-        mat.StarCommands.bUseSpecularColor = 1
-        mat.StarCommands.TintRGB = [1.0, 1.0, 1.0]
-        mat.StarCommands.nShaderNum = 0
-        mat.StarCommands.fBumpMapTileFactor = 1
-        mat.StarCommands.fDetailMapTileFactor = 4
-        mat.StarCommands.nCollMask = 255 # Can also be represented as -1
-        mat.StarCommands.nReactType = 0
-        mat.StarCommands.nSurfaceType = -1
+        # Parse parent material name for star commands
+        matStrParser = CMaterialStringParser()       
+        matStrParser.ResetToDefaults()
+        matStrParser.Parse(obj.data.materials[matIndex].name)
+        mat.StarCommands = matStrParser.m_ApeCommands;
+
+        #Parent material uses a special nShaderNum compared to layer / child materials
+        mat.StarCommands.nShaderNum = 0 # In the future don't hard code this
                
         mat.nFirstIndex = len(aIndexBuffer)
 
@@ -95,30 +94,54 @@ def ExportObjGeo(obj):
         layer.SpecularRGB = [0.8, 0.8, 0.8]
         layer.fShininess = 58.5
         layer.fShinStr = 0.25
-        # Layer uses a special nShaderNum compared to Material
-        # Are Star Commands from the Material used as a starting base to then be overwritten by the layer?
-        layer.StarCommands.bUseDiffuseColor = 1
-        layer.StarCommands.bUseSpecularColor = 1
-        layer.StarCommands.TintRGB = [1.0, 1.0, 1.0]
-        layer.StarCommands.nShaderNum = -1  # Difference between Layer & Material
-        layer.StarCommands.fBumpMapTileFactor = 1
-        layer.StarCommands.fDetailMapTileFactor = 4
-        layer.StarCommands.nCollMask = 255
-        layer.StarCommands.nReactType = 0
-        layer.StarCommands.nSurfaceType = -1
+        
+        # Parse layer / child material name for star commands
+        layerStrParser = CMaterialStringParser()
+        layerStrParser.ResetToDefaults()
+        # Use Star Commands from the Parent Material as a starting base for the layer material
+        layerStrParser.m_ApeCommands = matStrParser.m_ApeCommands
+        layerStrParser.Parse(obj.data.materials[matIndex].name)
+        layer.StarCommands = layerStrParser.m_ApeCommands
         
         # Messily get our diffuse texture for this material   
         try:
-            # Get the nodes in the material node tree
-            nodes = obj.data.materials[matIndex].node_tree.nodes
-            # Get a principled node (If there is 2 of these we should probably freak out and assert)
-            bsdf = next(n for n in nodes if n.type == 'BSDF_PRINCIPLED')
+            # Get the material output    
+            matOut = obj.data.materials[matIndex].node_tree.nodes["Material Output"]
+            # Get the Fang Material Node group connected to it
+            fangMatGroup = matOut.inputs["Surface"].links[0].from_node
+            
+            if (fangMatGroup.node_tree.name == "FANG Material"):
+                print("We got a FANG Material!")
+            elif (fangMatGroup.node_tree.name == "FANG Composite"):
+                print("We got a FANG Composite!")
+            else:
+                raise ValueError("NOT A FANG MATERIAL!!!")
+            
             # Get the NodeLink from the base color node
-            base_color = bsdf.inputs['Base Color'].links[0]
+            base_color = fangMatGroup.inputs["Diffuse Color"].links[0].from_node.image.name
             # Print the image connecting to this node
-            outTex = base_color.from_node.image.name
-            outTexB = outTex.split(".",1)[0]
-            layer.szTexName[0] = outTexB
+            outTexB = base_color.split(".",1)[0]
+            layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_DIFFUSE] = outTexB
+            
+            try:
+                # Get the NodeLink from the base color node
+                base_color = fangMatGroup.inputs["Environment Map"].links[0].from_node.image.name
+                # Print the image connecting to this node
+                outTexB = base_color.split(".",1)[0]
+                layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_ENVIRONMENT] = outTexB
+            except:
+                pass
+            
+            if(fangMatGroup.inputs["Illumination"].default_value != 0):
+                layer.StarCommands.bUseEmissiveColor = 1
+                layer.IllumRGB[0] = fangMatGroup.inputs["Illumination"].default_value
+                layer.IllumRGB[1] = fangMatGroup.inputs["Illumination"].default_value
+                layer.IllumRGB[2] = fangMatGroup.inputs["Illumination"].default_value
+            
+            if(layer.StarCommands.nFlags & 0x02 == 0x02):
+                layer.StarCommands.TintRGB[0] = fangMatGroup.inputs["Tint Color"].default_value[0]
+                layer.StarCommands.TintRGB[1] = fangMatGroup.inputs["Tint Color"].default_value[1]
+                layer.StarCommands.TintRGB[2] = fangMatGroup.inputs["Tint Color"].default_value[2]
         except:
             #print("Unable to extract texture from", obj.name)
             layer.szTexName[0] = "grid_64_pur"

@@ -629,6 +629,7 @@ class PASMCommands:
         self.nOrderNum = 0
         self.nShaderNum = 0
         self.nEmissiveMotifID = 0
+        self.nSpecularMotifID = 0
         self.nDiffuseMotifID = 0
         self.bUseEmissiveColor = 0
         self.bUseSpecularColor = 0
@@ -661,6 +662,7 @@ class PASMCommands:
         outBytes += struct.pack("<i", self.nOrderNum)[:4]
         outBytes += struct.pack("<i", self.nShaderNum)[:4]
         outBytes += struct.pack("<i", self.nEmissiveMotifID)[:4]
+        outBytes += struct.pack("<i", self.nSpecularMotifID)[:4]
         outBytes += struct.pack("<i", self.nDiffuseMotifID)[:4]
         outBytes += struct.pack("<i", self.bUseEmissiveColor)[:4]
         outBytes += struct.pack("<i", self.bUseSpecularColor)[:4]
@@ -681,7 +683,7 @@ class PASMCommands:
         outBytes += struct.pack("<h", self.nSurfaceType)
 
         # Strange null bytes
-        outBytes += bytearray(6)
+        outBytes += bytearray(2)
 
         for i in self.TintRGB:
             outBytes += struct.pack("<f", i)
@@ -698,7 +700,20 @@ class PASMCommands:
         outBytes += self.PAD
 
         return outBytes
-        
+ 
+class PASMLayerIndex_e():
+    APE_LAYER_TEXTURE_DIFFUSE = 0	
+    APE_LAYER_TEXTURE_SPECULAR_MASK = 1	
+    APE_LAYER_TEXTURE_EMISSIVE_MASK = 2	
+    APE_LAYER_TEXTURE_ALPHA_MASK = 3	
+    APE_LAYER_TEXTURE_BUMP = 4		
+    APE_LAYER_TEXTURE_DETAIL = 5		
+    APE_LAYER_TEXTURE_ENVIRONMENT = 6
+    APE_LAYER_TEXTURE_UNUSED_3 = 7
+    APE_LAYER_TEXTURE_UNUSED_2 = 8
+    APE_LAYER_TEXTURE_UNUSED_1 = 9	
+
+    APE_LAYER_TEXTURE_MAX = 10
         
 # Fang doesn't have multiple mats for a mesh, it has multiple layers, which combine into a material for a mesh
 # Size: 17Ch
@@ -712,7 +727,7 @@ class PASMLayer:
         self.bTileU = 1
         self.bTileV = 1
         self.SpecularRGB = [0.0, 0.0, 0.0]
-        self.SelfIllumRGB = [0.0, 0.0, 0.0]
+        self.IllumRGB = [0.0, 0.0, 0.0]
         self.DiffuseRGB = [0.0, 0.0, 0.0]
         self.fShininess = 0.0
         self.fShinStr = 0.0
@@ -742,7 +757,7 @@ class PASMLayer:
 
         for i in self.SpecularRGB:
             outBytes += struct.pack("<f", i)
-        for i in self.SelfIllumRGB:
+        for i in self.IllumRGB:
             outBytes += struct.pack("<f", i)
         for i in self.DiffuseRGB:
             outBytes += struct.pack("<f", i)
