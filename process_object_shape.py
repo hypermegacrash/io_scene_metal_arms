@@ -10,6 +10,9 @@ def ExportObjShape(obj):
     bExitEarly = False
     if obj.type != "EMPTY":
         bExitEarly = True
+    # Lines are shapes so must be excluded
+    if obj.type == "CURVE":
+        bExitEarly = False
     #objs could be ANY DATATYPE, so check for that
     if(obj.name.find("obj_", 0, 4) != -1):
         bExitEarly = True
@@ -32,20 +35,26 @@ def ExportObjShape(obj):
         outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT
         outShape.typeData = pasm_file_def.PASMShapeStartPoint()
     
-    if obj.empty_display_type == "CUBE":
-        if(obj.name.find("start_", 0, 6) != -1):
-            outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT
-            outShape.typeData = pasm_file_def.PASMShapeStartPoint()
-        else:
-            # Making an assumption by process of elimination it must be a box volume
-            outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_BOX
-            outShape.typeData = pasm_file_def.PASMShapeBox()
-    if obj.empty_display_type == "SPHERE":
-        outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE
-        outShape.typeData = pasm_file_def.PASMShapeSphere()
+    # Because we deal with shapes that aren't always empties
+    if obj.type == "EMPTY":
+        if obj.empty_display_type == "CUBE":
+            if(obj.name.find("start_", 0, 6) != -1):
+                outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT
+                outShape.typeData = pasm_file_def.PASMShapeStartPoint()
+            else:
+                # Making an assumption by process of elimination it must be a box volume
+                outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_BOX
+                outShape.typeData = pasm_file_def.PASMShapeBox()
+        if obj.empty_display_type == "SPHERE":
+            outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE
+            outShape.typeData = pasm_file_def.PASMShapeSphere()
+            
+    if obj.type == "CURVE":
+        outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPLINE
+        outShape.typeData = pasm_file_def.PASMShapeSpline()
     
     if outShape.nType == -1:
-        # Couldn't associate empty with shape, just return
+        # Couldn't associate our object with any shape
         return
         
     if outShape.nType == pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_BOX:
@@ -55,6 +64,21 @@ def ExportObjShape(obj):
         
     if outShape.nType == pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE:
         outShape.typeData.fRadius = obj.empty_display_size
+        
+    if outShape.nType == pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPLINE:
+        outShape.typeData.nNumPts = len(obj.data.splines[0].points)
+        # Actually check this
+        outShape.typeData.bClosed = 0 
+        # I think you can have multiple seperate chains of splines
+        # in a single node, must be tested but assume 1 for now
+        outShape.typeData.nNumSegments = 1
+        
+        for point in obj.data.splines[0].points:
+            # Multiply our world position matrix by the vertex position X Y Z to get world space position of verts
+            PosAfterWTM = obj.matrix_world @ point.co
+            outShape.userData.append(PosAfterWTM[0])
+            outShape.userData.append(PosAfterWTM[2])
+            outShape.userData.append(PosAfterWTM[1])
     
     # Rotation Matrix fun
     outShape.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
@@ -81,7 +105,10 @@ def ExportObjShape(obj):
     # Go back and patch up userData length
     dataLen = 0
     for data in outShape.userData:
-        dataLen = dataLen + len(data)
+        if type(data) == float:
+            dataLen = dataLen + 4
+        else:
+            dataLen = dataLen + len(data)
     outShape.nBytesOfUserData = dataLen
     
     # Finally, write data to the file, and our header

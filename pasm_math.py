@@ -2,7 +2,7 @@
 
 import mathutils # Need to work with matrix math
 
-# Convert a Blender Object to a Fand Engine 4x3 Matrix
+# Convert a Blender Object to a Fang Engine 4x3 Matrix
 def BObj2F43Mtx(obj):
     rotMtx = obj.rotation_euler
     rotMtx = rotMtx.to_matrix()
@@ -86,6 +86,19 @@ def BObj2F43MtxLIGHT(obj):
     outOrientation[11] =  obj.matrix_world.translation[1]
     
     return outOrientation
+    
+# Blender stores Color RGB values from UI in scene color, PASM expects them in sRGB format
+# https://blender.stackexchange.com/questions/218312/python-how-to-color-accurately-convert-from-rgb-0-255-format-to-values-in-0-0f
+def color_scene_linear_to_srgb(c):
+  if (c < 0.0031308):
+    if (c < 0.0):
+        return 0.0
+    else:
+        return c * 12.92
+  else:
+    return 1.055 * pow(c, 1.0 / 2.4) - 0.055   
+    
+    
     
     
     

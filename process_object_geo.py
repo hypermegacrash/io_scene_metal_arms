@@ -124,11 +124,20 @@ def ExportObjGeo(obj):
             layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_DIFFUSE] = outTexB
             
             try:
-                # Get the NodeLink from the base color node
+                # Get the NodeLink from the Environment Map node
                 base_color = fangMatGroup.inputs["Environment Map"].links[0].from_node.image.name
                 # Print the image connecting to this node
                 outTexB = base_color.split(".",1)[0]
                 layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_ENVIRONMENT] = outTexB
+            except:
+                pass
+                
+            try:
+                # Get the NodeLink from the Detail Map node
+                base_color = fangMatGroup.inputs["Detail Map"].links[0].from_node.image.name
+                # Print the image connecting to this node
+                outTexB = base_color.split(".",1)[0]
+                layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_DETAIL] = outTexB
             except:
                 pass
             
@@ -139,9 +148,9 @@ def ExportObjGeo(obj):
                 layer.IllumRGB[2] = fangMatGroup.inputs["Illumination"].default_value
             
             if(layer.StarCommands.nFlags & 0x02 == 0x02):
-                layer.StarCommands.TintRGB[0] = fangMatGroup.inputs["Tint Color"].default_value[0]
-                layer.StarCommands.TintRGB[1] = fangMatGroup.inputs["Tint Color"].default_value[1]
-                layer.StarCommands.TintRGB[2] = fangMatGroup.inputs["Tint Color"].default_value[2]
+                layer.StarCommands.TintRGB[0] = color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[0])
+                layer.StarCommands.TintRGB[1] = color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[1])
+                layer.StarCommands.TintRGB[2] = color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[2])
         except:
             #print("Unable to extract texture from", obj.name)
             layer.szTexName[0] = "grid_64_pur"

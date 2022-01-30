@@ -6,6 +6,8 @@ from . import g_class # Get our global variables for the header data
 
 from . import pasm_math # PASM helper defs
 
+from .process_star_command import CObjectStringParser # Import just the Material Star Command Parser
+
 def ExportObjObject(obj):
     if(obj.name.find("obj_", 0, 4) == -1):
         return
@@ -22,6 +24,12 @@ def ExportObjObject(obj):
     
     # Hard coded flag to this but there are alot more to consider in the future
     outObject.nFlags = 1
+    
+    # Hacky first itteration for parsing star commands from object names
+    objStrParser = CObjectStringParser()       
+    #objStrParser.ResetToDefaults()
+    objStrParser.Parse(obj.name)
+    outObject.nFlags += objStrParser.m_ApeObjectFlag
     
     outObject.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
     

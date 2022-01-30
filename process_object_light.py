@@ -41,9 +41,9 @@ def ExportObjLight(obj):
     outLight.szLightName = obj.name
     
     if obj.type == "LIGHT":
-        outLight.Color[0] = obj.data.color[0]
-        outLight.Color[1] = obj.data.color[1]
-        outLight.Color[2] = obj.data.color[2]
+        outLight.Color[0] = pasm_math.color_scene_linear_to_srgb(obj.data.color[0])
+        outLight.Color[1] = pasm_math.color_scene_linear_to_srgb(obj.data.color[1])
+        outLight.Color[2] = pasm_math.color_scene_linear_to_srgb(obj.data.color[2])
     elif obj.name.find("ambient", 0, 7) != -1 and obj.type == "EMPTY":
         try:
             # Grab the custom properties (we only need red green and blue but just grab them all)

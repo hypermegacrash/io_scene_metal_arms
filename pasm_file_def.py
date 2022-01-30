@@ -437,13 +437,33 @@ class PASMShapeParticleCylinder:
         
 class PASMShapeSpline:
     def __init__(self):
-        self.PAD = bytearray(16)
+        self.nNumPts = 0
+        self.bClosed = 0
+        self.nNumSegments = 0
+        self.PAD = bytearray(4)
 
     def packBytes(self):
         #init our bytearray
         outBytes = bytearray()
    
+        outBytes += struct.pack("<i", self.nNumPts)[:4]
+        outBytes += struct.pack("<i", self.bClosed)[:4]
+        outBytes += struct.pack("<i", self.nNumSegments)[:4]
         outBytes += self.PAD
+        
+        return outBytes
+        
+# Included at start of userData in PASMShape.userData when typeData = APE_SHAPE_TYPE_SPLINE
+class PASMSplinePt:
+    def __init__(self):
+        self.Pos = [0.0 for i in range(3)]
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+   
+        for i in self.Pos:
+            outBytes += struct.pack("<f", i)
         
         return outBytes
 
@@ -473,7 +493,10 @@ class PASMShape:
         outBytes += self.PAD
         
         for data in self.userData:
-            outBytes += bytes(data, "utf-8")
+            if type(data) == float:
+                outBytes += struct.pack("<f", data)[:4]
+            else:
+                outBytes += bytes(data, "utf-8")
         
         return outBytes
         
@@ -715,7 +738,7 @@ class PASMLayerIndex_e():
 
     APE_LAYER_TEXTURE_MAX = 10
         
-# Fang doesn't have multiple mats for a mesh, it has multiple layers, which combine into a material for a mesh
+# A Material is made up of either 1 or 2 layers, base and layer1 respectfully
 # Size: 17Ch
 class PASMLayer:
     def __init__(self):
@@ -771,7 +794,7 @@ class PASMLayer:
 
         return outBytes
 
-# A Material is a container for the layers in a mesh
+# A Material is a container for up to 2 layers
 class PASMMaterial:
     def __init__(self):
         self.nLayerCount = 0
