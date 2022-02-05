@@ -3,6 +3,7 @@
 
 import struct # For modifying vars into bytes
 
+# Shape in .wld, not standalone .cam file
 class PASMCamHeader:
     def __init__(self):
         self.fRadius = 0
@@ -29,8 +30,8 @@ class PASMCamInfo:
     
         self.szCameraName = ""
         self.nFrames = 0
-        self.nBytesOfUserData = 0
-        self.nOffsetToString = 0
+        self.nBytesOfUserData = 0 # Total size of CamToolFrame Entries
+        self.nOffsetToString = 0 # Unknown, same as nBytesOfUserData in test cam
     
         self.PAD = bytearray(64)
 
@@ -53,7 +54,7 @@ class PASMCamInfo:
         outBytes += struct.pack("<i", self.nBytesInFile)
         
         size = bytearray(16)
-        size[0:len(self.szBoneName[0:11])] = bytes(self.szBoneName, "utf-8")[0:11]
+        size[0:len(self.szCameraName[0:11])] = bytes(self.szCameraName, "utf-8")[0:11]
         outBytes += size
         
         outBytes += struct.pack("<i", self.nFrames)

@@ -6,6 +6,8 @@ from . import pasm_file_def # Get our PASM file classes
 
 from . import g_class # Get our global variables for the header data
 
+from .process_star_command import CLightStringParser # Import just the Light Star Command Parser
+
 from . import pasm_math # PASM helper defs
 
 def ExportObjLight(obj):
@@ -90,18 +92,11 @@ def ExportObjLight(obj):
         print("Unable to assign Light intensity, skipping " + obj.name)
         return
     
-    # Temporary hack for custom properties
-    if obj.name.find("*lm") != -1:
-        outLight.nFlags |= pasm_file_def.PASMLightFlag_e.APE_LIGHT_FLAG_LIGHTMAP_LIGHT
-    if obj.name.find("*castshadows") != -1:
-        outLight.nFlags |= pasm_file_def.PASMLightFlag_e.APE_LIGHT_FLAG_CAST_SHADOWS
-    if obj.name.find("*onlylm") != -1:
-        outLight.nFlags |= pasm_file_def.PASMLightFlag_e.APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT
-        outLight.nFlags |= pasm_file_def.PASMLightFlag_e.APE_LIGHT_FLAG_LIGHTMAP_LIGHT
-    if obj.name.find("*onlydynamic") != -1:
-        outLight.nFlags |= pasm_file_def.PASMLightFlag_e.APE_LIGHT_FLAG_DYNAMIC_ONLY
-    
-    
+    # Parse light name for star commands
+    lightStrParser = CLightStringParser()
+    lightStrParser.Parse(obj.name)
+    outLight.nFlags = lightStrParser.m_ApeLightFlag
+      
     # Lights calculate their rotation matrix in a different way to everything else
     outLight.mtxOrientation = pasm_math.BObj2F43MtxLIGHT(obj)
     

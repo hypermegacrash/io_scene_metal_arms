@@ -5,6 +5,30 @@ from .pasm_file_def import PASMCommands # We only need the Star Commands struct
 # Dont do this shit, come up with a cleaner solution
 _AUTO_ID = -128
 
+def _GetParameterString(pszCmd):
+    psz1stParenthesis = pszCmd.find("(")
+    if(psz1stParenthesis == -1):
+        print("Missing (")
+        return False
+    
+    psz2ndParenthesis = pszCmd.find(")")
+    if(psz2ndParenthesis == -1):
+        print("Missing )")
+        return False
+    
+    if(psz1stParenthesis > psz2ndParenthesis):
+        print("Statement not enclosed in parenthesis")
+        return False
+
+    pszNextCmd = pszCmd.find("*")
+    if(pszNextCmd != -1):
+        if (psz2ndParenthesis > pszNextCmd):
+            print("Found additional * command before )")
+            return False
+
+    nParams = pszCmd[psz1stParenthesis + 1:psz2ndParenthesis].split(",")
+    return nParams
+
 APE_MAT_FLAGS_NO_DRAW			= 0x01	# Polys with this material will not be drawn
 APE_MAT_FLAGS_APPLY_TINT		= 0x02	# This tint is modulated into the texture color in the surface pass
 APE_MAT_FLAGS_DO_NOT_LM			= 0x04	# These polys should not be light mapped, though they can obscure light
@@ -63,7 +87,9 @@ class CMaterialStringParser:
             self.m_ApeCommands.bSort = True
         
         if(self._GetParamterString2(pszMatStr, "*order")): 
-            print("*order not implimented")
+            self.nParams[0] = int(self.nParams[0])
+                
+            self.m_ApeCommands.nOrderNum = max(1, min(self.nParams[0], 100))
             
         if(self._GetParamterString2(pszMatStr, "*shader")):
             self.nParams[0] = int(self.nParams[0])
@@ -71,7 +97,12 @@ class CMaterialStringParser:
             self.m_ApeCommands.nShaderNum = max(0, self.nParams[0])
         
         if(self._GetParamterString2(pszMatStr, "*motif")): 
-            print("*motif not implimented")
+            self.m_ApeCommands.nEmissiveMotifID  = int(self.nParams[0])
+            self.m_ApeCommands.nDiffuseMotifID   = int(self.nParams[3])
+            self.m_ApeCommands.nSpecularMotifID  = int(self.nParams[5])
+            self.m_ApeCommands.bUseEmissiveColor = int(self.nParams[2])
+            self.m_ApeCommands.bUseDiffuseColor  = int(self.nParams[4])
+            self.m_ApeCommands.bUseSpecularColor = int(self.nParams[6])
         
         if(self._GetParamterString2(pszMatStr, "*anim")):
             # Takes 2 arguments: (NumFrames, FramesPerSec)
@@ -83,7 +114,13 @@ class CMaterialStringParser:
                 self.m_ApeCommands.nID = _AUTO_ID
         
         if(self._GetParamterString2(pszMatStr, "*rotate")):
-            print("*rotate not implimented")
+            self.m_ApeCommands.fDeltaUVRotationPerSec = float(self.nParams[0])
+            self.m_ApeCommands.vRotateUVAround.Set[0] = float(self.nParams[1])
+            self.m_ApeCommands.vRotateUVAround.Set[1] = float(self.nParams[2])
+            
+            # AUTO ID
+            if( self.m_ApeCommands.nID == -1 ):
+                self.m_ApeCommands.nID = _AUTO_ID
         
         if(self._GetParamterString2(pszMatStr, "*scroll")):
             self.nParams[0] = float(self.nParams[0])
@@ -97,9 +134,14 @@ class CMaterialStringParser:
             # AUTO ID
             if( self.m_ApeCommands.nID == -1 ):
                 self.m_ApeCommands.nID = _AUTO_ID
-                  
+        
+        if(self._GetParamterString2(pszMatStr, "*z")): 
+            self.nParams[0] = int(self.nParams[0])
+                
+            self.m_ApeCommands.nZTugValue = max(1, min(self.nParams[0], 1000))
+        
         if(self._GetParamterString2(pszMatStr, "*nocoll")): 
-            print("*nocoll not implimented")
+            self.m_ApeCommands.bNoColl = True
         
         if(self._GetParamterString2(pszMatStr, "*coll")): 
             print("*coll not implimented")
@@ -193,43 +235,45 @@ class CObjectStringParser:
     def Parse(self, pszObjectStr):
         
         if(self._GetParamterString2(pszObjectStr, "*postery")): 
-            print("*postery not implimented")
+            self.m_ApeObjectFlag |= APE_OB_FLAG_POSTER_Y
             
         if(self._GetParamterString2(pszObjectStr, "*posterx")): 
-            print("*posterx not implimented")
+            self.m_ApeObjectFlag |= APE_OB_FLAG_POSTER_X
             
         if(self._GetParamterString2(pszObjectStr, "*posterz")): 
-            print("*posterz not implimented")
+            self.m_ApeObjectFlag |= APE_OB_FLAG_POSTER_Z
             
         if(self._GetParamterString2(pszObjectStr, "*nocoll")): 
-            print("*nocoll not implimented")
-            
+            self.m_ApeObjectFlag |= APE_OB_FLAG_NO_COLL
+        # LEGACY / UNUSED?    
         if(self._GetParamterString2(pszObjectStr, "*nofog")): 
             print("*nofog not implimented")
             
         if(self._GetParamterString2(pszObjectStr, "*nolight")): 
-            print("*nolight not implimented")
+            self.m_ApeObjectFlag |= APE_OB_FLAG_NO_LIGHT
         
         if(self._GetParamterString2(pszObjectStr, "*culldist")): 
-            print("*culldist not implimented")
+            self.nParams[0] = float(self.nParams[0])
+                
+            self.m_ApeCommands.nZTugValue = min(self.nParams[0], 1.0)
             
         if(self._GetParamterString2(pszObjectStr, "*tint")): 
             print("*tint not implimented")
-            
+        # LEGACY / UNUSED?    
         if(self._GetParamterString2(pszObjectStr, "*sort")): 
             print("*sort not implimented")
             
         if(self._GetParamterString2(pszObjectStr, "*nodraw")): 
-            print("*nodraw not implimented")
+            self.m_ApeObjectFlag |= APE_OB_FLAG_NO_DRAW
             
         if(self._GetParamterString2(pszObjectStr, "*acceptlm")): 
-            print("*acceptlm not implimented")
+            self.m_ApeObjectFlag |= APE_OB_FLAG_LM
             
         if(self._GetParamterString2(pszObjectStr, "*vertrad")): 
-            print("*vertrad not implimented")
+            self.m_ApeObjectFlag |= APE_OB_FLAG_VERT_RADIOSITY
         
         if(self._GetParamterString2(pszObjectStr, "*acceptshadows")): 
-            print("*acceptshadows not implimented")
+            self.m_ApeObjectFlag |= APE_OB_FLAG_ACCEPT_SHADOWS
             
         if(self._GetParamterString2(pszObjectStr, "*castshadows")): 
             self.m_ApeObjectFlag |= APE_OB_FLAG_CAST_SHADOWS
@@ -241,8 +285,28 @@ class CObjectStringParser:
             print("*nolmuse not implimented")
             
         if(self._GetParamterString2(pszObjectStr, "*lightperpixel")): 
-            print("*lightperpixel not implimented")
-        
+            self.m_ApeObjectFlag |= APE_OB_FLAG_PER_PIXEL
+   
+APE_LIGHT_FLAG_DONT_USE_RGB				= 0x00000001	# Disregard the light's rgb and only use the motif's color (default = off)
+APE_LIGHT_FLAG_LIGHT_SELF				= 0x00000002	# Light the object that the light is attached to (default = off)
+APE_LIGHT_FLAG_OBJ_DONT_LIGHT_TERRAIN	= 0x00000004	# Lights attached to this object don't light the terrain (default = off)
+
+APE_LIGHT_FLAG_PER_PIXEL				= 0x00000008	# This light casts a projection on the environment (may or may not have a texture)
+
+APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT		= 0x00000010	# This light will only be used in the lightmap portion of PASM and will not be exported to the engine.
+APE_LIGHT_FLAG_LIGHTMAP_LIGHT			= 0x00000020	# This light is to be used for generating lightmaps (If it is not dynamic, it can be discarded prior to the engine)
+APE_LIGHT_FLAG_UNIQUE_LIGHTMAP			= 0x00000040	# This light will generate its own unique lightmap in the lightmapping phase (it must also have a unique m_nLightID)
+
+APE_LIGHT_FLAG_CORONA					= 0x00000080	# This light has a corona
+APE_LIGHT_FLAG_CORONA_PROXFADE			= 0x00000100	# Fade the corona as the camera gets closer.
+
+APE_LIGHT_FLAG_CAST_SHADOWS				= 0x00000200	# This light will cast shadows (only relevant for engine lights)
+
+APE_LIGHT_FLAG_DYNAMIC_ONLY				= 0x00000400	# This light will not affect static objects
+
+APE_LIGHT_FLAG_MESH_MUST_BE_PER_PIXEL	= 0x00000800	# For per-pixel lights that have a projected texture.  If this flag is set, only objects that are flagged
+                                                            # as per pixel lit will have the texture projected on them.  Others will just apply as a dynamic vertex light
+   
 class CLightStringParser:
     def __init__(self):
         self.m_ApeLightFlag = 0
@@ -262,7 +326,7 @@ class CLightStringParser:
             print("*self not implimented")
             
         if(self._GetParamterString2(pszLightStr, "*castshadows")): 
-            print("*castshadows not implimented")
+            self.m_ApeLightFlag |= APE_LIGHT_FLAG_CAST_SHADOWS
             
         if(self._GetParamterString2(pszLightStr, "*scalecorona")): 
             print("*scalecorona not implimented")
@@ -280,16 +344,17 @@ class CLightStringParser:
             print("*onlyppmesh not implimented")
             
         if(self._GetParamterString2(pszLightStr, "*onlydynamic")): 
-            print("*onlydynamic not implimented")
+            self.m_ApeLightFlag |= APE_LIGHT_FLAG_DYNAMIC_ONLY
             
-        if(self._GetParamterString2(pszLightStr, "*lm")): 
-            print("*lm not implimented")
+        if(self._GetParamterString2(pszLightStr, "*lm")):
+            self.m_ApeLightFlag |= APE_LIGHT_FLAG_LIGHTMAP_LIGHT
             
         if(self._GetParamterString2(pszLightStr, "*uniquelm")): 
             print("*uniquelm not implimented")
             
         if(self._GetParamterString2(pszLightStr, "*onlylm")): 
-            print("*onlylm not implimented")
+            self.m_ApeLightFlag |= APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT
+            self.m_ApeLightFlag |= APE_LIGHT_FLAG_LIGHTMAP_LIGHT
             
         if(self._GetParamterString2(pszLightStr, "*noterrain")): 
             print("*noterrain not implimented")
@@ -299,7 +364,14 @@ class CLightStringParser:
             
         if(self._GetParamterString2(pszLightStr, "*motif")): 
             print("*motif not implimented")
-        
+       
+APE_PORTAL_FLAG_MIRROR			= 0x00000001	# the portal is a mirror
+APE_PORTAL_FLAG_SOUND_ONLY		= 0x00000002	# the portal is for sound only
+APE_PORTAL_FLAG_ONE_WAY			= 0x00000004	# the portal is 1 way
+APE_PORTAL_FLAG_ANTI			= 0x00000008	# the portal is an anti portal
+
+APE_PORTAL_FLAG_NONE			= 0x00000000
+       
 class CPortalStringParser:
     def __init__(self):
         self.m_ApePortalFlag = 0
@@ -320,37 +392,16 @@ class CPortalStringParser:
     def Parse(self, pszPortalStr):
     
         if(self._GetParamterString2(pszPortalStr, "*mirror")): 
-            print("*mirror not implimented")
+            self.m_ApePortalFlag |= APE_PORTAL_FLAG_MIRROR
             
         if(self._GetParamterString2(pszPortalStr, "*sound")): 
-            print("*sound not implimented")
+            self.m_ApePortalFlag |= APE_PORTAL_FLAG_SOUND_ONLY
             
         if(self._GetParamterString2(pszPortalStr, "*oneway")): 
-            print("*oneway not implimented")
+            self.m_ApePortalFlag |= APE_PORTAL_FLAG_ONE_WAY
             
         if(self._GetParamterString2(pszPortalStr, "*anti")): 
-            print("*anti not implimented")  
-        
-def _GetParameterString(pszCmd):
-    psz1stParenthesis = pszCmd.find("(")
-    if(psz1stParenthesis == -1):
-        print("Missing (")
-        return False
-    
-    psz2ndParenthesis = pszCmd.find(")")
-    if(psz2ndParenthesis == -1):
-        print("Missing )")
-        return False
-    
-    if(psz1stParenthesis > psz2ndParenthesis):
-        print("Statement not enclosed in parenthesis")
-        return False
-
-    pszNextCmd = pszCmd.find("*")
-    if(pszNextCmd != -1):
-        if (psz2ndParenthesis > pszNextCmd):
-            print("Found additional * command before )")
-            return False
-
-    nParams = pszCmd[psz1stParenthesis + 1:psz2ndParenthesis].split(",")
-    return nParams
+            self.m_ApePortalFlag |= APE_PORTAL_FLAG_ANTI
+       
+       
+       

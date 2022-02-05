@@ -1,17 +1,70 @@
 # Module that processes a camera object and returns byte data
 
-from . import pasm_file_def # Get our PASM file classes
+from . import file_def_cam # Get our PASM file classes
 
 from . import g_class # Get our global variables for the header data
 
+from . import pasm_math # PASM helper defs
+
+import bpy # For working with Blender data
+
 def ExportObjCam(obj):
     # Validate we're working with camera data and not other stuff
-    if obj.type != "MESH":
+    if obj.type != "CAMERA":
+        return
+    # Enforce the user to follow naming scheme
+    if obj.name[:4] != "cam_":
         return
         
     print(obj.name, "is a camera object")
+
+    TIME_TICKSPERSEC = 4800
     
-    # Finally, write data to the file, and our header
-    g_class.file.write(outSegment.packBytes())
-    g_class.gWldHeader.fileSize += len(outSegment.packBytes())
-    g_class.gWldHeader.nNumSegments += 1
+    # Find the animation info from the interface
+    nTicksPerFrame = TIME_TICKSPERSEC / 30
+    nFrameRate = bpy.context.scene.render.fps
+    nStartTime = bpy.context.scene.frame_start
+    nEndTime = bpy.context.scene.frame_end
+    
+    # Calculate the interval and number of keys
+    nInterval = (nTicksPerFrame * nFrameRate) / 30;
+    
+    nKeys = (nEndTime - nStartTime) / nInterval;
+    
+    sce = bpy.context.scene
+    
+    camHeader = file_def_cam.PASMCamInfo()
+    camHeader.szCameraName = obj.name[4:]
+    aFrames = []
+    
+    #print("nFrameRate: ", nFrameRate)
+    #print("nStartTime: ", nStartTime)
+    #print("nEndTime: ", nEndTime)
+    #print("CurrentCam: ", obj.name)
+    #print("szCameraName: ", camHeader.szCameraName)
+    #print("CurrentCam FOV: ", obj.data.angle)
+    
+    # Scrub through the timeline for snapshots we want
+    for curFrame in range(nStartTime, nEndTime):
+        curFrameTick = curFrame * 160
+        sce.frame_set(curFrame)
+        testFrame = file_def_cam.PASMCamFrame()
+        number_of_ticks = float((curFrameTick - nStartTime)) * float((1.0/TIME_TICKSPERSEC))
+        testFrame.fSecsFromStart = number_of_ticks
+        testFrame.fFOV = obj.data.angle
+        testFrame.mtxOrientation = pasm_math.BObj2F43MtxLIGHT(obj)
+        aFrames.append(testFrame)
+        
+        camHeader.nFrames += 1
+        camHeader.nBytesOfUserData += 56
+        camHeader.nOffsetToString = camHeader.nBytesOfUserData
+    
+    # Finally, write data to the file
+    g_class.file.write(camHeader.packBytes())
+    for frame in aFrames:
+        g_class.file.write(frame.packBytes())
+    
+    
+    
+    
+    

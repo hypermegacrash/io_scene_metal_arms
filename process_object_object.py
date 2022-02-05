@@ -25,9 +25,8 @@ def ExportObjObject(obj):
     # Hard coded flag to this but there are alot more to consider in the future
     outObject.nFlags = 1
     
-    # Hacky first itteration for parsing star commands from object names
+    # Parse object name for star commands
     objStrParser = CObjectStringParser()       
-    #objStrParser.ResetToDefaults()
     objStrParser.Parse(obj.name)
     outObject.nFlags += objStrParser.m_ApeObjectFlag
     

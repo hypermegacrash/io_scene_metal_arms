@@ -29,10 +29,13 @@ from bpy.types import Operator
 from bpy_extras.io_utils import ExportHelper
 
 # . is the add-on folder directory
-from . import pasm_file_def
+from . import file_def_cam
 
 # Get our global variables like header data & I/O file
 from . import g_class
+
+# Grab all our defs for exporting Blender data to PASM formatted data
+from .process_object_camera import ExportObjCam
 
 # We need this for accessing filepath functions
 import os
@@ -66,11 +69,35 @@ class ExportCAM(Operator, ExportHelper):
                     
         # The Blender Python API's equivalent of C/C++ main()
         def execute(self, context):
-              
-                print("DONE EXPORTING .CAM!")
         
+            # Init our exported cam file          
+            filename = os.path.basename(self.filepath)
+            filename = filename[:len(filename)-4]                    
+            g_class.file = open(self.filepath, 'wb') # Init our none var in the global g_class
+       
+            # The data we want from the scene are the "objects"
+            # Objects are generic containers that contain "data"
+            # Data for an Object can be a mesh, light, empty etc
+            
+            objects = context.selected_objects
+            if(len(objects) == 0):
+                print("No Camera Object selected!")
                 return {'FINISHED'}
+            elif(len(objects) != 1):
+                print("Can only export 1 cam at a time!")
+                return {'FINISHED'}
+
+            # To mimic the original exporter as closely as possible
+            # We itterate over the entire scene for each section of the PASM file
+            # One loop for lights, one for geo, one for cells, and so on
+	
+            for obj in objects:
+                ExportObjCam(obj)
+                         
+            print("DONE EXPORTING .CAM!")
+        
+            return {'FINISHED'}
                 
 def exportCAM_MenuFunc(self, context):
     self.layout.operator(
-        ExportWLD.bl_idname, text="Metal Arms Pasm Cam (.cam)")
+        ExportCAM.bl_idname, text="Metal Arms Pasm Cam (.cam)")
