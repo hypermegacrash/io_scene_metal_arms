@@ -27,7 +27,7 @@ def ExportObjObject(obj):
     
     # Parse object name for star commands
     objStrParser = CObjectStringParser()       
-    objStrParser.Parse(obj.name)
+    objStrParser.Parse(obj.name.lower())
     outObject.nFlags += objStrParser.m_ApeObjectFlag
     
     outObject.mtxOrientation = pasm_math.BObj2F43Mtx(obj)

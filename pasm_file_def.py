@@ -701,7 +701,7 @@ class PASMCommands:
         outBytes += struct.pack("<b", self.nCollID)
         outBytes += struct.pack("<b", self.nFlags)
 
-        outBytes += struct.pack("<h", self.nCollMask)
+        outBytes += struct.pack("<H", self.nCollMask)
         outBytes += struct.pack("<h", self.nReactType)
         outBytes += struct.pack("<h", self.nSurfaceType)
 

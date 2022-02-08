@@ -6,6 +6,8 @@ from . import pasm_file_def # Get our PASM file classes
 
 from . import g_class # Get our global variables for the header data
 
+from . import pasm_math # PASM helper defs
+
 from .process_star_command import CMaterialStringParser # Import just the Material Star Command Parser
 
 def ExportObjGeo(obj):
@@ -75,11 +77,13 @@ def ExportObjGeo(obj):
         # Construct our material
         mat = pasm_file_def.PASMMaterial()
               
-        # Parse parent material name for star commands
+        # Parse parent material name for star commands & material flags
         matStrParser = CMaterialStringParser()       
         matStrParser.ResetToDefaults()
-        matStrParser.Parse(obj.data.materials[matIndex].name)
-        mat.StarCommands = matStrParser.m_ApeCommands;
+        matStrParser.Parse(obj.data.materials[matIndex].name.lower())
+        mat.StarCommands = matStrParser.m_ApeCommands     
+        mat.nFlags = matStrParser.m_nMatFlags
+        mat.nAffectAngle = matStrParser.m_nAffectAngle
 
         #Parent material uses a special nShaderNum compared to layer / child materials
         mat.StarCommands.nShaderNum = 0 # In the future don't hard code this
@@ -100,7 +104,7 @@ def ExportObjGeo(obj):
         layerStrParser.ResetToDefaults()
         # Use Star Commands from the Parent Material as a starting base for the layer material
         layerStrParser.m_ApeCommands = matStrParser.m_ApeCommands
-        layerStrParser.Parse(obj.data.materials[matIndex].name)
+        layerStrParser.Parse(obj.data.materials[matIndex].name.lower())
         layer.StarCommands = layerStrParser.m_ApeCommands
         
         # Messily get our diffuse texture for this material   
@@ -148,9 +152,9 @@ def ExportObjGeo(obj):
                 layer.IllumRGB[2] = fangMatGroup.inputs["Illumination"].default_value
             
             if(layer.StarCommands.nFlags & 0x02 == 0x02):
-                layer.StarCommands.TintRGB[0] = color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[0])
-                layer.StarCommands.TintRGB[1] = color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[1])
-                layer.StarCommands.TintRGB[2] = color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[2])
+                layer.StarCommands.TintRGB[0] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[0])
+                layer.StarCommands.TintRGB[1] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[1])
+                layer.StarCommands.TintRGB[2] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[2])
         except:
             #print("Unable to extract texture from", obj.name)
             layer.szTexName[0] = "grid_64_pur"

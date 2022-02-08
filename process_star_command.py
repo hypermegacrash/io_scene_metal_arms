@@ -29,21 +29,49 @@ def _GetParameterString(pszCmd):
     nParams = pszCmd[psz1stParenthesis + 1:psz2ndParenthesis].split(",")
     return nParams
 
-APE_MAT_FLAGS_NO_DRAW			= 0x01	# Polys with this material will not be drawn
-APE_MAT_FLAGS_APPLY_TINT		= 0x02	# This tint is modulated into the texture color in the surface pass
-APE_MAT_FLAGS_DO_NOT_LM			= 0x04	# These polys should not be light mapped, though they can obscure light
-APE_MAT_FLAGS_ZWRITE_ON			= 0x08	# Relevant for translucent materials, only. When rendering this material, write to the zbuffer (default for translucent materials is not to)
-APE_MAT_FLAGS_DO_NOT_TINT		= 0x10	# If tint is applied to the mesh, this material will not receive tint
-APE_MAT_FLAGS_NO_LM_USE			= 0x20	# These polys should not be used in the lightmap phase (to receive or obscure light)
-APE_MAT_FLAGS_DO_NOT_BLOCK_LM	= 0x40	# These polys will not block light during lightmap application
-APE_MAT_FLAGS_VERT_RADIOSITY	= 0x80	# These polys will receive vertex radiosity
+APE_MAT_FLAGS_NO_DRAW            = 0x01    # Polys with this material will not be drawn
+APE_MAT_FLAGS_APPLY_TINT         = 0x02    # This tint is modulated into the texture color in the surface pass
+APE_MAT_FLAGS_DO_NOT_LM          = 0x04    # These polys should not be light mapped, though they can obscure light
+APE_MAT_FLAGS_ZWRITE_ON          = 0x08    # Relevant for translucent materials, only. When rendering this material, write to the zbuffer (default for translucent materials is not to)
+APE_MAT_FLAGS_DO_NOT_TINT        = 0x10    # If tint is applied to the mesh, this material will not receive tint
+APE_MAT_FLAGS_NO_LM_USE          = 0x20    # These polys should not be used in the lightmap phase (to receive or obscure light)
+APE_MAT_FLAGS_DO_NOT_BLOCK_LM    = 0x40    # These polys will not block light during lightmap application
+APE_MAT_FLAGS_VERT_RADIOSITY     = 0x80    # These polys will receive vertex radiosity
 
-APE_MAT_FLAGS_NONE				= 0x00
+APE_MAT_FLAGS_NONE               = 0x00
+
+
+APE_MAT_COLL_FLAGS_COLL_WITH_PLAYER              = 0x0001
+APE_MAT_COLL_FLAGS_COLL_WITH_NPCS                = 0x0002
+APE_MAT_COLL_FLAGS_OBSTRUCT_LINE_OF_SIGHT        = 0x0004
+APE_MAT_COLL_FLAGS_COLL_WITH_THIN_PROJECTILES    = 0x0008
+APE_MAT_COLL_FLAGS_COLL_WITH_THICK_PROJECTILTES  = 0x0010
+APE_MAT_COLL_FLAGS_COLL_WITH_CAMERA              = 0x0020
+APE_MAT_COLL_FLAGS_COLL_WITH_OBJECTS             = 0x0040
+APE_MAT_COLL_FLAGS_WALKABLE                      = 0x0080
+APE_MAT_COLL_FLAGS_OBSTRUCT_SPLASH_DAMAGE        = 0x0100
+APE_MAT_COLL_FLAGS_COLLIDE_WITH_DEBRIS           = 0x0200
+APE_MAT_COLL_FLAGS_COLLIDE_WITH_VEHICLES         = 0x0400
+APE_MAT_COLL_FLAGS_HOVER_COLLIDABLE              = 0x0800
+
+APE_MAT_COLL_FLAGS_COLL_WITH_NOTHING             = 0x0000
+APE_MAT_COLL_FLAGS_COLL_WITH_EVERYTHING          = 0xFFFF
+
+
+APE_LAYER_FLAGS_DO_NOT_CAST_SHADOWS              = 0x00000100
+APE_LAYER_FLAGS_INVERT_EMISSIVE_MASK             = 0x00000200
+APE_LAYER_FLAGS_ANGULAR_EMISSIVE                 = 0x00000400
+APE_LAYER_FLAGS_ANGULAR_TRANSLUCENCY             = 0x00000800
+APE_LAYER_FLAGS_NO_ALPHA_SCROLL                  = 0x00001000
+
+APE_LAYER_FLAGS_NONE                             = 0x00000000
 
 class CMaterialStringParser:
     def __init__(self):
         self.m_ApeCommands = PASMCommands()
         self.Params = None
+        self.m_nMatFlags = APE_MAT_FLAGS_NONE
+        self.m_nAffectAngle = 0
 
     def _GetParamterString2(self, inStr, Cmd):
         pszCmd = inStr.find(Cmd)            
@@ -64,7 +92,7 @@ class CMaterialStringParser:
         self.m_ApeCommands.nShaderNum = -1
         self.m_ApeCommands.fBumpMapTileFactor = 1
         self.m_ApeCommands.fDetailMapTileFactor = 4
-        self.m_ApeCommands.nCollMask = 255
+        self.m_ApeCommands.nCollMask = APE_MAT_COLL_FLAGS_COLL_WITH_EVERYTHING
         self.m_ApeCommands.nReactType = 0
         self.m_ApeCommands.nSurfaceType = -1
         self.m_ApeCommands.nID = -1
@@ -98,11 +126,11 @@ class CMaterialStringParser:
         
         if(self._GetParamterString2(pszMatStr, "*motif")): 
             self.m_ApeCommands.nEmissiveMotifID  = int(self.nParams[0])
-            self.m_ApeCommands.nDiffuseMotifID   = int(self.nParams[3])
-            self.m_ApeCommands.nSpecularMotifID  = int(self.nParams[5])
-            self.m_ApeCommands.bUseEmissiveColor = int(self.nParams[2])
-            self.m_ApeCommands.bUseDiffuseColor  = int(self.nParams[4])
-            self.m_ApeCommands.bUseSpecularColor = int(self.nParams[6])
+            self.m_ApeCommands.nDiffuseMotifID   = int(self.nParams[2])
+            self.m_ApeCommands.nSpecularMotifID  = int(self.nParams[4])
+            self.m_ApeCommands.bUseEmissiveColor = int(self.nParams[1])
+            self.m_ApeCommands.bUseDiffuseColor  = int(self.nParams[3])
+            self.m_ApeCommands.bUseSpecularColor = int(self.nParams[5])
         
         if(self._GetParamterString2(pszMatStr, "*anim")):
             # Takes 2 arguments: (NumFrames, FramesPerSec)
@@ -144,78 +172,130 @@ class CMaterialStringParser:
             self.m_ApeCommands.bNoColl = True
         
         if(self._GetParamterString2(pszMatStr, "*coll")): 
-            print("*coll not implimented")
+            if( self.nParams[0] == 1 ):
+                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_PLAYER
+            else:
+                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_PLAYER
+            if( self.nParams[1] == 1 ):
+                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_NPCS
+            else:
+                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_NPCS
+            if( self.nParams[2] == 1 ):
+                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_OBSTRUCT_LINE_OF_SIGHT
+            else:
+                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_OBSTRUCT_LINE_OF_SIGHT
+            if( self.nParams[3] == 1 ):
+                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_THIN_PROJECTILES
+            else:
+                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_THIN_PROJECTILES
+            if( self.nParams[4] == 1 ):
+                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_THICK_PROJECTILTES
+            else:
+                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_THICK_PROJECTILTES
+            if( self.nParams[5] == 1 ):
+                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_CAMERA
+            else:
+                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_CAMERA
+            if( self.nParams[6] == 1 ):
+                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_OBJECTS
+            else:
+                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_OBJECTS
+            if( self.nParams[7] == 1 ):
+                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_WALKABLE
+            else:
+                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_WALKABLE        
+            if( self.nParams[8] == 1 ):
+                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_OBSTRUCT_SPLASH_DAMAGE
+            else:
+                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_OBSTRUCT_SPLASH_DAMAGE
+            if( self.nParams[9] == 1 ):
+                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLLIDE_WITH_DEBRIS
+            else:
+                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLLIDE_WITH_DEBRIS     
+            if( self.nParams[10] == 1 ):
+                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLLIDE_WITH_VEHICLES
+            else:
+                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLLIDE_WITH_VEHICLES
+            if( self.nParams[11] == 1 ):
+                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_HOVER_COLLIDABLE
+            else:
+                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_HOVER_COLLIDABLE
         
-        if(self._GetParamterString2(pszMatStr, "*noascroll")): 
-            print("*noascroll not implimented")
+        if(self._GetParamterString2(pszMatStr, "*noascroll")):
+            self.m_nMatFlags |= APE_LAYER_FLAGS_NO_ALPHA_SCROLL
         
         if(self._GetParamterString2(pszMatStr, "*tint")):
             self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_APPLY_TINT
             
         if(self._GetParamterString2(pszMatStr, "*writez")): 
-            print("*writez not implimented")
+            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_ZWRITE_ON
         
         if(self._GetParamterString2(pszMatStr, "*nomeshtint")): 
-            print("*nomeshtint not implimented")
+            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_DO_NOT_TINT
         
         if(self._GetParamterString2(pszMatStr, "*bumptile")): 
-            print("*bumptile not implimented")
+            self.m_ApeCommands.fBumpMapTileFactor = float(self.nParams[0])
         
         if(self._GetParamterString2(pszMatStr, "*detailtile")): 
-            print("*detailtile not implimented")
+            self.m_ApeCommands.fDetailMapTileFactor = float(self.nParams[0])
             
-        if(self._GetParamterString2(pszMatStr, "*light")): 
-            print("*light not implimented")
+        if(self._GetParamterString2(pszMatStr, "*light")):
+            self.m_ApeCommands.LightRGBI[0] =  ( max(0.0, min(float(self.nParams[0]), 255.0)) ) / 255.0
+            self.m_ApeCommands.LightRGBI[1] =  ( max(0.0, min(float(self.nParams[1]), 255.0)) ) / 255.0
+            self.m_ApeCommands.LightRGBI[2] =  ( max(0.0, min(float(self.nParams[2]), 255.0)) ) / 255.0
+            self.m_ApeCommands.LightRGBI[3] =  ( max(0.0, min(float(self.nParams[3]), 255.0)) ) / 255.0
         
         if(self._GetParamterString2(pszMatStr, "*nodraw")): 
-            print("*nodraw not implimented")
+            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_NO_DRAW
             
         if(self._GetParamterString2(pszMatStr, "*notinlm")): 
-            print("*notinlm not implimented")
+            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_DO_NOT_LM
             
         if(self._GetParamterString2(pszMatStr, "*nolmblock")): 
-            print("*nolmblock not implimented")
+            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_DO_NOT_BLOCK_LM
             
         if(self._GetParamterString2(pszMatStr, "*nolmuse")): 
-            print("*nolmuse not implimented")
+            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_NO_LM_USE
             
         if(self._GetParamterString2(pszMatStr, "*vertrad")): 
-            print("*vertrad not implimented")
+            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_VERT_RADIOSITY|APE_MAT_FLAGS_DO_NOT_LM
             
         if(self._GetParamterString2(pszMatStr, "*noshadows")): 
-            print("*noshadows not implimented")
+            self.m_nMatFlags |= APE_LAYER_FLAGS_DO_NOT_CAST_SHADOWS
             
-        if(self._GetParamterString2(pszMatStr, "*eangle")): 
-            print("*eangle not implimented")
+        if(self._GetParamterString2(pszMatStr, "*eangle")):
+            self.m_nAffectAngle = max ( 0, min( int(self.nParams[0]), 180) )
+            self.m_nMatFlags |= APE_LAYER_FLAGS_ANGULAR_EMISSIVE
             
         if(self._GetParamterString2(pszMatStr, "*tangle")): 
-            print("*tangle not implimented")
+            self.m_nAffectAngle = max ( 0, min( int(self.nParams[0]), 180) )
+            self.m_nMatFlags |= APE_LAYER_FLAGS_ANGULAR_TRANSLUCENCY
             
         if(self._GetParamterString2(pszMatStr, "*surf")): 
-            print("*surf not implimented")
+            self.m_ApeCommands.nSurfaceType = max ( 0, min( int(self.nParams[0]), 15) )
             
         if(self._GetParamterString2(pszMatStr, "*react")): 
-            print("*react not implimented")  
+            self.m_ApeCommands.nReactType = max ( 0, min( int(self.nParams[0]), 7) )
 
 
-APE_OB_FLAG_STATIC				= 0x00000001	# Object's bounding sphere has a static footprint in 3D space
-APE_OB_FLAG_POSTER_Y			= 0x00000002	# Poster object around it's Y axis to always face the camera (neg-Z axis of object toward viewer)
-APE_OB_FLAG_NO_COLL				= 0x00000004	# Don't collide with this object
+APE_OB_FLAG_STATIC              = 0x00000001    # Object's bounding sphere has a static footprint in 3D space
+APE_OB_FLAG_POSTER_Y            = 0x00000002    # Poster object around it's Y axis to always face the camera (neg-Z axis of object toward viewer)
+APE_OB_FLAG_NO_COLL             = 0x00000004    # Don't collide with this object
                                                
-APE_OB_FLAG_NO_LIGHT			= 0x00000010	# Don't light this object
+APE_OB_FLAG_NO_LIGHT            = 0x00000010    # Don't light this object
                                                
-APE_OB_FLAG_POSTER_X			= 0x00000040	# Poster object around it's X axis
-APE_OB_FLAG_POSTER_Z			= 0x00000080	# Poster object around it's Z axis
-APE_OB_FLAG_NO_DRAW				= 0x00000100   
-APE_OB_FLAG_LM					= 0x00000200	# This (static) object will receive light maps
-APE_OB_FLAG_PER_PIXEL			= 0x00000400   
-APE_OB_FLAG_VERT_RADIOSITY		= 0x00000800	# This (static) object will receive vertex radiosity
-APE_OB_FLAG_ACCEPT_SHADOWS		= 0x00001000	# This object will receive shadows
-APE_OB_FLAG_CAST_SHADOWS		= 0x00002000	# This object will cast shadows
-APE_OB_FLAG_TINT				= 0x00004000	# This object will be tinted
-APE_OB_FLAG_NO_LM_USE			= 0x00008000	# This object will not be considered when generating lightmaps (even if static)
+APE_OB_FLAG_POSTER_X            = 0x00000040    # Poster object around it's X axis
+APE_OB_FLAG_POSTER_Z            = 0x00000080    # Poster object around it's Z axis
+APE_OB_FLAG_NO_DRAW             = 0x00000100   
+APE_OB_FLAG_LM                  = 0x00000200    # This (static) object will receive light maps
+APE_OB_FLAG_PER_PIXEL           = 0x00000400   
+APE_OB_FLAG_VERT_RADIOSITY      = 0x00000800    # This (static) object will receive vertex radiosity
+APE_OB_FLAG_ACCEPT_SHADOWS      = 0x00001000    # This object will receive shadows
+APE_OB_FLAG_CAST_SHADOWS        = 0x00002000    # This object will cast shadows
+APE_OB_FLAG_TINT                = 0x00004000    # This object will be tinted
+APE_OB_FLAG_NO_LM_USE           = 0x00008000    # This object will not be considered when generating lightmaps (even if static)
 
-APE_OB_FLAG_NONE				= 0x00000000
+APE_OB_FLAG_NONE                = 0x00000000
 
 class CObjectStringParser:
     def __init__(self):
@@ -258,7 +338,10 @@ class CObjectStringParser:
             self.m_ApeCommands.nZTugValue = min(self.nParams[0], 1.0)
             
         if(self._GetParamterString2(pszObjectStr, "*tint")): 
-            print("*tint not implimented")
+            self.m_ApeCommands.TintRGB[0] =  ( max(0.0, min(float(self.nParams[0]), 255.0)) ) / 255.0
+            self.m_ApeCommands.TintRGB[1] =  ( max(0.0, min(float(self.nParams[1]), 255.0)) ) / 255.0
+            self.m_ApeCommands.TintRGB[2] =  ( max(0.0, min(float(self.nParams[2]), 255.0)) ) / 255.0
+            
         # LEGACY / UNUSED?    
         if(self._GetParamterString2(pszObjectStr, "*sort")): 
             print("*sort not implimented")
@@ -279,38 +362,43 @@ class CObjectStringParser:
             self.m_ApeObjectFlag |= APE_OB_FLAG_CAST_SHADOWS
             
         if(self._GetParamterString2(pszObjectStr, "*dynamic")): 
-            print("*dynamic not implimented")
+            self.m_ApeObjectFlag &= ~(APE_OB_FLAG_STATIC|APE_OB_FLAG_LM|APE_OB_FLAG_VERT_RADIOSITY)
             
         if(self._GetParamterString2(pszObjectStr, "*nolmuse")): 
-            print("*nolmuse not implimented")
+            self.m_ApeObjectFlag |= APE_OB_FLAG_NO_LM_USE
+            self.m_ApeObjectFlag &= ~(APE_OB_FLAG_LM|APE_OB_FLAG_VERT_RADIOSITY)
             
         if(self._GetParamterString2(pszObjectStr, "*lightperpixel")): 
             self.m_ApeObjectFlag |= APE_OB_FLAG_PER_PIXEL
    
-APE_LIGHT_FLAG_DONT_USE_RGB				= 0x00000001	# Disregard the light's rgb and only use the motif's color (default = off)
-APE_LIGHT_FLAG_LIGHT_SELF				= 0x00000002	# Light the object that the light is attached to (default = off)
-APE_LIGHT_FLAG_OBJ_DONT_LIGHT_TERRAIN	= 0x00000004	# Lights attached to this object don't light the terrain (default = off)
+APE_LIGHT_FLAG_DONT_USE_RGB              = 0x00000001    # Disregard the light's rgb and only use the motif's color (default = off)
+APE_LIGHT_FLAG_LIGHT_SELF                = 0x00000002    # Light the object that the light is attached to (default = off)
+APE_LIGHT_FLAG_OBJ_DONT_LIGHT_TERRAIN    = 0x00000004    # Lights attached to this object don't light the terrain (default = off)
 
-APE_LIGHT_FLAG_PER_PIXEL				= 0x00000008	# This light casts a projection on the environment (may or may not have a texture)
+APE_LIGHT_FLAG_PER_PIXEL                 = 0x00000008    # This light casts a projection on the environment (may or may not have a texture)
 
-APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT		= 0x00000010	# This light will only be used in the lightmap portion of PASM and will not be exported to the engine.
-APE_LIGHT_FLAG_LIGHTMAP_LIGHT			= 0x00000020	# This light is to be used for generating lightmaps (If it is not dynamic, it can be discarded prior to the engine)
-APE_LIGHT_FLAG_UNIQUE_LIGHTMAP			= 0x00000040	# This light will generate its own unique lightmap in the lightmapping phase (it must also have a unique m_nLightID)
+APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT       = 0x00000010    # This light will only be used in the lightmap portion of PASM and will not be exported to the engine.
+APE_LIGHT_FLAG_LIGHTMAP_LIGHT            = 0x00000020    # This light is to be used for generating lightmaps (If it is not dynamic, it can be discarded prior to the engine)
+APE_LIGHT_FLAG_UNIQUE_LIGHTMAP           = 0x00000040    # This light will generate its own unique lightmap in the lightmapping phase (it must also have a unique m_nLightID)
 
-APE_LIGHT_FLAG_CORONA					= 0x00000080	# This light has a corona
-APE_LIGHT_FLAG_CORONA_PROXFADE			= 0x00000100	# Fade the corona as the camera gets closer.
+APE_LIGHT_FLAG_CORONA                    = 0x00000080    # This light has a corona
+APE_LIGHT_FLAG_CORONA_PROXFADE           = 0x00000100    # Fade the corona as the camera gets closer.
 
-APE_LIGHT_FLAG_CAST_SHADOWS				= 0x00000200	# This light will cast shadows (only relevant for engine lights)
+APE_LIGHT_FLAG_CAST_SHADOWS              = 0x00000200    # This light will cast shadows (only relevant for engine lights)
 
-APE_LIGHT_FLAG_DYNAMIC_ONLY				= 0x00000400	# This light will not affect static objects
+APE_LIGHT_FLAG_DYNAMIC_ONLY              = 0x00000400    # This light will not affect static objects
 
-APE_LIGHT_FLAG_MESH_MUST_BE_PER_PIXEL	= 0x00000800	# For per-pixel lights that have a projected texture.  If this flag is set, only objects that are flagged
+APE_LIGHT_FLAG_MESH_MUST_BE_PER_PIXEL    = 0x00000800    # For per-pixel lights that have a projected texture.  If this flag is set, only objects that are flagged
                                                             # as per pixel lit will have the texture projected on them.  Others will just apply as a dynamic vertex light
    
 class CLightStringParser:
     def __init__(self):
         self.m_ApeLightFlag = 0
         self.Params = None
+        self.m_fCoronaScale = 1.0
+        self.m_szCoronaTexture = ""
+        self.m_szPerPixelTexture = ""
+        self.m_nLightID = -1
         
     def _GetParamterString2(self, inStr, Cmd):
         pszCmd = inStr.find(Cmd)            
@@ -323,25 +411,28 @@ class CLightStringParser:
     def Parse(self, pszLightStr):
     
         if(self._GetParamterString2(pszLightStr, "*self")): 
-            print("*self not implimented")
+            self.m_ApeLightFlag |= APE_LIGHT_FLAG_LIGHT_SELF
             
         if(self._GetParamterString2(pszLightStr, "*castshadows")): 
             self.m_ApeLightFlag |= APE_LIGHT_FLAG_CAST_SHADOWS
             
         if(self._GetParamterString2(pszLightStr, "*scalecorona")): 
-            print("*scalecorona not implimented")
+            self.m_fCoronaScale = float(self.nParams[0])
             
         if(self._GetParamterString2(pszLightStr, "*fadingcorona")): 
-            print("*fadingcorona not implimented")
+            self.m_ApeLightFlag |= APE_LIGHT_FLAG_CORONA|APE_LIGHT_FLAG_CORONA_PROXFADE
+            self.m_szCoronaTexture = self.nParams[0]
             
         if(self._GetParamterString2(pszLightStr, "*corona")): 
-            print("*corona not implimented")
+            self.m_ApeLightFlag |= APE_LIGHT_FLAG_CORONA
+            self.m_szCoronaTexture = self.nParams[0]
             
         if(self._GetParamterString2(pszLightStr, "*perpixel")): 
-            print("*perpixel not implimented")
+            self.m_ApeLightFlag |= APE_LIGHT_FLAG_PER_PIXEL
+            self.m_szPerPixelTexture = self.nParams[0]
             
         if(self._GetParamterString2(pszLightStr, "*onlyppmesh")): 
-            print("*onlyppmesh not implimented")
+            self.m_ApeLightFlag |= APE_LIGHT_FLAG_MESH_MUST_BE_PER_PIXEL
             
         if(self._GetParamterString2(pszLightStr, "*onlydynamic")): 
             self.m_ApeLightFlag |= APE_LIGHT_FLAG_DYNAMIC_ONLY
@@ -350,27 +441,30 @@ class CLightStringParser:
             self.m_ApeLightFlag |= APE_LIGHT_FLAG_LIGHTMAP_LIGHT
             
         if(self._GetParamterString2(pszLightStr, "*uniquelm")): 
-            print("*uniquelm not implimented")
+            self.m_ApeLightFlag &= ~APE_LIGHT_FLAG_DYNAMIC_ONLY
+            self.m_ApeLightFlag |= APE_LIGHT_FLAG_UNIQUE_LIGHTMAP | APE_LIGHT_FLAG_LIGHTMAP_LIGHT
             
         if(self._GetParamterString2(pszLightStr, "*onlylm")): 
-            self.m_ApeLightFlag |= APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT
-            self.m_ApeLightFlag |= APE_LIGHT_FLAG_LIGHTMAP_LIGHT
+            self.m_ApeLightFlag &= ~APE_LIGHT_FLAG_DYNAMIC_ONLY
+            self.m_ApeLightFlag |= APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT|APE_LIGHT_FLAG_LIGHTMAP_LIGHT
             
         if(self._GetParamterString2(pszLightStr, "*noterrain")): 
-            print("*noterrain not implimented")
+            self.m_ApeLightFlag |= APE_LIGHT_FLAG_OBJ_DONT_LIGHT_TERRAIN
             
         if(self._GetParamterString2(pszLightStr, "*id")): 
-            print("*id not implimented")
+            self.m_nLightID = max(0, min( int(self.nParams[0]), 0xffff))
             
         if(self._GetParamterString2(pszLightStr, "*motif")): 
-            print("*motif not implimented")
+            self.m_nMotifID = int(self.nParams[0])
+            if(int(self.nParams[1]) != 0):
+                self.m_ApeLightFlag |= APE_LIGHT_FLAG_DONT_USE_RGB
        
-APE_PORTAL_FLAG_MIRROR			= 0x00000001	# the portal is a mirror
-APE_PORTAL_FLAG_SOUND_ONLY		= 0x00000002	# the portal is for sound only
-APE_PORTAL_FLAG_ONE_WAY			= 0x00000004	# the portal is 1 way
-APE_PORTAL_FLAG_ANTI			= 0x00000008	# the portal is an anti portal
+APE_PORTAL_FLAG_MIRROR            = 0x00000001    # the portal is a mirror
+APE_PORTAL_FLAG_SOUND_ONLY        = 0x00000002    # the portal is for sound only
+APE_PORTAL_FLAG_ONE_WAY           = 0x00000004    # the portal is 1 way
+APE_PORTAL_FLAG_ANTI              = 0x00000008    # the portal is an anti portal
 
-APE_PORTAL_FLAG_NONE			= 0x00000000
+APE_PORTAL_FLAG_NONE              = 0x00000000
        
 class CPortalStringParser:
     def __init__(self):

@@ -94,8 +94,12 @@ def ExportObjLight(obj):
     
     # Parse light name for star commands
     lightStrParser = CLightStringParser()
-    lightStrParser.Parse(obj.name)
+    lightStrParser.Parse(obj.name.lower())
     outLight.nFlags = lightStrParser.m_ApeLightFlag
+    outLight.fCoronaScale = lightStrParser.m_fCoronaScale
+    outLight.szCoronaTexture = lightStrParser.m_szCoronaTexture
+    outLight.szPerPixelTexture = lightStrParser.m_szPerPixelTexture
+    outLight.nLightID = lightStrParser.m_nLightID
       
     # Lights calculate their rotation matrix in a different way to everything else
     outLight.mtxOrientation = pasm_math.BObj2F43MtxLIGHT(obj)
