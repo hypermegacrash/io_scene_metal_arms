@@ -144,6 +144,7 @@ class ExportAPE(Operator, ExportHelper):
                 g_class.file.write(g_class.gWldHeader.packBytes())
                              
                 g_class.file.close() # Remember folks, always close your files when your done playing with them
+                
                 print("DONE EXPORTING .APE!")
         
                 return {'FINISHED'}

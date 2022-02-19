@@ -31,8 +31,6 @@ def ExportObjCam(obj):
     
     nKeys = (nEndTime - nStartTime) / nInterval;
     
-    sce = bpy.context.scene
-    
     camHeader = file_def_cam.PASMCamInfo()
     camHeader.szCameraName = obj.name[4:]
     aFrames = []
@@ -47,7 +45,7 @@ def ExportObjCam(obj):
     # Scrub through the timeline for snapshots we want
     for curFrame in range(nStartTime, nEndTime):
         curFrameTick = curFrame * 160
-        sce.frame_set(curFrame)
+        bpy.context.scene.frame_set(curFrame)
         testFrame = file_def_cam.PASMCamFrame()
         number_of_ticks = float((curFrameTick - nStartTime)) * float((1.0/TIME_TICKSPERSEC))
         testFrame.fSecsFromStart = number_of_ticks
