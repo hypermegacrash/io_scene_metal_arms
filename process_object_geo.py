@@ -80,6 +80,9 @@ def ExportObjGeo(obj):
         # Parse parent material name for star commands & material flags
         matStrParser = CMaterialStringParser()       
         matStrParser.ResetToDefaults()
+        # First we parse geo name for star commands
+        matStrParser.Parse(obj.name.lower())
+        # Then we parse the actual material name for star commands
         matStrParser.Parse(obj.data.materials[matIndex].name.lower())
         mat.StarCommands = matStrParser.m_ApeCommands     
         mat.nFlags = matStrParser.m_nMatFlags
@@ -308,6 +311,9 @@ def ExportObjGeo(obj):
                 entryVertex.Norm[2] = face.normal[1]
                 
                 entryVertex.aUVs[0] = UVLAYER.data[face.loop_indices[index]].uv
+                
+                # W of Color is Alpha, set it to fully opqaue / 1.0f so shaders that use alpha like water work
+                entryVertex.Color[3] = 1.0
         
                 # Is this PASMVert unique?
                 if entryVertex not in aVertexBuffer:

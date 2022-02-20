@@ -94,7 +94,7 @@ class CMaterialStringParser:
         self.m_ApeCommands.fDetailMapTileFactor = 4
         self.m_ApeCommands.nCollMask = APE_MAT_COLL_FLAGS_COLL_WITH_EVERYTHING
         self.m_ApeCommands.nReactType = 0
-        self.m_ApeCommands.nSurfaceType = -1
+        self.m_ApeCommands.nSurfaceType = 0 # HAD SET TO -1 BUT CHANGED TO 0 CAUSE DECALS + GIBS
         self.m_ApeCommands.nID = -1
     
     # The meat, takes a Material String Name as input formats the class's Star Command struct
