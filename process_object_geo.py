@@ -10,6 +10,108 @@ from . import pasm_math # PASM helper defs
 
 from .process_star_command import CMaterialStringParser # Import just the Material Star Command Parser
 
+def ParseMaterial(matName, fangMatGroup, matStrParser):
+    # Construct a layer that will act as our diffuse texture, nothing fancy YET
+    # This Layer is based on Floor & Wall Mesh from testwld scene... Are these good default values?
+    layer = pasm_file_def.PASMLayer()
+    layer.bTextured = 1
+    layer.fUnitAlphaMultiplier = 1.0
+    
+    layer.SpecularRGB[0] = fangMatGroup.inputs["Specular Color"].default_value[0]
+    layer.SpecularRGB[1] = fangMatGroup.inputs["Specular Color"].default_value[1]
+    layer.SpecularRGB[2] = fangMatGroup.inputs["Specular Color"].default_value[2]
+    
+    if(fangMatGroup.inputs["Shine Strength"].default_value < 0.05):
+        layer.fShinStr = 0.0
+        layer.fShininess = 0.0
+    else:
+        layer.fShinStr = fangMatGroup.inputs["Shine Strength"].default_value / 100.0
+        layer.fShininess = (fangMatGroup.inputs["Shininesss"].default_value / 100) * 127.0
+        
+    # Parse layer / child material name for star commands
+    layerStrParser = CMaterialStringParser()
+    layerStrParser.ResetToDefaults()
+    # Use Star Commands from the Parent Material as a starting base for the layer material
+    layerStrParser.m_ApeCommands = matStrParser.m_ApeCommands
+    layerStrParser.Parse(matName)
+    layer.StarCommands = layerStrParser.m_ApeCommands
+    
+    # Get the NodeLink from the base color node
+    base_color = fangMatGroup.inputs["Diffuse Color"].links[0].from_node.image.name
+    # Print the image connecting to this node
+    outTexB = base_color.split(".",1)[0]
+    layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_DIFFUSE] = outTexB
+    
+    try:
+        # Get the NodeLink from the Alpha Mask node
+        base_color = fangMatGroup.inputs["Alpha Mask"].links[0].from_node.image.name
+        # Print the image connecting to this node
+        outTexB = base_color.split(".",1)[0]
+        layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_ALPHA_MASK] = outTexB
+    except:
+        pass
+        
+    try:
+        # Get the NodeLink from the Specular Mask node
+        base_color = fangMatGroup.inputs["Specular Mask"].links[0].from_node.image.name
+        # Print the image connecting to this node
+        outTexB = base_color.split(".",1)[0]
+        layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_SPECULAR_MASK] = outTexB
+    except:
+        pass
+        
+    try:
+        # Get the NodeLink from the Emissive Mask node
+        base_color = fangMatGroup.inputs["Emissive Mask"].links[0].from_node.image.name
+        # Print the image connecting to this node
+        outTexB = base_color.split(".",1)[0]
+        layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_EMISSIVE_MASK] = outTexB
+    except:
+        pass
+        
+    try:
+        # Get the NodeLink from the Environment Map node
+        base_color = fangMatGroup.inputs["Environment Map"].links[0].from_node.image.name
+        # Print the image connecting to this node
+        outTexB = base_color.split(".",1)[0]
+        layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_ENVIRONMENT] = outTexB
+    except:
+        pass
+        
+    try:
+        # Get the NodeLink from the Bump Map node
+        base_color = fangMatGroup.inputs["Bump Map"].links[0].from_node.image.name
+        # Print the image connecting to this node
+        outTexB = base_color.split(".",1)[0]
+        layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_BUMP] = outTexB
+    except:
+        pass
+        
+    try:
+        # Get the NodeLink from the Detail Map node
+        base_color = fangMatGroup.inputs["Detail Map"].links[0].from_node.image.name
+        # Print the image connecting to this node
+        outTexB = base_color.split(".",1)[0]
+        layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_DETAIL] = outTexB
+    except:
+        pass
+    
+    if(fangMatGroup.inputs["Illumination"].default_value != 0):
+        layer.StarCommands.bUseEmissiveColor = 1
+        layer.IllumRGB[0] = fangMatGroup.inputs["Illumination"].default_value
+        layer.IllumRGB[1] = fangMatGroup.inputs["Illumination"].default_value
+        layer.IllumRGB[2] = fangMatGroup.inputs["Illumination"].default_value
+    
+    if(layer.StarCommands.nFlags & 0x02 == 0x02):
+        layer.StarCommands.TintRGB[0] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[0])
+        layer.StarCommands.TintRGB[1] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[1])
+        layer.StarCommands.TintRGB[2] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[2])
+        
+    return layer
+        
+    #mat.aMatLayers[0] = layer # Link our base layer with our material
+    #mat.nLayerCount += 1
+
 def ExportObjGeo(obj):
     # Validate we're working with mesh data and not other stuff
     if obj.type != "MESH":
@@ -47,7 +149,24 @@ def ExportObjGeo(obj):
     bmesh.ops.triangulate(bm, faces=bm.faces)
     bm.to_mesh(geo)
     bm.free()
+      
+    # Get our color layers
+    ColorChannel = None
+    AlphaChannel = None
+    for vc in geo.vertex_colors:
+        outName = vc.name.lower()[:]
+        outName = outName.split(".",1)[0]
+        if(outName == "alpha"):
+            #print("FOUND ALPHA")
+            AlphaChannel = vc
+        elif(outName == "color"):
+            #print("FOUND COLOR")
+            ColorChannel = vc
+        else:
+            pass
+            #print("No matching name for vertex color channel")
     
+    # Get our UV layers
     UVLAYER = geo.uv_layers[0] # Hardcoded reference to UV MAP
     # Flip UVs vertically across (0.5, 0.5) point
     reflectionPoint = 0.500
@@ -100,174 +219,25 @@ def ExportObjGeo(obj):
             # Get the material output
             matOut = obj.data.materials[matIndex].node_tree.nodes["Material Output"]
             # Get the Fang Material Node group connected to it
-            fangMatGroup = matOut.inputs["Surface"].links[0].from_node
+            fangMatGroup = matOut.inputs["Surface"].links[0].from_node 
             
             if (fangMatGroup.node_tree.name == "FANG Material"):
                 print("We got a FANG Material!")
                 
-                # Construct a layer that will act as our diffuse texture, nothing fancy YET
-                # This Layer is based on Floor & Wall Mesh from testwld scene... Are these good default values?
-                layer = pasm_file_def.PASMLayer()
-                layer.bTextured = 1
-                layer.fUnitAlphaMultiplier = 1.0
-                layer.SpecularRGB = [0.8, 0.8, 0.8]
-                layer.fShininess = 58.5
-                layer.fShinStr = 0.25
+                layer = ParseMaterial(obj.data.materials[matIndex].name.lower(), fangMatGroup, matStrParser)
                 
-                # Parse layer / child material name for star commands
-                layerStrParser = CMaterialStringParser()
-                layerStrParser.ResetToDefaults()
-                # Use Star Commands from the Parent Material as a starting base for the layer material
-                layerStrParser.m_ApeCommands = matStrParser.m_ApeCommands
-                layerStrParser.Parse(obj.data.materials[matIndex].name.lower())
-                layer.StarCommands = layerStrParser.m_ApeCommands
-            
-                # Get the NodeLink from the base color node
-                base_color = fangMatGroup.inputs["Diffuse Color"].links[0].from_node.image.name
-                # Print the image connecting to this node
-                outTexB = base_color.split(".",1)[0]
-                layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_DIFFUSE] = outTexB
-                
-                try:
-                    # Get the NodeLink from the Environment Map node
-                    base_color = fangMatGroup.inputs["Environment Map"].links[0].from_node.image.name
-                    # Print the image connecting to this node
-                    outTexB = base_color.split(".",1)[0]
-                    layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_ENVIRONMENT] = outTexB
-                except:
-                    pass
-                    
-                try:
-                    # Get the NodeLink from the Detail Map node
-                    base_color = fangMatGroup.inputs["Detail Map"].links[0].from_node.image.name
-                    # Print the image connecting to this node
-                    outTexB = base_color.split(".",1)[0]
-                    layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_DETAIL] = outTexB
-                except:
-                    pass
-                
-                if(fangMatGroup.inputs["Illumination"].default_value != 0):
-                    layer.StarCommands.bUseEmissiveColor = 1
-                    layer.IllumRGB[0] = fangMatGroup.inputs["Illumination"].default_value
-                    layer.IllumRGB[1] = fangMatGroup.inputs["Illumination"].default_value
-                    layer.IllumRGB[2] = fangMatGroup.inputs["Illumination"].default_value
-                
-                if(layer.StarCommands.nFlags & 0x02 == 0x02):
-                    layer.StarCommands.TintRGB[0] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[0])
-                    layer.StarCommands.TintRGB[1] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[1])
-                    layer.StarCommands.TintRGB[2] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[2])
-                    
                 mat.aMatLayers[0] = layer # Link our base layer with our material
                 mat.nLayerCount += 1
+                
             elif (fangMatGroup.node_tree.name == "FANG Composite"):
                 print("We got a FANG Composite!")
                 
-                # Construct a layer that will act as our diffuse texture, nothing fancy YET
-                # This Layer is based on Floor & Wall Mesh from testwld scene... Are these good default values?
-                layer = pasm_file_def.PASMLayer()
-                layer.bTextured = 1
-                layer.fUnitAlphaMultiplier = 1.0
-                layer.SpecularRGB = [0.8, 0.8, 0.8]
-                layer.fShininess = 58.5
-                layer.fShinStr = 0.25
-                
-                # Parse layer / child material name for star commands
-                layerStrParser = CMaterialStringParser()
-                layerStrParser.ResetToDefaults()
-                # Use Star Commands from the Parent Material as a starting base for the layer material
-                layerStrParser.m_ApeCommands = matStrParser.m_ApeCommands
-                layerStrParser.Parse(obj.data.materials[matIndex].name.lower())
-                layer.StarCommands = layerStrParser.m_ApeCommands
-            
-                # Get the NodeLink from the base color node
-                base_color = fangMatGroup.inputs["Base"].links[0].from_node.inputs["Diffuse Color"].links[0].from_node.image.name
-                # Print the image connecting to this node
-                outTexB = base_color.split(".",1)[0]
-                layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_DIFFUSE] = outTexB
-                
-                try:
-                    # Get the NodeLink from the Environment Map node
-                    base_color = fangMatGroup.inputs["Base"].links[0].from_node.inputs["Environment Map"].links[0].from_node.image.name
-                    # Print the image connecting to this node
-                    outTexB = base_color.split(".",1)[0]
-                    layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_ENVIRONMENT] = outTexB
-                except:
-                    pass
-                    
-                try:
-                    # Get the NodeLink from the Detail Map node
-                    base_color = fangMatGroup.inputs["Base"].links[0].from_node.inputs["Detail Map"].links[0].from_node.image.name
-                    # Print the image connecting to this node
-                    outTexB = base_color.split(".",1)[0]
-                    layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_DETAIL] = outTexB
-                except:
-                    pass
-                
-                if(fangMatGroup.inputs["Base"].links[0].from_node.inputs["Illumination"].default_value != 0):
-                    layer.StarCommands.bUseEmissiveColor = 1
-                    layer.IllumRGB[0] = fangMatGroup.inputs["Base"].links[0].from_node.inputs["Illumination"].default_value
-                    layer.IllumRGB[1] = fangMatGroup.inputs["Base"].links[0].from_node.inputs["Illumination"].default_value
-                    layer.IllumRGB[2] = fangMatGroup.inputs["Base"].links[0].from_node.inputs["Illumination"].default_value
-                
-                if(layer.StarCommands.nFlags & 0x02 == 0x02):
-                    layer.StarCommands.TintRGB[0] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Base"].links[0].from_node.inputs["Tint Color"].default_value[0])
-                    layer.StarCommands.TintRGB[1] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Base"].links[0].from_node.inputs["Tint Color"].default_value[1])
-                    layer.StarCommands.TintRGB[2] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Base"].links[0].from_node.inputs["Tint Color"].default_value[2])
+                layer = ParseMaterial(obj.data.materials[matIndex].name.lower(), fangMatGroup.inputs["Base"].links[0].from_node, matStrParser)
                 
                 mat.aMatLayers[0] = layer # Link our base layer with our material
                 mat.nLayerCount += 1
                 
-                # Construct a layer that will act as our diffuse texture, nothing fancy YET
-                # This Layer is based on Floor & Wall Mesh from testwld scene... Are these good default values?
-                layer = pasm_file_def.PASMLayer()
-                layer.bTextured = 1
-                layer.fUnitAlphaMultiplier = 1.0
-                layer.SpecularRGB = [0.8, 0.8, 0.8]
-                layer.fShininess = 58.5
-                layer.fShinStr = 0.25
-                
-                # Parse layer / child material name for star commands
-                layerStrParser = CMaterialStringParser()
-                layerStrParser.ResetToDefaults()
-                # Use Star Commands from the Parent Material as a starting base for the layer material
-                layerStrParser.m_ApeCommands = matStrParser.m_ApeCommands
-                layerStrParser.Parse(obj.data.materials[matIndex].name.lower())
-                layer.StarCommands = layerStrParser.m_ApeCommands
-            
-                # Get the NodeLink from the base color node
-                base_color = fangMatGroup.inputs["Layer 1"].links[0].from_node.inputs["Diffuse Color"].links[0].from_node.image.name
-                # Print the image connecting to this node
-                outTexB = base_color.split(".",1)[0]
-                layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_DIFFUSE] = outTexB
-                
-                try:
-                    # Get the NodeLink from the Environment Map node
-                    base_color = fangMatGroup.inputs["Layer 1"].links[0].from_node.inputs["Environment Map"].links[0].from_node.image.name
-                    # Print the image connecting to this node
-                    outTexB = base_color.split(".",1)[0]
-                    layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_ENVIRONMENT] = outTexB
-                except:
-                    pass
-                    
-                try:
-                    # Get the NodeLink from the Detail Map node
-                    base_color = fangMatGroup.inputs["Layer 1"].links[0].from_node.inputs["Detail Map"].links[0].from_node.image.name
-                    # Print the image connecting to this node
-                    outTexB = base_color.split(".",1)[0]
-                    layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_DETAIL] = outTexB
-                except:
-                    pass
-                
-                if(fangMatGroup.inputs["Layer 1"].links[0].from_node.inputs["Illumination"].default_value != 0):
-                    layer.StarCommands.bUseEmissiveColor = 1
-                    layer.IllumRGB[0] = fangMatGroup.inputs["Layer 1"].links[0].from_node.inputs["Illumination"].default_value
-                    layer.IllumRGB[1] = fangMatGroup.inputs["Layer 1"].links[0].from_node.inputs["Illumination"].default_value
-                    layer.IllumRGB[2] = fangMatGroup.inputs["Layer 1"].links[0].from_node.inputs["Illumination"].default_value
-                
-                if(layer.StarCommands.nFlags & 0x02 == 0x02):
-                    layer.StarCommands.TintRGB[0] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Layer 1"].links[0].from_node.inputs["Tint Color"].default_value[0])
-                    layer.StarCommands.TintRGB[1] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Layer 1"].links[0].from_node.inputs["Tint Color"].default_value[1])
-                    layer.StarCommands.TintRGB[2] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Layer 1"].links[0].from_node.inputs["Tint Color"].default_value[2])
+                layer = ParseMaterial(obj.data.materials[matIndex].name.lower(), fangMatGroup.inputs["Layer 1"].links[0].from_node, matStrParser)
                 
                 mat.aMatLayers[1] = layer # Link layer 1 with our material
                 mat.nLayerCount += 1
@@ -310,10 +280,24 @@ def ExportObjGeo(obj):
                 entryVertex.Norm[1] = face.normal[2]
                 entryVertex.Norm[2] = face.normal[1]
                 
-                entryVertex.aUVs[0] = UVLAYER.data[face.loop_indices[index]].uv
+                # Could be handled better but for now just catch this so no error
+                try:
+                    entryVertex.aUVs[0] = UVLAYER.data[face.loop_indices[index]].uv
+                    entryVertex.aUVs[1] = UVLAYER.data[face.loop_indices[index]].uv
+                except:
+                    entryVertex.aUVs[0] = [0.0, 0.0]
                 
-                # W of Color is Alpha, set it to fully opqaue / 1.0f so shaders that use alpha like water work
-                entryVertex.Color[3] = 1.0
+                 # Vertex Color
+                if ColorChannel != None:
+                    entryVertex.Color[0] = float("%.2f" % ColorChannel.data[face.loop_indices[index]].color[0])
+                    entryVertex.Color[1] = float("%.2f" % ColorChannel.data[face.loop_indices[index]].color[1])
+                    entryVertex.Color[2] = float("%.2f" % ColorChannel.data[face.loop_indices[index]].color[2])
+                
+                # Vertex Alpha
+                if AlphaChannel != None:
+                    entryVertex.Color[3] = float("%.2f" % AlphaChannel.data[face.loop_indices[index]].color[0])
+                else:
+                    entryVertex.Color[3] = 1.0
         
                 # Is this PASMVert unique?
                 if entryVertex not in aVertexBuffer:

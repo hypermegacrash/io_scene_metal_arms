@@ -699,7 +699,7 @@ class PASMCommands:
         outBytes += struct.pack("<b", self.nID)
         outBytes += struct.pack("<b", self.bNoColl)
         outBytes += struct.pack("<b", self.nCollID)
-        outBytes += struct.pack("<b", self.nFlags)
+        outBytes += struct.pack("<B", self.nFlags)
 
         outBytes += struct.pack("<H", self.nCollMask)
         outBytes += struct.pack("<h", self.nReactType)

@@ -156,8 +156,10 @@ class CMaterialStringParser:
             self.nParams[2] = float(self.nParams[2])
             self.nParams[3] = float(self.nParams[3])
             
-            self.m_ApeCommands.fDeltaUPerSec = self.nParams[0] / self.nParams[1]
-            self.m_ApeCommands.fDeltaVPerSec = self.nParams[2] / self.nParams[3]
+            if self.nParams[0] != 0.0 and self.nParams[1] != 0.0:
+                self.m_ApeCommands.fDeltaUPerSec = self.nParams[0] / self.nParams[1]
+            if self.nParams[2] != 0.0 and self.nParams[3] != 0.0:
+                self.m_ApeCommands.fDeltaVPerSec = self.nParams[2] / self.nParams[3]
             
             # AUTO ID
             if( self.m_ApeCommands.nID == -1 ):
