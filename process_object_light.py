@@ -85,7 +85,22 @@ def ExportObjLight(obj):
     # diffuse_factor we introduced in 2.93
     # Therefore 2.8 - 2.92 no longer work
     if obj.type == "LIGHT":
-        outLight.Intensity = obj.data.diffuse_factor
+         if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_DIR:
+            outLight.Intensity = obj.data.energy
+         else:
+            # Pretty kludgely hack
+            # If the light is small, you need to calculate intensity in a specific way,
+            # This methodology only works for small lights, large lights don't work with this
+            # For the time being compromise, this is better than before but still not ideal
+            if(obj.data.energy < 1000):
+                # I guess we're doing this mathematically as well
+                # https://www.youtube.com/watch?v=b9HgDScFoTo
+                radius = math.sqrt((( obj.data.energy / 0.02) / ( 4 * math.pi )))     
+                outLight.Intensity = (( obj.data.energy ) / ( radius * radius ))
+            else:
+                import colorsys
+                tempHSV = colorsys.rgb_to_hsv(obj.data.color[0], obj.data.color[1], obj.data.color[2])
+                outLight.Intensity = tempHSV[2]
     elif obj.name.find("ambient", 0, 7) != -1 and obj.type == "EMPTY":
         outLight.Intensity = 1.0
     else:
@@ -114,8 +129,8 @@ def ExportObjLight(obj):
         # Blender doesn't give a radius of light that we want
         # So we're gonna calculate inverse square law with a distance of 0.02 to try and approximate one
         # Thx The Science Asylum! https://www.youtube.com/watch?v=2FMx2GDqMo4
-        radius = math.sqrt((( obj.data.energy / 0.02) / ( 4 * math.pi )))
-        outLight.Sphere[0] = radius
+        radius2 = math.sqrt((( obj.data.energy / 0.02) / ( 4 * math.pi )))
+        outLight.Sphere[0] = radius2
         outLight.Sphere[1] = outLight.mtxOrientation[9]
         outLight.Sphere[2] = outLight.mtxOrientation[10]
         outLight.Sphere[3] = outLight.mtxOrientation[11]

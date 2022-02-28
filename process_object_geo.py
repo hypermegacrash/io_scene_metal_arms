@@ -282,6 +282,7 @@ def ExportObjGeo(obj):
                 
                 # Could be handled better but for now just catch this so no error
                 try:
+                    # Base Mat uses UV0, Layer 1 uses UV1
                     entryVertex.aUVs[0] = UVLAYER.data[face.loop_indices[index]].uv
                     entryVertex.aUVs[1] = UVLAYER.data[face.loop_indices[index]].uv
                 except:
