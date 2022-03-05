@@ -86,7 +86,7 @@ class CMaterialStringParser:
         self.Params = None
 
         self.m_ApeCommands = PASMCommands()
-        self.m_ApeCommands.bUseDiffuseColor = 1
+        self.m_ApeCommands.bUseEmissiveColor = 1
         self.m_ApeCommands.bUseSpecularColor = 1
         self.m_ApeCommands.TintRGB = [1.0, 1.0, 1.0]
         self.m_ApeCommands.nShaderNum = -1

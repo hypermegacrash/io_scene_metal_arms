@@ -159,7 +159,8 @@ class ExportWLD(Operator, ExportHelper):
                              
                 g_class.file.close() # Remember folks, always close your files when your done playing with them
                 
-                print("DONE EXPORTING .WLD!")
+                print("WLD Export Finished!")
+                self.report({'INFO'}, "WLD Export Finished!")
         
                 return {'FINISHED'}
                 

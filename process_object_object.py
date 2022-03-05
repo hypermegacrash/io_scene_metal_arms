@@ -32,6 +32,16 @@ def ExportObjObject(obj):
     
     outObject.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
     
+    # We only apply scale if it is uniform
+    if(obj.scale[0] == obj.scale[1] == obj.scale[2]):
+        #print("SCALE UNIFORM")
+        outObject.mtxOrientation[0] = obj.scale[0] * outObject.mtxOrientation[0]
+        outObject.mtxOrientation[4] = obj.scale[0] * outObject.mtxOrientation[4]
+        outObject.mtxOrientation[8] = obj.scale[0] * outObject.mtxOrientation[8]
+    else:
+        pass
+        #print("SCALE NOT UNIFORM")
+    
     # Grab custom properties from the object
     try:
         cmds = obj["ma"].split('\n')

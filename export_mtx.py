@@ -96,7 +96,8 @@ class ExportMTX(Operator, ExportHelper):
                 
             g_class.file.close() # Remember folks, always close your files when your done playing with them
                          
-            print("DONE EXPORTING .MTX!")
+            print("MTX Export Finished!")
+            self.report({'INFO'}, "MTX Export Finished!")
         
             return {'FINISHED'}
                 

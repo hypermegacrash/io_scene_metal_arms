@@ -96,7 +96,8 @@ class ExportCAM(Operator, ExportHelper):
                 
             g_class.file.close() # Remember folks, always close your files when your done playing with them
                          
-            print("DONE EXPORTING .CAM!")
+            print("CAM Export Finished!")
+            self.report({'INFO'}, "CAM Export Finished!")
         
             return {'FINISHED'}
                 
