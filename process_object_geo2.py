@@ -1,6 +1,5 @@
-# Module that processes a geo object and returns byte data
-
-import bmesh # Need this to triangulate the mesh
+# Rewritten Module that processes a geo object and returns byte data
+# Reference: https://github.com/sobotka/blender-addons/blob/master/io_scene_obj/export_obj.py
 
 from . import pasm_file_def # Get our PASM file classes
 
@@ -38,7 +37,7 @@ def ParseMaterial(matName, fangMatGroup, matStrParser):
     layerStrParser.Parse(matName.lower())
     layer.StarCommands = layerStrParser.m_ApeCommands
     
-    # Get the NodeLink from the base color node
+    # Get the NodeLink from the Base Color node
     base_color = fangMatGroup.inputs["Diffuse Color"].links[0].from_node.image.name
     # Print the image connecting to this node
     outTexB = base_color.split(".",1)[0]
@@ -133,21 +132,31 @@ def ExportObjGeo(obj):
 
     outSegment = pasm_file_def.PASMSegment()
     outSegment.szMeshName = obj.name
-    #outSegment.szMeshName = "segment" + str(g_class.gWldHeader.nNumSegments)
     
-    # This returns a new instance of the vertex data with modifiers applied
-    # Whatever modifed here won't affect the scene
-    import bpy # Do we REALLY need to grab bpy for this??? get this from a higher level or something
+    # This returns a new instance of geometry data with modifiers applied that wont affect scene
+    import bpy # Pass this into the func or something so we aren't constantly grabbing, releasing this
     dg = bpy.context.evaluated_depsgraph_get()
     eval_obj = obj.evaluated_get(dg)
     geo = eval_obj.to_mesh()
         
     # We're gonna triangulate the mesh first before we work with it further
+    import bmesh # Need this to triangulate the mesh
     bm = bmesh.new()
     bm.from_mesh(geo)
     bmesh.ops.triangulate(bm, faces=bm.faces)
     bm.to_mesh(geo)
     bm.free()
+    
+    # If negative scaling normals will flip when world matrix is applied
+    if obj.matrix_world.determinant() < 0.0:
+        geo.flip_normals()
+    
+    # Transform the verts from local space to world space
+    from mathutils import Matrix
+    geo.transform(Matrix() @ obj.matrix_world)
+    
+    # Normals need to be recalculated
+    geo.calc_normals_split()
     
     # UV Requirement
     reflectionPoint = 0.500
@@ -264,7 +273,6 @@ def ExportObjGeo(obj):
                     VBuffer = VBuffer + reflectionPoint
                     uv.uv[1] = VBuffer
                 
-                
             elif (fangMatGroup.node_tree.name == "FANG Composite"):
                 try:
                     # Get UV0
@@ -291,10 +299,12 @@ def ExportObjGeo(obj):
                     VBuffer = -VBuffer
                     VBuffer = VBuffer + reflectionPoint
                     uv.uv[1] = VBuffer
+                    
             else:
                 # No Fang Material? No UVs
                 UV0 = []
                 UV1 = []
+                
         except Exception as e: 
             print("Error extracing UV Group")
             print(e)
@@ -316,28 +326,27 @@ def ExportObjGeo(obj):
                 # Assemble a PASMVert with this vertex info
                 entryVertex = pasm_file_def.PASMVert()
                 
-                # Multiply our world position matrix by the vertex position X Y Z to get world space position of verts
-                vertPosAfterWTM = obj.matrix_world @ geo.vertices[face.vertices[index]].co
-                entryVertex.Pos[0] = vertPosAfterWTM[0]
-                entryVertex.Pos[1] = vertPosAfterWTM[2]
-                entryVertex.Pos[2] = vertPosAfterWTM[1]
+                # We do a copy.copy cause python passes stuff by reference instead of by value
+                entryVertex.Pos[0] = copy.copy ( geo.vertices[face.vertices[index]].co[0] )
+                entryVertex.Pos[1] = copy.copy ( geo.vertices[face.vertices[index]].co[2] )
+                entryVertex.Pos[2] = copy.copy ( geo.vertices[face.vertices[index]].co[1] )
                 
                 # This deserves a bit of history...
                 # For the longest time I tried making entryVertex.Norm = "geo.vertices[face.vertices[index]].normal" work
                 # But this doesn't work since a single vert can be shared across multiple polygons
                 # However on a whim I decided each of the verts of a single polygon share the same normal...
                 # And it worked!
-                entryVertex.Norm[0] = face.normal[0]
-                entryVertex.Norm[1] = face.normal[2]
-                entryVertex.Norm[2] = face.normal[1]
+                entryVertex.Norm[0] = copy.copy ( face.normal[0] )
+                entryVertex.Norm[1] = copy.copy ( face.normal[2] )
+                entryVertex.Norm[2] = copy.copy ( face.normal[1] )
                 
                 # Oh Mr Programmer, Refactor your code
                 try:
                     if (fangMatGroup.node_tree.name == "FANG Material"):   
-                        entryVertex.aUVs[0] = UV0.data[face.loop_indices[index]].uv          
+                        entryVertex.aUVs[0] = copy.copy ( UV0.data[face.loop_indices[index]].uv )          
                     elif (fangMatGroup.node_tree.name == "FANG Composite"):  
-                        entryVertex.aUVs[0] = UV0.data[face.loop_indices[index]].uv 
-                        entryVertex.aUVs[1] = UV1.data[face.loop_indices[index]].uv
+                        entryVertex.aUVs[0] = copy.copy ( UV0.data[face.loop_indices[index]].uv )
+                        entryVertex.aUVs[1] = copy.copy ( UV1.data[face.loop_indices[index]].uv )
                 except:
                     # It's all there, black and white, clear as crystal!
                     # You didn't assign a FANG Material!
@@ -347,13 +356,13 @@ def ExportObjGeo(obj):
                     
                  # Vertex Color
                 if ColorChannel != None:
-                    entryVertex.Color[0] = float("%.2f" % ColorChannel.data[face.loop_indices[index]].color[0])
-                    entryVertex.Color[1] = float("%.2f" % ColorChannel.data[face.loop_indices[index]].color[1])
-                    entryVertex.Color[2] = float("%.2f" % ColorChannel.data[face.loop_indices[index]].color[2])
+                    entryVertex.Color[0] = copy.copy ( float("%.2f" % ColorChannel.data[face.loop_indices[index]].color[0]) )
+                    entryVertex.Color[1] = copy.copy ( float("%.2f" % ColorChannel.data[face.loop_indices[index]].color[1]) )
+                    entryVertex.Color[2] = copy.copy ( float("%.2f" % ColorChannel.data[face.loop_indices[index]].color[2]) )
                 
                 # Vertex Alpha
                 if AlphaChannel != None:
-                    entryVertex.Color[3] = float("%.2f" % AlphaChannel.data[face.loop_indices[index]].color[0])
+                    entryVertex.Color[3] = copy.copy ( float("%.2f" % AlphaChannel.data[face.loop_indices[index]].color[0]) )
                 else:
                     entryVertex.Color[3] = 1.0
         
@@ -375,6 +384,9 @@ def ExportObjGeo(obj):
     
         outSegment.aMaterials.append(mat)
         outSegment.nNumMaterials += 1
+    
+    # Clean up? IDK what this does honestly
+    eval_obj.to_mesh_clear()
     
     # OK, every polygon accounted for, now update outSegment data
     outSegment.aVertices   = aVertexBuffer

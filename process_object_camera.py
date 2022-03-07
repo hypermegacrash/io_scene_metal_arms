@@ -13,7 +13,7 @@ def ExportObjCam(obj):
     if obj.type != "CAMERA":
         return
     # Enforce the user to follow naming scheme
-    if obj.name[:4] != "cam_":
+    if obj.name[:4].lower() != "cam_":
         return
         
     print(obj.name, "is a camera object")

@@ -16,7 +16,7 @@ def ExportObjLight(obj):
     if obj.type != "LIGHT":
         bExitEarly = True
     
-    if obj.name.find("ambient", 0, 7) != -1 and obj.type == "EMPTY":
+    if obj.name[:7].lower() == "ambient" and obj.type == "EMPTY":
         bExitEarly = False
     
     if(bExitEarly):
@@ -33,7 +33,7 @@ def ExportObjLight(obj):
             outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_OMNI
         elif obj.data.type == "SPOT":
             outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT
-    if obj.name.find("ambient", 0, 7) != -1 and obj.type == "EMPTY":
+    if obj.name[:7].lower() == "ambient" and obj.type == "EMPTY":
         outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_AMBIENT
         
     if outLight.nApeLightType == -1:
@@ -46,7 +46,7 @@ def ExportObjLight(obj):
         outLight.Color[0] = pasm_math.color_scene_linear_to_srgb(obj.data.color[0])
         outLight.Color[1] = pasm_math.color_scene_linear_to_srgb(obj.data.color[1])
         outLight.Color[2] = pasm_math.color_scene_linear_to_srgb(obj.data.color[2])
-    elif obj.name.find("ambient", 0, 7) != -1 and obj.type == "EMPTY":
+    elif obj.name[:7].lower() == "ambient" and obj.type == "EMPTY":
         try:
             # Grab the custom properties (we only need red green and blue but just grab them all)
             dictProperties = {}
@@ -82,8 +82,6 @@ def ExportObjLight(obj):
         print("Unable to assign Light color, skipping " + obj.name)
         return
          
-    # diffuse_factor we introduced in 2.93
-    # Therefore 2.8 - 2.92 no longer work
     if obj.type == "LIGHT":
          if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_DIR:
             outLight.Intensity = obj.data.energy
@@ -101,7 +99,7 @@ def ExportObjLight(obj):
                 import colorsys
                 tempHSV = colorsys.rgb_to_hsv(obj.data.color[0], obj.data.color[1], obj.data.color[2])
                 outLight.Intensity = tempHSV[2]
-    elif obj.name.find("ambient", 0, 7) != -1 and obj.type == "EMPTY":
+    elif obj.name[:7].lower() == "ambient" and obj.type == "EMPTY":
         outLight.Intensity = 1.0
     else:
         print("Unable to assign Light intensity, skipping " + obj.name)

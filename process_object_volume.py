@@ -9,7 +9,7 @@ from . import g_class # Get our global variables for the header data
 def ExportObjVolume(obj):
     if obj.type != "MESH":
         return
-    if(obj.name.find("cell_", 0, 5) == -1):
+    if obj.name[:5].lower() != "cell_":
         return
         
     print(obj.name, "is a cell object")    

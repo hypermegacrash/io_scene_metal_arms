@@ -94,7 +94,7 @@ class CMaterialStringParser:
         self.m_ApeCommands.fDetailMapTileFactor = 4
         self.m_ApeCommands.nCollMask = APE_MAT_COLL_FLAGS_COLL_WITH_EVERYTHING
         self.m_ApeCommands.nReactType = 0
-        self.m_ApeCommands.nSurfaceType = 0 # HAD SET TO -1 BUT CHANGED TO 0 CAUSE DECALS + GIBS
+        self.m_ApeCommands.nSurfaceType = 0
         self.m_ApeCommands.nID = -1
     
     # The meat, takes a Material String Name as input formats the class's Star Command struct
@@ -173,51 +173,51 @@ class CMaterialStringParser:
             self.m_ApeCommands.bNoColl = True
         
         if(self._GetParamterString2(pszMatStr, "*coll")): 
-            if( self.nParams[0] == 1 ):
+            if( int( float( self.nParams[0] ) )  == 1 ):
                 self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_PLAYER
             else:
                 self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_PLAYER
-            if( self.nParams[1] == 1 ):
+            if( int( float( self.nParams[1] ) )  == 1 ):
                 self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_NPCS
             else:
                 self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_NPCS
-            if( self.nParams[2] == 1 ):
+            if( int( float( self.nParams[2] ) )  == 1 ):
                 self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_OBSTRUCT_LINE_OF_SIGHT
             else:
                 self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_OBSTRUCT_LINE_OF_SIGHT
-            if( self.nParams[3] == 1 ):
+            if( int( float( self.nParams[3] ) )  == 1 ):
                 self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_THIN_PROJECTILES
             else:
                 self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_THIN_PROJECTILES
-            if( self.nParams[4] == 1 ):
+            if( int( float( self.nParams[4] ) )  == 1 ):
                 self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_THICK_PROJECTILTES
             else:
                 self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_THICK_PROJECTILTES
-            if( self.nParams[5] == 1 ):
+            if( int( float( self.nParams[5] ) )  == 1 ):
                 self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_CAMERA
             else:
                 self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_CAMERA
-            if( self.nParams[6] == 1 ):
+            if( int( float( self.nParams[6] ) )  == 1 ):
                 self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_OBJECTS
             else:
                 self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_OBJECTS
-            if( self.nParams[7] == 1 ):
+            if( int( float( self.nParams[7] ) )  == 1 ):
                 self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_WALKABLE
             else:
                 self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_WALKABLE        
-            if( self.nParams[8] == 1 ):
+            if( int( float( self.nParams[8] ) )  == 1 ):
                 self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_OBSTRUCT_SPLASH_DAMAGE
             else:
                 self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_OBSTRUCT_SPLASH_DAMAGE
-            if( self.nParams[9] == 1 ):
+            if( int( float( self.nParams[9] ) )  == 1 ):
                 self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLLIDE_WITH_DEBRIS
             else:
                 self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLLIDE_WITH_DEBRIS     
-            if( self.nParams[10] == 1 ):
+            if( int( float( self.nParams[10] ) )  == 1 ):
                 self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLLIDE_WITH_VEHICLES
             else:
                 self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLLIDE_WITH_VEHICLES
-            if( self.nParams[11] == 1 ):
+            if( int( float( self.nParams[11] ) )  == 1 ):
                 self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_HOVER_COLLIDABLE
             else:
                 self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_HOVER_COLLIDABLE

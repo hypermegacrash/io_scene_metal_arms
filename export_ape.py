@@ -38,6 +38,8 @@ from . import g_class
 from .process_object_geo import ExportObjGeo
 from .process_object_light import ExportObjLight
 
+#from .process_object_geo2 import ExportObjGeo
+
 # We need this for accessing filepath functions
 import os
 

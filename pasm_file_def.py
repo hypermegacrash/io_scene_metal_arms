@@ -858,7 +858,7 @@ class PASMVert:
     # Class comparison doesn't work by default b/c it doesn't know what to compare so we do this
     # Stupid, half assed function, blah
     def __eq__(self, other) : 
-        return self.Pos == other.Pos and self.Norm == other.Norm and self.Color == other.Color and self.aUVs == other.aUVs
+        return self.Pos == other.Pos and self.Norm == other.Norm and self.Color == other.Color and self.aUVs[0] == other.aUVs[0] and self.aUVs[1] == other.aUVs[1]
         
     def packBytes(self):
         #init our bytearray

@@ -9,7 +9,7 @@ from . import pasm_math # PASM helper defs
 from .process_star_command import CObjectStringParser # Import just the Material Star Command Parser
 
 def ExportObjObject(obj):
-    if(obj.name.find("obj_", 0, 4) == -1):
+    if obj.name[:4].lower() != "obj_":
         return
         
     print(obj.name, "is a object object")
@@ -30,17 +30,7 @@ def ExportObjObject(obj):
     objStrParser.Parse(obj.name.lower())
     outObject.nFlags += objStrParser.m_ApeObjectFlag
     
-    outObject.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
-    
-    # We only apply scale if it is uniform
-    if(obj.scale[0] == obj.scale[1] == obj.scale[2]):
-        #print("SCALE UNIFORM")
-        outObject.mtxOrientation[0] = obj.scale[0] * outObject.mtxOrientation[0]
-        outObject.mtxOrientation[4] = obj.scale[0] * outObject.mtxOrientation[4]
-        outObject.mtxOrientation[8] = obj.scale[0] * outObject.mtxOrientation[8]
-    else:
-        pass
-        #print("SCALE NOT UNIFORM")
+    outObject.mtxOrientation = pasm_math.BObj2F43MtxSCALE(obj)
     
     # Grab custom properties from the object
     try:

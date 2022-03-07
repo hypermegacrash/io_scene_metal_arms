@@ -14,13 +14,13 @@ def ExportObjShape(obj):
     if obj.type == "CURVE":
         bExitEarly = False
     #objs could be ANY DATATYPE, so check for that
-    if(obj.name.find("obj_", 0, 4) != -1):
+    if obj.name[:4].lower() == "obj_":
         bExitEarly = True
     # Ambient cubes are lights, not shapes
-    if obj.name.find("ambient", 0, 7) != -1 and obj.type == "EMPTY":
+    if obj.name[:7].lower() == "ambient" and obj.type == "EMPTY":
         bExitEarly = True
     # Little hack for Vissova so a mesh can represent a player start
-    if(obj.name.find("start_", 0, 6) != -1) and obj.type == "MESH":
+    if obj.name[:6].lower() == "start_" and obj.type == "MESH":
         bExitEarly = False
         
     if(bExitEarly):
@@ -31,7 +31,7 @@ def ExportObjShape(obj):
     outShape = pasm_file_def.PASMShape()
     
     # Little hack PT 2 for Vissova so a mesh can represent a player start
-    if(obj.name.find("start_", 0, 6) != -1) and obj.type == "MESH":
+    if obj.name[:6].lower() == "start_" and obj.type == "MESH":
         outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT
         outShape.typeData = pasm_file_def.PASMShapeStartPoint()
     
