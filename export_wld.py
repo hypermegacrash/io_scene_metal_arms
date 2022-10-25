@@ -35,14 +35,13 @@ from . import pasm_file_def
 from . import g_class
 
 # Grab all our defs for exporting Blender data to PASM formatted data
-#from .process_object_geo import ExportObjGeo
-from .process_object_light import ExportObjLight
+from .process_object_geo3   import ExportObjGeo
+from .process_object_light  import ExportObjLight
 from .process_object_object import ExportObjObject
-from .process_object_shape import ExportObjShape
+from .process_object_shape  import ExportObjShape
 from .process_object_volume import ExportObjVolume
-from .process_object_fog import ExportObjFog
-
-from .process_object_geo2 import ExportObjGeo
+from .process_object_portal import ExportObjPortal
+from .process_object_fog    import ExportObjFog
 
 # We need this for accessing filepath functions
 import os
@@ -150,6 +149,9 @@ class ExportWLD(Operator, ExportHelper):
 
                 for obj in objects:
                     ExportObjVolume(obj)
+                    
+                for obj in objects:
+                    ExportObjPortal(obj)
                 
                 if(self.m_bExportGeo):                
                     for obj in objects:

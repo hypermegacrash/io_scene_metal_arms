@@ -35,10 +35,8 @@ from . import pasm_file_def
 from . import g_class
 
 # Grab all our defs for exporting Blender data to PASM formatted data
-from .process_object_geo import ExportObjGeo
+from .process_object_geo3  import ExportObjGeo
 from .process_object_light import ExportObjLight
-
-#from .process_object_geo2 import ExportObjGeo
 
 # We need this for accessing filepath functions
 import os

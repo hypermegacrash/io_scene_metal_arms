@@ -643,6 +643,40 @@ class PASMVolume:
         return outBytes
 
 #################
+# PORTAL DEFINITIONS
+# Visibilty Portal definition for designer placed sightline planes between volumes
+class PASMVisPortal:
+    def __init__(self):
+        self.szName = ""
+        self.ACorners = [PASMVisPoint() for i in range(4)]
+        self.Normal = [0.0, 0.0, 0.0]
+        self.Centroid = [0.0, 0.0, 0.0]
+
+        self.nFlags = 0
+
+        self.PAD = bytearray(16)
+
+    def packBytes(self):
+        outBytes = bytearray() # init our bytearray
+        
+        size = bytearray(32)
+        size[0:len(self.szName[0:31])] = bytes(self.szName, "utf-8")[0:31]
+        outBytes += size
+        
+        for i in self.ACorners:
+            outBytes += i.packBytes()
+        for i in self.Normal:
+            outBytes += struct.pack("<f", i)
+        for i in self.Centroid:
+            outBytes += struct.pack("<f", i)
+        
+        outBytes += struct.pack("<i", self.nFlags)[:4]
+            
+        outBytes += self.PAD
+             
+        return outBytes
+
+#################
 # MESH DEFINITIONS
 # Flags for special material effect in Layers
 # Size: 80h

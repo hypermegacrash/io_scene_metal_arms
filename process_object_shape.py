@@ -8,23 +8,15 @@ from . import pasm_math # PASM helper defs
 
 def ExportObjShape(obj):
     bExitEarly = False
-    if obj.type != "EMPTY":
-        bExitEarly = True
-    # Lines are shapes so must be excluded
-    if obj.type == "CURVE":
-        bExitEarly = False
-    #objs could be ANY DATATYPE, so check for that
-    if obj.name[:4].lower() == "obj_":
-        bExitEarly = True
-    # Ambient cubes are lights, not shapes
-    if obj.name[:7].lower() == "ambient" and obj.type == "EMPTY":
-        bExitEarly = True
-    # Little hack for Vissova so a mesh can represent a player start
-    if obj.name[:6].lower() == "start_" and obj.type == "MESH":
-        bExitEarly = False
+    
+    if obj.type != "EMPTY": bExitEarly = True
+    if obj.type == "CURVE": bExitEarly = False            # Lines are shapes so must be excluded
+    if obj.name[:4].lower() == "obj_": bExitEarly = True  # objs could be ANY DATATYPE, so check for that
+    if obj.name[:5].lower() == "port_": bExitEarly = True # portals should be skipped
+    if obj.name[:7].lower() == "ambient" and obj.type == "EMPTY": bExitEarly = True  # Ambient cubes are lights, not shapes
+    if obj.name[:6].lower() == "start_"  and obj.type == "MESH":  bExitEarly = False # Little hack for Vissova so a mesh can represent a player start
         
-    if(bExitEarly):
-        return
+    if(bExitEarly): return
         
     print(obj.name, "is a shape object")
     
@@ -59,7 +51,7 @@ def ExportObjShape(obj):
         
     if outShape.nType == pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_BOX:
         outShape.typeData.fLength = obj.scale[1]
-        outShape.typeData.fWidth = obj.scale[0]
+        outShape.typeData.fWidth  = obj.scale[0]
         outShape.typeData.fHeight = obj.scale[2]
         
     if outShape.nType == pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE:
