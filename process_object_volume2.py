@@ -14,10 +14,10 @@ def ExportObjVolume(obj):
         
     print(obj.name, "is a cell object")    
     
-    if(len(obj.data.polygons) != 6):
+    #if(len(obj.data.polygons) != 6):
         #print("The cell", obj.name, "isn't a non-triangulated cube with 6 faces. While convex shapes ARE supported for cells" +
         #" in the PASM .wld format. That functionality is not currently supported in this itteration of the tool")
-        return
+    #    return
     #print("CELL NAME:", obj.name, "is a cube with 6 faces, good")   
     
     outCell = pasm_file_def.PASMCell()
@@ -27,6 +27,38 @@ def ExportObjVolume(obj):
     # This returns a new instance of the vertex data
     # Whatever modifed here won't affect the scene
     testM = obj.to_mesh()
+    
+    # Test for convexity
+    import bmesh # Need this to triangulate the mesh
+    bm = bmesh.new()
+    bm.from_mesh(testM)
+    
+    bIsConvex = False
+    
+    for face in bm.faces:
+        for loop in face.loops:
+            if not loop.is_convex:
+                bIsConvex = True
+                break
+    
+    if(bIsConvex):
+        print("Mesh is not convex, skipping cell")
+        return
+        
+    # OK Now we need the following
+    # There can be only 6 degrees per face...
+    # 1. For each face if face.vertices > 6
+    # Select 6 vertices and then call vert_connect_path() on that selection
+    # Continue until there are no more faces with more than 6 degrees
+    
+    for poly in bm.faces:
+        #print(len(poly.verts))
+        if(len(poly.verts) > 6):
+            #print("TOO MANY POINTS ON THIS FACE")
+            bmesh.ops.connect_verts(bm, verts=[v for v in poly.verts[:6]] )
+    
+    bm.to_mesh(testM)
+    bm.free()
     
     # Dump the verts
     VisVerts = []
@@ -75,12 +107,12 @@ def ExportObjVolume(obj):
     for index in testM.polygons:
         tempVisFace = pasm_file_def.PASMVisFace()
         
-        # We're hardcoding cubes for now, cubes always got 4 edges and verts per face
-        tempVisFace.nDegree = 4
+        # Degrees is # of vertices / edges for this face
+        # A face always shares the same number of vertices & edges
+        tempVisFace.nDegree = len(index.vertices)
         
-        # Should be 4 in here b/c CUBE
         for vertex in range(len(index.vertices)):
-              tempVisFace.aVertIndices[vertex] = index.vertices[vertex]
+            tempVisFace.aVertIndices[vertex] = index.vertices[vertex]
               
         # We already got a list of edges, use them to find pattern
         aEdgeIndices = []

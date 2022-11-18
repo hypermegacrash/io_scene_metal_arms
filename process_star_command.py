@@ -478,7 +478,7 @@ class CPortalStringParser:
                 return True
         return False
     
-    def ResetRoDefaults():
+    def ResetToDefaults(self):
         self.m_ApePortalFlag = 0
         self.Params = None
     

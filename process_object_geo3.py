@@ -139,6 +139,12 @@ def ExportObjGeo(obj):
     
     # UV Requirement
     reflectionPoint = 0.500
+    # Reflect all UVs early to prepare them for the pipeline
+    for uvlayer in geo.uv_layers:
+       for layer in uvlayer.data:
+           layer.uv[1] =  layer.uv[1] - reflectionPoint
+           layer.uv[1] = -layer.uv[1]
+           layer.uv[1] =  layer.uv[1] + reflectionPoint
       
     # Get our color layers
     ColorChannel = None
@@ -172,15 +178,16 @@ def ExportObjGeo(obj):
         mat = pasm_file_def.PASMMaterial()  # Construct our material
         mat.StarCommands.nShaderNum = -1    # Set shader # to -1 to know we need to set a default
               
-        # Parse parent material name for star commands & material flags
+        # STAR COMMANDS
+        # Geometry Name -> Composite Material Name > Material Name
         matStrParser = CMaterialStringParser()
         matStrParser.ResetToDefaults()
-        # First we parse geo name for star commands
-        matStrParser.Parse(obj.name.lower())
-        # Then we parse the actual material name for star commands
-        matStrParser.Parse( obj.data.materials[matIndex].name.lower() )
+        
+        matStrParser.Parse( obj.name.lower() )                          # First we parse geo name for star commands & material flags
+        matStrParser.Parse( obj.data.materials[matIndex].name.lower() ) # Then we parse the material name for star commands & material flags
+        
         mat.StarCommands = matStrParser.m_ApeCommands
-        mat.nFlags = matStrParser.m_nMatFlags
+        mat.nFlags       = matStrParser.m_nMatFlags
         mat.nAffectAngle = matStrParser.m_nAffectAngle
                
         mat.nFirstIndex = len(aIndexBuffer)
@@ -188,17 +195,15 @@ def ExportObjGeo(obj):
         layer  = pasm_file_def.PASMLayer()
         layer1 = pasm_file_def.PASMLayer()
         
-        # Get the material output
-        matOut = obj.data.materials[matIndex].node_tree.nodes["Material Output"]
-        # Get the Fang Material Node group connected to it
-        fangMatGroup = matOut.inputs["Surface"].links[0].from_node 
+        matOut = obj.data.materials[matIndex].node_tree.nodes["Material Output"] # Get the material output
+        fangMatGroup = matOut.inputs["Surface"].links[0].from_node               # Get the Fang Material Node group connected to it
         
         if (fangMatGroup.node_tree.name == "FANG Material"):
             print("We got a FANG Material!")
             
             layer = ParseMaterial(obj.data.materials[matIndex].name.lower(), fangMatGroup, matStrParser)
             
-            mat.aMatLayers[0] = copy.copy( layer ) # Link our base layer with our material
+            mat.aMatLayers[0] = copy.copy( layer ) # Link base layer with our material
             mat.nLayerCount += 1
             
         elif (fangMatGroup.node_tree.name == "FANG Composite"):
@@ -206,12 +211,12 @@ def ExportObjGeo(obj):
             
             layer = ParseMaterial(fangMatGroup.inputs["Base"].links[0].from_node.name.lower(), fangMatGroup.inputs["Base"].links[0].from_node, matStrParser)
             
-            mat.aMatLayers[0] = layer # Link our base layer with our material
+            mat.aMatLayers[0] = copy.copy( layer ) # Link base layer with our material
             mat.nLayerCount += 1
             
             layer1 = ParseMaterial(fangMatGroup.inputs["Layer 1"].links[0].from_node.name.lower(), fangMatGroup.inputs["Layer 1"].links[0].from_node, matStrParser)
             
-            mat.aMatLayers[1] = layer1 # Link layer 1 with our material
+            mat.aMatLayers[1] = copy.copy( layer1 ) # Link layer 1 with our material
             mat.nLayerCount += 1
         else:
             raise ValueError("NOT A FANG MATERIAL!!!")
@@ -232,13 +237,6 @@ def ExportObjGeo(obj):
                     UV0 = geo.uv_layers[ fangMatGroup.inputs["Diffuse Color"].links[0].from_node.inputs["Vector"].links[0].from_node.uv_map ]
                 except:
                     UV0 = geo.uv_layers[0]
-                # Fix it
-                for uv in UV0.data:
-                    VBuffer = uv.uv[1]
-                    VBuffer = VBuffer - reflectionPoint
-                    VBuffer = -VBuffer
-                    VBuffer = VBuffer + reflectionPoint
-                    uv.uv[1] = VBuffer
                 
             elif (fangMatGroup.node_tree.name == "FANG Composite"):
                 try:
@@ -246,26 +244,12 @@ def ExportObjGeo(obj):
                     UV0 = geo.uv_layers[ fangMatGroup.inputs["Base"].links[0].from_node.inputs["Diffuse Color"].links[0].from_node.inputs["Vector"].links[0].from_node.uv_map ]
                 except:
                     UV0 = geo.uv_layers[0]
-                # Fix it
-                for uv in UV0.data:
-                    VBuffer = uv.uv[1]
-                    VBuffer = VBuffer - reflectionPoint
-                    VBuffer = -VBuffer
-                    VBuffer = VBuffer + reflectionPoint
-                    uv.uv[1] = VBuffer
                 
                 try:
                     # Get UV1
                     UV1 = geo.uv_layers[ fangMatGroup.inputs["Layer 1"].links[0].from_node.inputs["Diffuse Color"].links[0].from_node.inputs["Vector"].links[0].from_node.uv_map ]
                 except:
                     UV1 = geo.uv_layers[0]
-                # Fix it
-                for uv in UV1.data:
-                    VBuffer = uv.uv[1]
-                    VBuffer = VBuffer - reflectionPoint
-                    VBuffer = -VBuffer
-                    VBuffer = VBuffer + reflectionPoint
-                    uv.uv[1] = VBuffer
                 
         except Exception as e: 
             print("Error extracing UV Group")

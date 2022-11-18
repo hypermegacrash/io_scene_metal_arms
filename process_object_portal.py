@@ -36,6 +36,12 @@ def ExportObjPortal(obj):
     
     outPortal = pasm_file_def.PASMVisPortal()
     outPortal.szName = obj.name
+    
+    # Parse layer / child material name for star commands
+    portalStrParser = CPortalStringParser()
+    portalStrParser.ResetToDefaults()
+    portalStrParser.Parse(obj.name.lower())
+    outPortal.nFlags = portalStrParser.m_ApePortalFlag
      
     VisVerts = []
     for point in spline.points:

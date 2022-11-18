@@ -39,7 +39,7 @@ from .process_object_geo3   import ExportObjGeo
 from .process_object_light  import ExportObjLight
 from .process_object_object import ExportObjObject
 from .process_object_shape  import ExportObjShape
-from .process_object_volume import ExportObjVolume
+from .process_object_volume2 import ExportObjVolume
 from .process_object_portal import ExportObjPortal
 from .process_object_fog    import ExportObjFog
 

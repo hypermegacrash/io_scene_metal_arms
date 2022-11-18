@@ -4,7 +4,7 @@
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 9, 1),
+        "version": (0, 9, 3),
         "blender": (2, 93, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",
@@ -19,15 +19,25 @@ from .export_wld import *
 from .export_ape import *
 from .export_cam import *
 from .export_mtx import *
-from .ui_custom_properties import *
+
+# Classes that expose more Metal Arms functionality
+from .ui_custom_properties   import *
+#from .ui_material_properties import *
 
 # The list of classes we are registering within Blender
 classes = (
+    # File Export Logic
     ExportWLD,
     ExportAPE,
     ExportCAM,
     ExportMTX,
-    MAImgui
+    
+    # Gamedata Editor UI
+    MAImgui,
+    
+    # Material Properties + UI
+    #MAMaterialProperty,
+    #MAMaterialPanel
 )
 
 # When this add-on is enabled in Edit>Preferences>Add-ons, this function is called
@@ -37,23 +47,37 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     
-    # Update UI
+    # Update UI in File > Export 
     bpy.types.TOPBAR_MT_file_export.append(exportAPE_MenuFunc)
     bpy.types.TOPBAR_MT_file_export.append(exportWLD_MenuFunc)
     bpy.types.TOPBAR_MT_file_export.append(exportCAM_MenuFunc)
     bpy.types.TOPBAR_MT_file_export.append(exportMTX_MenuFunc)
+    
+    # Update UI in Right Click > Object Context Menu
     VIEW3D_MT_object_context_menu.append(MAGUI_MenuFunc)
+    
+    # This code declares a variable called 'ma_mat' which is short for Metal Arms Material
+    # Being declared in 'bpy.types.Material' means every material gets it's own 'ma_mat'
+    # Each 'ma_mat' points to it's own instance of the class 'MAMaterialProperty'
+    #bpy.types.Material.ma_mat = bpy.props.PointerProperty(type = MAMaterialProperty)
 
 # When this add-on is disabled in Edit>Preferences>Add-ons, this function is called
 def unregister():
     print("Metal Arms Toolbox Add-On disabled!")
+    
+    # Delete references to data before deleting classes said data are using
+    #del bpy.types.Material.ma_mat
+    
     # Unregistering classes
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
     
-    # Update UI
-    bpy.types.TOPBAR_MT_file_export.remove(exportAPE_MenuFunc)
-    bpy.types.TOPBAR_MT_file_export.remove(exportWLD_MenuFunc)
-    bpy.types.TOPBAR_MT_file_export.remove(exportCAM_MenuFunc)
-    bpy.types.TOPBAR_MT_file_export.remove(exportMTX_MenuFunc)
+    # Update UI in Right Click > Object Context Menu
     VIEW3D_MT_object_context_menu.remove(MAGUI_MenuFunc)
+    
+    # Update UI in File > Export in reverse order
+    bpy.types.TOPBAR_MT_file_export.remove(exportMTX_MenuFunc)
+    bpy.types.TOPBAR_MT_file_export.remove(exportCAM_MenuFunc)
+    bpy.types.TOPBAR_MT_file_export.remove(exportWLD_MenuFunc)
+    bpy.types.TOPBAR_MT_file_export.remove(exportAPE_MenuFunc)
+    

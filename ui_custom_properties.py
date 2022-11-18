@@ -1,3 +1,5 @@
+# Module that adds a text input window under the 
+
 # Native Blender
 import bpy
 from bpy.types import VIEW3D_MT_object_context_menu # We need access to the context menu struct
@@ -8,18 +10,20 @@ from .thirdparty import blender_imgui
 import imgui
 
 class MAImgui(Operator,blender_imgui.ImguiBasedOperator):
-    """Rercreation of Object Properties window from 3DS MAX 5 using Dear Imgui"""
+    """(Part of Metal Arms PASM Toolkit Add-on)
+Multi line text field for inputting gamedata (Entity parameters) associated with the selected object.
+Recreation of the Object Properties window from 3DS MAX 5 using Dear Imgui"""
     bl_idname = "object.ma_imgui_example"
-    bl_label = "MA Toolkit Custom Properties"
+    bl_label = "MA Gamedata"
  
     def draw(self, context):
         # This is where you can use any code from pyimgui's doc
         # see https://pyimgui.readthedocs.io/en/latest/
         imgui.set_next_window_size(300, 400, imgui.APPEARING)
         imgui.set_next_window_position((context.window.width/2) - 100, (context.window.height/2) - 200, imgui.APPEARING )
-        self.window = imgui.begin("Object Properties MA Toolkit", True)
+        self.window = imgui.begin("MA Gamedata", True)
         imgui.text("Editing: " + self.obj.name)
-        imgui.text("User Defined Properties:")
+        #imgui.text("User Defined Properties:")
         changed, bpy.data.objects[self.obj.name]["ma"] = imgui.input_text_multiline(
             '',
             bpy.data.objects[self.obj.name]["ma"],
@@ -31,7 +35,7 @@ class MAImgui(Operator,blender_imgui.ImguiBasedOperator):
         
     def invoke(self, context, event):
         #print("invoke is a go")
-        # If there are no objs in the scene this will crash
+        # @Bug If there are no objs in the scene this will crash
         self.obj = bpy.context.active_object
         # Call init_imgui() at the beginning
         self.init_imgui(context)
