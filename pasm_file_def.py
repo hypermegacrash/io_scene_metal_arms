@@ -889,6 +889,9 @@ class PASMVert:
         self.aWeights = [PASMWeight() for i in range(4)]
         self.PAD = bytearray(16)
         
+    def __hash__(self):
+        return hash( (tuple(self.Pos), tuple(self.Norm), tuple(self.Color), tuple(self.aUVs[0]), tuple(self.aUVs[1]), self.fNumWeights ) ) # Skipping weights, bite me future me
+        
     # Class comparison doesn't work by default b/c it doesn't know what to compare so we do this
     # Stupid, half assed function, blah
     def __eq__(self, other) : 

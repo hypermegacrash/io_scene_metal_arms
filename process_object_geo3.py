@@ -7,6 +7,7 @@ from . import pasm_math     # PASM helper defs
 from .process_star_command import CMaterialStringParser # Import just the Material Star Command Parser
 
 import copy # We need to do a deep copy rather than shallow copy because exported data gets finicky
+#import time # For debugging performance bottlenecks
 
 def ParseMaterial(matName, fangMatGroup, matStrParser):
     # Construct a layer containing all information to create a surface
@@ -115,6 +116,9 @@ def ExportObjGeo(obj):
         return # Don't work with meshes that have no material
         
     print(obj.name, "is a geo object")
+    
+    #tickA = None
+    #tickB = None
 
     outSegment = pasm_file_def.PASMSegment()
     outSegment.szMeshName = obj.name
@@ -157,7 +161,7 @@ def ExportObjGeo(obj):
 
     aVertexBuffer  = [] # Array buffer for holding every all unique PASMVerts(), used for file export
     aIndexBuffer   = [] # Array buffer for holding every remapped index as a PASMVertIndex(), used for file export
-    nLargestIndex  = 0  # When adding a new unique vertex index to aIndexBuffer we use this value then increment
+    vertexMap      = {} # Sorting map / dictonary for faster duplicate lookups
     
     # Itterate through the materials once to cache polygons into per material lists for access
     # rather than full itteration through polygons, everytime for each material
@@ -202,7 +206,6 @@ def ExportObjGeo(obj):
             print("We got a FANG Material!")
             
             layer = ParseMaterial(obj.data.materials[matIndex].name.lower(), fangMatGroup, matStrParser)
-            
             mat.aMatLayers[0] = copy.copy( layer ) # Link base layer with our material
             mat.nLayerCount += 1
             
@@ -210,12 +213,10 @@ def ExportObjGeo(obj):
             print("We got a FANG Composite!")
             
             layer = ParseMaterial(fangMatGroup.inputs["Base"].links[0].from_node.name.lower(), fangMatGroup.inputs["Base"].links[0].from_node, matStrParser)
-            
             mat.aMatLayers[0] = copy.copy( layer ) # Link base layer with our material
             mat.nLayerCount += 1
             
             layer1 = ParseMaterial(fangMatGroup.inputs["Layer 1"].links[0].from_node.name.lower(), fangMatGroup.inputs["Layer 1"].links[0].from_node, matStrParser)
-            
             mat.aMatLayers[1] = copy.copy( layer1 ) # Link layer 1 with our material
             mat.nLayerCount += 1
         else:
@@ -223,33 +224,22 @@ def ExportObjGeo(obj):
             
         # Setup a default shader if not supplied
         if mat.StarCommands.nShaderNum < 0:
-            if mat.nLayerCount == 1:
-                mat.StarCommands.nShaderNum = 0
-            else:
-                mat.StarCommands.nShaderNum = 11
+            if mat.nLayerCount == 1: mat.StarCommands.nShaderNum = 0
+            else:                    mat.StarCommands.nShaderNum = 11
         
         # Buffer of UVs
         # The hacky hack that smells... hacky
         try:
             if (fangMatGroup.node_tree.name == "FANG Material"):   
-                try:
-                    # Get UV0
-                    UV0 = geo.uv_layers[ fangMatGroup.inputs["Diffuse Color"].links[0].from_node.inputs["Vector"].links[0].from_node.uv_map ]
-                except:
-                    UV0 = geo.uv_layers[0]
+                try:    UV0 = geo.uv_layers[ fangMatGroup.inputs["Diffuse Color"].links[0].from_node.inputs["Vector"].links[0].from_node.uv_map ]
+                except: UV0 = geo.uv_layers[0]
                 
             elif (fangMatGroup.node_tree.name == "FANG Composite"):
-                try:
-                    # Get UV0
-                    UV0 = geo.uv_layers[ fangMatGroup.inputs["Base"].links[0].from_node.inputs["Diffuse Color"].links[0].from_node.inputs["Vector"].links[0].from_node.uv_map ]
-                except:
-                    UV0 = geo.uv_layers[0]
+                try:    UV0 = geo.uv_layers[ fangMatGroup.inputs["Base"].links[0].from_node.inputs["Diffuse Color"].links[0].from_node.inputs["Vector"].links[0].from_node.uv_map ]
+                except: UV0 = geo.uv_layers[0]
                 
-                try:
-                    # Get UV1
-                    UV1 = geo.uv_layers[ fangMatGroup.inputs["Layer 1"].links[0].from_node.inputs["Diffuse Color"].links[0].from_node.inputs["Vector"].links[0].from_node.uv_map ]
-                except:
-                    UV1 = geo.uv_layers[0]
+                try:    UV1 = geo.uv_layers[ fangMatGroup.inputs["Layer 1"].links[0].from_node.inputs["Diffuse Color"].links[0].from_node.inputs["Vector"].links[0].from_node.uv_map ]
+                except: UV1 = geo.uv_layers[0]
                 
         except Exception as e: 
             print("Error extracing UV Group")
@@ -269,15 +259,12 @@ def ExportObjGeo(obj):
                 continue
 
             for loop, vertex, normal in zip(triangle.loops, triangle.vertices, triangle.split_normals):
+                #geoLogicTic1 = time.perf_counter()
                 entryVertex = pasm_file_def.PASMVert() # Assemble a PASMVert for this vertex
                 
                 entryVertex.Pos[0] = copy.copy ( geo.vertices[vertex].co[0] )
                 entryVertex.Pos[1] = copy.copy ( geo.vertices[vertex].co[2] )
                 entryVertex.Pos[2] = copy.copy ( geo.vertices[vertex].co[1] )
-                
-                #entryVertex.Norm[0] =  copy.copy ( normal[0] )
-                #entryVertex.Norm[1] =  copy.copy ( normal[2] )
-                #entryVertex.Norm[2] =  copy.copy ( normal[1] )
                 
                 entryVertex.Norm[0] =  copy.copy ( geo.loops[loop].normal[0] )
                 entryVertex.Norm[1] =  copy.copy ( geo.loops[loop].normal[2] )
@@ -296,24 +283,28 @@ def ExportObjGeo(obj):
                     entryVertex.Color[2] = copy.copy ( float("%.2f" % ColorChannel.data[loop].color[2]) )
                 
                 # Vertex Alpha
-                if AlphaChannel != None:
-                    entryVertex.Color[3] = copy.copy ( float("%.2f" % AlphaChannel.data[loop].color[0]) )
-                else:
-                    entryVertex.Color[3] = 1.0 # What the... if the default is 1.0 set it on init
+                if AlphaChannel != None: entryVertex.Color[3] = copy.copy ( float("%.2f" % AlphaChannel.data[loop].color[0]) )
+                else:                    entryVertex.Color[3] = 1.0 # What the... if the default is 1.0 set it on init
         
-                # Is this PASMVert unique?
-                if entryVertex not in aVertexBuffer:
-                    aVertexBuffer.append(entryVertex)
-                    #print("ADD NEW PASMVERTEX AT INDEX:", nLargestIndex)
-                    indexBuf = pasm_file_def.PASMVertIndex()
-                    indexBuf.nVertIndex = nLargestIndex
-                    aIndexBuffer.append(indexBuf)
-                    nLargestIndex = nLargestIndex + 1
-                else:
-                    #print("PASMVERTEX ALREADY EXISTS AT INDEX:", aVertexBuffer.index(entryVertex))
-                    indexBuf = pasm_file_def.PASMVertIndex()
-                    indexBuf.nVertIndex = aVertexBuffer.index(entryVertex)
-                    aIndexBuffer.append(indexBuf)
+                #geoLogicTic2 = time.perf_counter()
+                #geoLogicUniqueTic1 = time.perf_counter()
+                    
+                # We need to check if we've seen this PASMVert yet, use a hashmap / dict for super fast lookups ( hashmap is O(n), list is O(n^2) )
+                indexBuf = pasm_file_def.PASMVertIndex()
+                if entryVertex in vertexMap: # We've seem this vertex already...
+                    indexBuf.nVertIndex = vertexMap[entryVertex] # ...therefore find the vertex in question in the hashmap
+                else: # We have not seen this vertex yet
+                    vertexMap[entryVertex] = len(aVertexBuffer)  # Add the hash of the PASMVert to the hashmap / dict
+                    indexBuf.nVertIndex    = len(aVertexBuffer)  # This is now the newest triangle index, therefore it is the largest
+                    aVertexBuffer.append(entryVertex)            # Add the vertex to the vertex buffer
+                aIndexBuffer.append(indexBuf) # Finally, add the PASMVertIndex to the index buffer list
+                    
+                #geoLogicUniqueTic2 = time.perf_counter()
+                
+            #if tickA == None: tickA = geoLogicTic2 - geoLogicTic1
+            #else: tickA += geoLogicTic2 - geoLogicTic1
+            #if tickB == None: tickB = geoLogicUniqueTic2 - geoLogicUniqueTic1
+            #else: tickB += geoLogicUniqueTic2 - geoLogicUniqueTic1
 
         mat.nNumIndices = len(aIndexBuffer) - mat.nFirstIndex
     
@@ -333,3 +324,8 @@ def ExportObjGeo(obj):
     g_class.file.write(outSegment.packBytes())
     g_class.gWldHeader.fileSize += len(outSegment.packBytes())
     g_class.gWldHeader.nNumSegments += 1
+    
+    # DEBUG
+    #print("PROFILING FOR GEO: " + obj.name)
+    #print("PASM VERTEX CONSTRUCTION: " + str( float("%.3f" % tickA) ) )
+    #print("PASM VERTEX NOT IN LOOP: " + str( float("%.3f" % tickB) ) )
