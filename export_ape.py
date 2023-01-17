@@ -37,6 +37,7 @@ from . import g_class
 # Grab all our defs for exporting Blender data to PASM formatted data
 from .process_object_geo3  import ExportObjGeo
 from .process_object_light import ExportObjLight
+from .process_object_bone  import ExportObjBone
 
 # We need this for accessing filepath functions
 import os
@@ -66,11 +67,12 @@ class ExportAPE(Operator, ExportHelper):
             default=True,
             )
           
-        #m_bExportHierarchy: BoolProperty(
-        #    name="Export Hierarchy",
-        #    description="Create a bone for every object",
-        #    default=True,
-        #    )
+        m_bExportHierarchy: BoolProperty(
+            name="Export Hierarchy",
+            #description="Create a bone for every object",
+            description="Export the armature from the scene",
+            default=True,
+            )
 
         # Draw the export properties which are then stored in self to be accessed later
         def draw(self, context):
@@ -85,7 +87,7 @@ class ExportAPE(Operator, ExportHelper):
             
             testA.prop(self, "m_bExportLights")
             testA.prop(self, "m_bExportGeo")
-            #testA.prop(self, "m_bExportHierarchy")
+            testA.prop(self, "m_bExportHierarchy")
             
             fileRevision = layout.row()
             fileRevision.label(text = "PASM File Version # 1.5.0")
@@ -127,9 +129,9 @@ class ExportAPE(Operator, ExportHelper):
                 # We itterate over the entire scene for each section of the PASM file
                 # One loop for lights, one for geo, one for cells, and so on
 	       
-                # if(self.m_bExportHierarchy):
-                #     for obj in objects:
-                #         ExportObjBone(obj)
+                if(self.m_bExportHierarchy):
+                    for obj in objects:
+                        ExportObjBone(obj)
                         
                 if(self.m_bExportLights):
                     for obj in objects:

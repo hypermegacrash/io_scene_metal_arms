@@ -81,10 +81,10 @@ class ExportMTX(Operator, ExportHelper):
             
             objects = context.selected_objects
             if(len(objects) == 0):
-                print("No Animated Object selected!")
+                self.report({'ERROR'}, 'No Animated Object selected!')
                 return {'FINISHED'}
             elif(len(objects) != 1):
-                print("Can only export 1 mtx at a time!")
+                self.report({'ERROR'}, 'Can only export 1 mtx at a time!')
                 return {'FINISHED'}
 
             # To mimic the original exporter as closely as possible

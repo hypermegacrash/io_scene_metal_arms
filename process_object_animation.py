@@ -21,10 +21,11 @@ def ExportObjAnim(obj):
     TIME_TICKSPERSEC = 4800 # Constant ripped from Max SDK Docs
     
     # Find the animation info from the interface
-    nTicksPerFrame = TIME_TICKSPERSEC / 30
     nFrameRate = bpy.context.scene.render.fps
     nStartTime = bpy.context.scene.frame_start
     nEndTime = bpy.context.scene.frame_end
+    nTicksPerFrame = TIME_TICKSPERSEC / 30
+    #nTicksPerFrame = TIME_TICKSPERSEC / nFrameRate
     
     # Calculate the interval and number of keys
     nInterval = (nTicksPerFrame * nFrameRate) / 30;
@@ -50,30 +51,32 @@ def ExportObjAnim(obj):
         aMTXBones.append(mtxBone)
         
         # Our bind pose is the first frame of animation
-        bpy.context.scene.frame_set(nStartTime)
-        bindPose = pasm_math.BObj2F43MtxBONE(pbone)
+        #bpy.context.scene.frame_set(nStartTime)
+        #bindPose = pasm_math.BObj2F43MtxBONE(pbone)
         # Our first frame of animation could also have a keyframe applied
-        bindFrame = [0.0 for i in range(3)]
-        bindPose[9] = bindPose[9] + pbone.location[0]
-        bindPose[10] = bindPose[10] + pbone.location[2]
-        bindPose[11] = bindPose[11] + pbone.location[1]
-        bindFrame[0] = pbone.location[0]
-        bindFrame[1] = pbone.location[1]
-        bindFrame[2] = pbone.location[2]
+        #bindFrame = [0.0 for i in range(3)]
+        #bindPose[9] = bindPose[9] + pbone.location[0]
+        #bindPose[10] = bindPose[10] + pbone.location[2]
+        #bindPose[11] = bindPose[11] + pbone.location[1]
+        #bindFrame[0] = pbone.location[0]
+        #bindFrame[1] = pbone.location[1]
+        #bindFrame[2] = pbone.location[2]
         
         for curFrame in range(nStartTime, nEndTime):
             curFrameTick = curFrame * 160
+            #curFrameTick = curFrame * nTicksPerFrame
             bpy.context.scene.frame_set(curFrame)
             testFrame = file_def_mtx.MTXFrame()
             number_of_ticks = float((curFrameTick - nStartTime)) * float((1.0/TIME_TICKSPERSEC))
             testFrame.fStartingSecs = number_of_ticks
+            
             testFrame.mtxOrientation = pasm_math.BObj2F43MtxBONE(pbone)
             
             # The bones positions is an offset from inital frame
             # In addition to respecting offset from parent bone
-            testFrame.mtxOrientation[9] = bindPose[9] + (bindFrame[0] - pbone.location[0])
-            testFrame.mtxOrientation[10] = bindPose[10] + (bindFrame[2] - pbone.location[2])
-            testFrame.mtxOrientation[11] = bindPose[11] + (bindFrame[1] - pbone.location[1])
+            #testFrame.mtxOrientation[9] = bindPose[9] + (bindFrame[0] - pbone.location[0])
+            #testFrame.mtxOrientation[10] = bindPose[10] + (bindFrame[2] - pbone.location[2])
+            #testFrame.mtxOrientation[11] = bindPose[11] + (bindFrame[1] - pbone.location[1])
             
             aMTXFrames.append(testFrame)
             

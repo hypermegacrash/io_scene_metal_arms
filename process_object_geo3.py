@@ -1,13 +1,13 @@
 # Third rewrite after hiatus. Module that processes a geo object and returns byte data
-# Reference: https://github.com/sobotka/blender-addons/blob/master/io_scene_obj/export_obj.py
 
+# FANG TOOLKIT
 from . import pasm_file_def # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
 from .process_star_command import CMaterialStringParser # Import just the Material Star Command Parser
-
+# BLENDER
 import copy # We need to do a deep copy rather than shallow copy because exported data gets finicky
-#import time # For debugging performance bottlenecks
+import bpy  # Pass this into the func or something so we aren't constantly grabbing, releasing this
 
 def ParseMaterial(matName, fangMatGroup, matStrParser):
     # Construct a layer containing all information to create a surface
@@ -116,15 +116,28 @@ def ExportObjGeo(obj):
         return # Don't work with meshes that have no material
         
     print(obj.name, "is a geo object")
-    
-    #tickA = None
-    #tickB = None
 
     outSegment = pasm_file_def.PASMSegment()
     outSegment.szMeshName = obj.name
     
+    # Check to see if this geo is attached to an armature
+    hSkeleton = None
+    if obj.vertex_groups: 
+        for modifier in obj.modifiers:
+            if modifier.type == "ARMATURE":
+                #print("Found our skeleton!")
+                hSkeleton = modifier.object
+                continue
+            
+    # If there is weight painting and theres an armature modifier attached, we got a skinned mesh
+    if hSkeleton != None:
+        outSegment.bSkinned = True # We are not checking if this mesh is rigged!!! Do this
+        # Make sure we are in REST pose so we can grab all the data in the rest position
+        hSkeleton.data.pose_position = "REST"
+        bpy.context.view_layer.update()
+        # Rest Pose Change https://blenderartists.org/t/cannot-change-pose-when-rest-position-is-enabled/637989
+    
     # This returns a new instance of geometry data with modifiers applied that wont affect scene
-    import bpy # Pass this into the func or something so we aren't constantly grabbing, releasing this
     dg = bpy.context.evaluated_depsgraph_get()
     eval_obj = obj.evaluated_get(dg)
     geo = eval_obj.to_mesh()
@@ -174,7 +187,7 @@ def ExportObjGeo(obj):
         if material is None:
             print("There are some faces on your mesh that are assigned to an empty material slot.")
         faceDict[face.material_index].append(face)
-       
+     
     # We itterate over each material to append new polygons into the segment   
     for matIndex in range(len(obj.data.materials)):
         if not faceDict[matIndex]: continue # If material is unused, bail early
@@ -244,11 +257,11 @@ def ExportObjGeo(obj):
         except Exception as e: 
             print("Error extracing UV Group")
             print(e)
-     
+
         # Mesh geometry take 2
         for triangle in faceDict[matIndex]:
             
-            # We need to check if there is an infinitely thin face, it will cause PASM to crash
+            # We need to check if there is an infinitely thin face, said face will cause PASM to crash
             samePos = 0
             if geo.vertices[triangle.vertices[0]].co[0] == geo.vertices[triangle.vertices[1]].co[0] == geo.vertices[triangle.vertices[2]].co[0]:  samePos += 1
             if geo.vertices[triangle.vertices[0]].co[1] == geo.vertices[triangle.vertices[1]].co[1] == geo.vertices[triangle.vertices[2]].co[1]:  samePos += 1
@@ -259,7 +272,6 @@ def ExportObjGeo(obj):
                 continue
 
             for loop, vertex, normal in zip(triangle.loops, triangle.vertices, triangle.split_normals):
-                #geoLogicTic1 = time.perf_counter()
                 entryVertex = pasm_file_def.PASMVert() # Assemble a PASMVert for this vertex
                 
                 entryVertex.Pos[0] = copy.copy ( geo.vertices[vertex].co[0] )
@@ -285,26 +297,32 @@ def ExportObjGeo(obj):
                 # Vertex Alpha
                 if AlphaChannel != None: entryVertex.Color[3] = copy.copy ( float("%.2f" % AlphaChannel.data[loop].color[0]) )
                 else:                    entryVertex.Color[3] = 1.0 # What the... if the default is 1.0 set it on init
-        
-                #geoLogicTic2 = time.perf_counter()
-                #geoLogicUniqueTic1 = time.perf_counter()
+                
+                # Vertex Weights
+                # In FANG, the 3 vertices that form a triangle can only have a max of 4 vertex weights total.
+                # SAS's Max Exporter contextually understands how to assign 1 vertex of a triangle 2 vertex weights instead of 1.
+                # This Blender implimentation could support that, but for brevity's sake we use only the largest weight group per vertex and assign it max influence (1.0f)
+                # https://blender.stackexchange.com/questions/14250/how-to-restrict-vertex-weights-to-no-more-than-n-number-of-bones
+                if hSkeleton != None:
+                    pWeight = pasm_file_def.PASMWeight()
+                    for vgroup in geo.vertices[vertex].groups:
+                        # Survival of the fittest, largest weight wins
+                        if vgroup.weight > pWeight.fWeight:
+                            pWeight.fWeight = vgroup.weight
+                            pWeight.fBoneIndex = hSkeleton.pose.bones.find(obj.vertex_groups[vgroup.group].name)
+                    pWeight.fWeight = 1 # If this is the only weight, might as well have it be max influence
+                    entryVertex.aWeights[0] = pWeight
+                    entryVertex.fNumWeights = 1 # We could support 2 max
                     
                 # We need to check if we've seen this PASMVert yet, use a hashmap / dict for super fast lookups ( hashmap is O(n), list is O(n^2) )
                 indexBuf = pasm_file_def.PASMVertIndex()
-                if entryVertex in vertexMap: # We've seem this vertex already...
-                    indexBuf.nVertIndex = vertexMap[entryVertex] # ...therefore find the vertex in question in the hashmap
-                else: # We have not seen this vertex yet
+                if entryVertex in vertexMap: # We've seem this PASMVert already
+                    indexBuf.nVertIndex = vertexMap[entryVertex] # Find the PASMVert in the hashmap
+                else: # We have not seen this PASMVert yet
                     vertexMap[entryVertex] = len(aVertexBuffer)  # Add the hash of the PASMVert to the hashmap / dict
                     indexBuf.nVertIndex    = len(aVertexBuffer)  # This is now the newest triangle index, therefore it is the largest
-                    aVertexBuffer.append(entryVertex)            # Add the vertex to the vertex buffer
+                    aVertexBuffer.append(entryVertex)            # Add the PASMVert to the vertex buffer
                 aIndexBuffer.append(indexBuf) # Finally, add the PASMVertIndex to the index buffer list
-                    
-                #geoLogicUniqueTic2 = time.perf_counter()
-                
-            #if tickA == None: tickA = geoLogicTic2 - geoLogicTic1
-            #else: tickA += geoLogicTic2 - geoLogicTic1
-            #if tickB == None: tickB = geoLogicUniqueTic2 - geoLogicUniqueTic1
-            #else: tickB += geoLogicUniqueTic2 - geoLogicUniqueTic1
 
         mat.nNumIndices = len(aIndexBuffer) - mat.nFirstIndex
     
@@ -324,8 +342,3 @@ def ExportObjGeo(obj):
     g_class.file.write(outSegment.packBytes())
     g_class.gWldHeader.fileSize += len(outSegment.packBytes())
     g_class.gWldHeader.nNumSegments += 1
-    
-    # DEBUG
-    #print("PROFILING FOR GEO: " + obj.name)
-    #print("PASM VERTEX CONSTRUCTION: " + str( float("%.3f" % tickA) ) )
-    #print("PASM VERTEX NOT IN LOOP: " + str( float("%.3f" % tickB) ) )

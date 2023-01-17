@@ -1,6 +1,11 @@
 # Various helpful math functions to help with converting from Blender formatting to PASM formatting
 
 import mathutils # Need to work with matrix math
+import copy      # Want to work on a copy of the data, not a reference
+
+# Blender matrix stuff
+from mathutils import Matrix, Vector
+from math import *
 
 # Convert a Blender Object to a Fang Engine 4x3 Matrix
 def BObj2F43Mtx(obj):
@@ -142,57 +147,87 @@ def BObj2F43MtxLIGHT(obj):
     
     return outOrientation
     
+# DONT TOUCH IT
 def BObj2F43MtxBONE(obj):
-    rotMtx = obj.matrix.to_euler()
-    # We need the bone rotation in local space
-    # Since we inherit the parent bone's rotation
-    # we must subtract that to get this bone's own rotation
-    try:
-        rotMtxParent = obj.parent.matrix.to_euler()
-        #print("rotMtx: ", rotMtx)
-        #print("rotMtx Parent: ", rotMtxParent)
-        rotMtx[0] = rotMtx[0] - rotMtxParent[0]
-        rotMtx[1] = rotMtx[1] - rotMtxParent[1]
-        rotMtx[2] = rotMtx[2] - rotMtxParent[2]
-        #print(rotMtx)
-    except:
-        None
-    rotMtx = rotMtx.to_matrix()
+    # This is so stupid, should be a matrix not an array of floats
+    outOrientation = [0.0 for i in range(12)]
     
-    rotMtx.transpose()
-
-    left2RightMtx = mathutils.Matrix.Identity(3)
+    hArmature = obj.id_data
+    
+    if obj.parent:
+        rotMtx = obj.parent.matrix.inverted() @ obj.matrix
+    else:
+        rotMtx = hArmature.matrix_world @ obj.matrix
+    
+    # Construct our left-handed matrix
+    left2RightMtx = mathutils.Matrix.Identity(4)
     left2RightMtx[1][1] = 0.0
     left2RightMtx[1][2] = 1.0
     left2RightMtx[2][1] = 1.0
     left2RightMtx[2][2] = 0.0
-
+    
+    # Convert matrix from Blender's right-handed to PASM's left-handed
     rotMtx = left2RightMtx @ rotMtx @ left2RightMtx
     
-    # This is so stupid, should be a matrix not an array of floats
+    # Write out the rotation matrix
+    outOrientation[0]  = rotMtx[0][0]
+    outOrientation[1]  = rotMtx[1][0]
+    outOrientation[2]  = rotMtx[2][0]
+                       
+    outOrientation[3]  = rotMtx[0][1]
+    outOrientation[4]  = rotMtx[1][1]
+    outOrientation[5]  = rotMtx[2][1]
+                       
+    outOrientation[6]  = rotMtx[0][2]
+    outOrientation[7]  = rotMtx[1][2]
+    outOrientation[8]  = rotMtx[2][2]
+    
+    # Assign Position
+    outOrientation[9]  = rotMtx[0][3]
+    outOrientation[10] = rotMtx[1][3]
+    outOrientation[11] = rotMtx[2][3]
+    
+    return outOrientation
+  
+# This WORKS, DO NOT TOUCH UNLESS YOU ARE CRAZY!!!!!
+def BObj2F43MtxHIERARCHY(obj):
+    # Convert pose bone matrix from object-space of the armature to world-space of the scene
     outOrientation = [0.0 for i in range(12)]
+ 
+    hArmature = obj.id_data
+
+    rotMtx = hArmature.matrix_world @ obj.bone.matrix_local
     
-    outOrientation[0] =  rotMtx[0][0]
-    outOrientation[1] =  rotMtx[0][1]
-    outOrientation[2] =  rotMtx[0][2]
+    # Construct our left-handed matrix
+    left2RightMtx = mathutils.Matrix.Identity(4)
+    left2RightMtx[1][1] = 0.0
+    left2RightMtx[1][2] = 1.0
+    left2RightMtx[2][1] = 1.0
+    left2RightMtx[2][2] = 0.0
     
-    outOrientation[3] =  rotMtx[1][0]
-    outOrientation[4] =  rotMtx[1][1]
-    outOrientation[5] =  rotMtx[1][2]
+    # Convert matrix from Blender's right-handed to PASM's left-handed
+    rotMtx = left2RightMtx @ rotMtx @ left2RightMtx
     
-    outOrientation[6] =  rotMtx[2][0]
-    outOrientation[7] =  rotMtx[2][1]
-    outOrientation[8] =  rotMtx[2][2]
+    # Invert it
+    rotMtx.invert()
     
-    # Bone position is relative to it's parent as a starting position
-    try:
-        Translation = obj.head - obj.parent.head
-    except:
-        Translation = obj.head
+    # Write out the rotation matrix
+    outOrientation[0]  = rotMtx[0][0]
+    outOrientation[1]  = rotMtx[1][0]
+    outOrientation[2]  = rotMtx[2][0]
+                       
+    outOrientation[3]  = rotMtx[0][1]
+    outOrientation[4]  = rotMtx[1][1]
+    outOrientation[5]  = rotMtx[2][1]
+                       
+    outOrientation[6]  = rotMtx[0][2]
+    outOrientation[7]  = rotMtx[1][2]
+    outOrientation[8]  = rotMtx[2][2]
     
-    outOrientation[9] =   Translation[0]
-    outOrientation[10] =  Translation[2]
-    outOrientation[11] =  Translation[1]
+    # Assign Position
+    outOrientation[9]  = rotMtx[0][3]
+    outOrientation[10] = rotMtx[1][3]
+    outOrientation[11] = rotMtx[2][3]
     
     return outOrientation
     
@@ -205,7 +240,7 @@ def color_scene_linear_to_srgb(c):
     else:
         return c * 12.92
   else:
-    return 1.055 * pow(c, 1.0 / 2.4) - 0.055   
+    return 1.055 * pow(c, 1.0 / 2.4) - 0.055
     
     
     

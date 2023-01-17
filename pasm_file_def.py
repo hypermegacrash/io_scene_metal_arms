@@ -22,7 +22,7 @@ class PASMHeader:
         self.nNumLights = 0
         self.nNumVisPortals = 0
         self.nNumObjects = 0
-        self.nNumFogs = 0
+        self.nNumFogs = 0 # Deprecated
         self.nNumSegments = 0
         self.nNumShapes = 0
         self.nSizeOfBoneStruct = 176
@@ -122,6 +122,23 @@ class PASMBone:
 
         outBytes += self.PAD
         
+        return outBytes
+        
+class PASMWeight:
+    def __init__(self):
+        self.fBoneIndex = 0.0
+        self.fWeight = 0.0
+        self.PAD = bytearray(16)
+
+    def packBytes(self):
+        #init our bytearray
+        outBytes = bytearray()
+
+        outBytes += struct.pack("<f", self.fBoneIndex)
+        outBytes += struct.pack("<f", self.fWeight)
+
+        outBytes += self.PAD
+
         return outBytes
         
 ################# 
@@ -348,7 +365,7 @@ class PASMShapeSpeaker:
         
         return outBytes
         
-# Deprecated?
+# Deprecated
 class PASMShapeSpawnPoint:
     def __init__(self):
         self.PAD = bytearray(16)
@@ -373,7 +390,7 @@ class PASMShapeStartPoint:
         
         return outBytes
         
-#Deprecated?
+# Deprecated
 class PASMShapeRoom:
     def __init__(self):
         self.PAD = bytearray(16)
@@ -386,7 +403,7 @@ class PASMShapeRoom:
         
         return outBytes
         
-#Deprecated?
+# Deprecated
 class PASMShapeArena:
     def __init__(self):
         self.PAD = bytearray(16)
@@ -862,23 +879,6 @@ class PASMMaterial:
 
         return outBytes
 
-class PASMWeight:
-    def __init__(self):
-        self.fBoneIndex = 0.0
-        self.fWeight = 0.0
-        self.PAD = bytearray(16)
-
-    def packBytes(self):
-        #init our bytearray
-        outBytes = bytearray()
-
-        outBytes += struct.pack("<f", self.fBoneIndex)
-        outBytes += struct.pack("<f", self.fWeight)
-
-        outBytes += self.PAD
-
-        return outBytes
-
 class PASMVert:
     def __init__(self):
         self.Pos = [0.0, 0.0, 0.0]
@@ -890,7 +890,7 @@ class PASMVert:
         self.PAD = bytearray(16)
         
     def __hash__(self):
-        return hash( (tuple(self.Pos), tuple(self.Norm), tuple(self.Color), tuple(self.aUVs[0]), tuple(self.aUVs[1]), self.fNumWeights ) ) # Skipping weights, bite me future me
+        return hash( (tuple(self.Pos), tuple(self.Norm), tuple(self.Color), tuple(self.aUVs[0]), tuple(self.aUVs[1]), self.fNumWeights, tuple(self.aWeights) ) )
         
     # Class comparison doesn't work by default b/c it doesn't know what to compare so we do this
     # Stupid, half assed function, blah
