@@ -3,8 +3,8 @@
 
 import struct # For modifying vars into bytes
 
-# Shape in .wld, not standalone .cam file
 class PASMCamHeader:
+    """Shape in .wld, not standalone .cam file"""
     def __init__(self):
         self.fRadius = 0
         self.PAD = bytearray(12)

@@ -1,9 +1,10 @@
 # Various helpful math functions to help with converting from Blender formatting to PASM formatting
+# This module is outdated, update and/or merge functions based on BObj2F43MtxBONE
 
 import mathutils # Need to work with matrix math
 import copy      # Want to work on a copy of the data, not a reference
 
-# Blender matrix stuff
+# New Matrix Math
 from mathutils import Matrix, Vector
 from math import *
 
@@ -231,6 +232,7 @@ def BObj2F43MtxHIERARCHY(obj):
     
     return outOrientation
     
+# 23-1-18 Blender might have this function built in, need to find it
 # Blender stores Color RGB values from UI in scene color, PASM expects them in sRGB format
 # https://blender.stackexchange.com/questions/218312/python-how-to-color-accurately-convert-from-rgb-0-255-format-to-values-in-0-0f
 def color_scene_linear_to_srgb(c):

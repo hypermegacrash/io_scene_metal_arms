@@ -1,43 +1,44 @@
 # This file is a collection of classes that represents sections of the PASM file format
 # Each of them contain a function to take the class contents and pack them into an array of bytes
+# ASCII Banners created at https://manytools.org/hacker-tools/ascii-banner/ using the Small Font
 
 import struct # For modifying vars into bytes
 
-#################
-# HEADER DEFINITION
-# Flags for special material effect in Layers
-# Size: 84h
+#  _  _ ___   _   ___  ___ ___ 
+# | || | __| /_\ |   \| __| _ \
+# | __ | _| / _ \| |) | _||   /
+# |_||_|___/_/ \_\___/|___|_|_\ 
+
 class PASMHeader:
     def __init__(self):
-        self.magic = "FANG"
-        self.FVersion_Sub = 0
-        self.FVersion_Minor = 5
-        self.FVersion_Major = 1
-        self.FVersion_Platform = 8
-        self.fileSize = 132
-        self.sceneName = ""
-        self.bWld = 0
-        self.nNumBones = 0
-        self.nNumCells = 0
-        self.nNumLights = 0
-        self.nNumVisPortals = 0
-        self.nNumObjects = 0
-        self.nNumFogs = 0 # Deprecated
-        self.nNumSegments = 0
-        self.nNumShapes = 0
-        self.nSizeOfBoneStruct = 176
-        self.nSizeOfLightStruct = 228
-        self.nSizeOfObjectStruct = 112
-        self.nSizeOfFogStruct = 44
-        self.nSizeOfSegmentStruct = 48
-        self.nSizeOfMaterialStruct = 1692
-        self.nSizeOfVertStruct = 188
+        self.magic                  = "FANG"
+        self.FVersion_Sub           = 0
+        self.FVersion_Minor         = 5
+        self.FVersion_Major         = 1
+        self.FVersion_Platform      = 8
+        self.fileSize               = 132
+        self.sceneName              = ""
+        self.bWld                   = 0
+        self.nNumBones              = 0
+        self.nNumCells              = 0
+        self.nNumLights             = 0
+        self.nNumVisPortals         = 0
+        self.nNumObjects            = 0
+        self.nNumFogs               = 0 # Deprecated
+        self.nNumSegments           = 0
+        self.nNumShapes             = 0
+        self.nSizeOfBoneStruct      = 176
+        self.nSizeOfLightStruct     = 228
+        self.nSizeOfObjectStruct    = 112
+        self.nSizeOfFogStruct       = 44
+        self.nSizeOfSegmentStruct   = 48
+        self.nSizeOfMaterialStruct  = 1692
+        self.nSizeOfVertStruct      = 188
         self.nSizeOfVertIndexStruct = 20
-        self.nSizeOfShapeStruct = 88
-        self.PAD = bytearray(66)
+        self.nSizeOfShapeStruct     = 88
+        self.PAD                    = bytearray(66)
 
     def packBytes(self):
-        import struct
         #init our bytearray
         outBytes = bytearray()
 
@@ -86,19 +87,21 @@ class PASMHeader:
         
         return outBytes
  
- ################# 
-# BONE DEFINITIONS
-# Bones only exist in .ape files, not in .wld files
+#  ___  ___  _  _ ___ ___ 
+# | _ )/ _ \| \| | __/ __|
+# | _ \ (_) | .` | _|\__ \
+# |___/\___/|_|\_|___|___/
+
 class PASMBone:
     def __init__(self):
-        self.szBoneName = ""
-        self.nFlags = 0
-        self.nBoneIndex = 0
-        self.nParentIndex = -1
+        self.szBoneName     = ""
+        self.nFlags         = 0
+        self.nBoneIndex     = 0
+        self.nParentIndex   = -1
         self.mtxOrientation = [0.0 for i in range(12)]
-        self.nNumChildren = 0
+        self.nNumChildren   = 0
         self.auChildIndices = [0 for i in range(64)]
-        self.PAD = bytearray(16)
+        self.PAD            = bytearray(16)
         
     def packBytes(self):
         #init our bytearray
@@ -127,8 +130,8 @@ class PASMBone:
 class PASMWeight:
     def __init__(self):
         self.fBoneIndex = 0.0
-        self.fWeight = 0.0
-        self.PAD = bytearray(16)
+        self.fWeight    = 0.0
+        self.PAD        = bytearray(16)
 
     def packBytes(self):
         #init our bytearray
@@ -141,14 +144,15 @@ class PASMWeight:
 
         return outBytes
         
-################# 
-# LIGHT DEFINITIONS
-# Flags for special material effect in Layers
-# How does one properly enum in Python? Ehhh who cares put it all in a class
+#  _    ___ ___ _  _ _____ ___ 
+# | |  |_ _/ __| || |_   _/ __|
+# | |__ | | (_ | __ | | | \__ \
+# |____|___\___|_||_| |_| |___/
+                              
 class PASMLightType_e():
-    APE_LIGHT_TYPE_SPOT = 0
-    APE_LIGHT_TYPE_OMNI = 1
-    APE_LIGHT_TYPE_DIR = 2
+    APE_LIGHT_TYPE_SPOT    = 0
+    APE_LIGHT_TYPE_OMNI    = 1
+    APE_LIGHT_TYPE_DIR     = 2
     APE_LIGHT_TYPE_AMBIENT = 3
 
 class PASMLightFlag_e():
@@ -174,23 +178,23 @@ class PASMLightFlag_e():
 
 class PASMLight:
     def __init__(self):
-        self.nApeLightType = 0
-        self.szLightName = ""
-        self.Sphere = [0.0 for i in range(4)]
-        self.Direction = [0.0 for i in range(3)]
-        self.Color = [0.0 for i in range(3)]
-        self.Intensity = 0.0
-        self.fSpotInnerAngle = 0.0
-        self.fSpotOuterAngle = 0.0
-        self.nFlags = 0
-        self.nMotifID = 0
-        self.fCoronaScale = 1.0
-        self.mtxOrientation = [0.0 for i in range(12)]
-        self.szCoronaTexture = ""
+        self.nApeLightType     = 0
+        self.szLightName       = ""
+        self.Sphere            = [0.0 for i in range(4)]
+        self.Direction         = [0.0 for i in range(3)]
+        self.Color             = [0.0 for i in range(3)]
+        self.Intensity         = 0.0
+        self.fSpotInnerAngle   = 0.0
+        self.fSpotOuterAngle   = 0.0
+        self.nFlags            = 0
+        self.nMotifID          = 0
+        self.fCoronaScale      = 1.0
+        self.mtxOrientation    = [0.0 for i in range(12)]
+        self.szCoronaTexture   = ""
         self.szPerPixelTexture = ""
-        self.nLightID = -1
-        self.szParentBoneName = "Scene Root"
-        self.PAD = bytearray(30)
+        self.nLightID          = -1
+        self.szParentBoneName  = "Scene Root"
+        self.PAD               = bytearray(30)
 
     def packBytes(self):
         #init our bytearray
@@ -239,19 +243,22 @@ class PASMLight:
         
         return outBytes
 
-################# 
-# OBJECT DEFINITIONS
+#   ___  ___    _ ___ ___ _____ ___ 
+#  / _ \| _ )_ | | __/ __|_   _/ __|
+# | (_) | _ \ || | _| (__  | | \__ \
+#  \___/|___/\__/|___\___| |_| |___/
+                                   
 class PASMObject:
     def __init__(self):
-        self.szObjectName = ""
-        self.nFlags = 0
-        self.mtxOrientation = [0.0 for i in range(12)]
+        self.szObjectName     = ""
+        self.nFlags           = 0
+        self.mtxOrientation   = [0.0 for i in range(12)]
         self.nBytesOfUserData = 0
-        self.fCullDistance = 0
-        self.nParentIndex = 0
-        self.TintRGB = [0.0 for i in range(3)]
-        self.PAD = bytearray(20)
-        self.userData = [] # User Data is gonna be an array of string commands
+        self.fCullDistance    = 0
+        self.nParentIndex     = 0
+        self.TintRGB          = [0.0 for i in range(3)]
+        self.PAD              = bytearray(20)
+        self.userData         = [] # User Data is gonna be an array of string commands
 
     def packBytes(self):
         #init our bytearray
@@ -280,8 +287,11 @@ class PASMObject:
         
         return outBytes
 
-################# 
-# SHAPE DEFINITIONS      
+#  ___ _  _   _   ___ ___ ___ 
+# / __| || | /_\ | _ \ __/ __|
+# \__ \ __ |/ _ \|  _/ _|\__ \
+# |___/_||_/_/ \_\_| |___|___/
+                                 
 class PASMShapeType_e:
     APE_SHAPE_TYPE_SPHERE            = 0
     APE_SHAPE_TYPE_CYLINDER          = 1
@@ -300,7 +310,7 @@ class PASMShapeType_e:
 class PASMShapeSphere:
     def __init__(self):
         self.fRadius = 0
-        self.PAD = bytearray(12)
+        self.PAD     = bytearray(12)
 
     def packBytes(self):
         #init our bytearray
@@ -325,9 +335,9 @@ class PASMShapeCylinder:
         
 class PASMShapeBox:
     def __init__(self):
-        self.PAD = bytearray(4)
+        self.PAD     = bytearray(4)
         self.fLength = 0
-        self.fWidth = 0
+        self.fWidth  = 0
         self.fHeight = 0
 
     def packBytes(self):
@@ -365,8 +375,8 @@ class PASMShapeSpeaker:
         
         return outBytes
         
-# Deprecated
 class PASMShapeSpawnPoint:
+    """Deprecated"""
     def __init__(self):
         self.PAD = bytearray(16)
 
@@ -390,8 +400,8 @@ class PASMShapeStartPoint:
         
         return outBytes
         
-# Deprecated
 class PASMShapeRoom:
+    """Deprecated"""
     def __init__(self):
         self.PAD = bytearray(16)
 
@@ -403,8 +413,8 @@ class PASMShapeRoom:
         
         return outBytes
         
-# Deprecated
 class PASMShapeArena:
+    """Deprecated"""
     def __init__(self):
         self.PAD = bytearray(16)
 
@@ -454,10 +464,10 @@ class PASMShapeParticleCylinder:
         
 class PASMShapeSpline:
     def __init__(self):
-        self.nNumPts = 0
-        self.bClosed = 0
+        self.nNumPts      = 0
+        self.bClosed      = 0
         self.nNumSegments = 0
-        self.PAD = bytearray(4)
+        self.PAD          = bytearray(4)
 
     def packBytes(self):
         #init our bytearray
@@ -470,8 +480,8 @@ class PASMShapeSpline:
         
         return outBytes
         
-# Included at start of userData in PASMShape.userData when typeData = APE_SHAPE_TYPE_SPLINE
 class PASMSplinePt:
+    """Included at start of userData in PASMShape.userData when typeData = APE_SHAPE_TYPE_SPLINE"""
     def __init__(self):
         self.Pos = [0.0 for i in range(3)]
 
@@ -486,13 +496,12 @@ class PASMSplinePt:
 
 class PASMShape:
     def __init__(self):
-        self.nType = -1
-        # This type data will become one of the classes defined above based on nType
-        self.typeData = None
-        self.mtxOrientation = [0.0 for i in range(12)]
+        self.nType            = -1
+        self.typeData         = None # Will become one of the classes defined above based on nType
+        self.mtxOrientation   = [0.0 for i in range(12)]
         self.nBytesOfUserData = 0
-        self.PAD = bytearray(16)
-        self.userData = [] # User Data is gonna be an array of string commands
+        self.PAD              = bytearray(16)
+        self.userData         = [] # User Data is gonna be an array of string commands
 
     def packBytes(self):
         #init our bytearray
@@ -517,8 +526,11 @@ class PASMShape:
         
         return outBytes
         
-################# 
-# VOLUME DEFINITIONS
+# __   _____  _   _   _ __  __ ___     __  ___  ___  ___ _____ _   _    
+# \ \ / / _ \| | | | | |  \/  | __|   / / | _ \/ _ \| _ \_   _/_\ | |   
+#  \ V / (_) | |_| |_| | |\/| | _|   / /  |  _/ (_) |   / | |/ _ \| |__ 
+#   \_/ \___/|____\___/|_|  |_|___| /_/   |_|  \___/|_|_\ |_/_/ \_\____|                                                                   
+                                  
 class PASMVisPoint:
     def __init__(self):
         self.Pos = [0.0, 0.0, 0.0]
@@ -534,12 +546,9 @@ class PASMVisPoint:
 class PASMVisEdge:
     def __init__(self):
         self.anVertIndices = [0,0]
-
-        # How could an edge be connected to more than 2 faces in a convex shape???
-        self.nNumFaces = 0  
+        self.nNumFaces     = 0 # How could an edge be connected to more than 2 faces in a convex shape???
         self.anFaceIndices = [0,0]
-
-        self.PAD = bytearray(4)
+        self.PAD           = bytearray(4)
 
     def packBytes(self):
         #init our bytearray
@@ -559,15 +568,13 @@ class PASMVisEdge:
 
 class PASMVisFace:
     def __init__(self):
-        self.nDegree = 0 # Number of aVertIndicies / aEdgeIndicies used, usually 4
+        self.nDegree      = 0 # Number of aVertIndicies / aEdgeIndicies used, usually 4
         # Not all these values have to be filled out, EX: cube only needs 4
         self.aVertIndices = [0 for i in range(6)]
         self.aEdgeIndices = [0 for i in range(6)]
-
-        self.Normal = [0.0, 0.0, 0.0]
-        self.Centroid = [0.0, 0.0, 0.0]
-
-        self.PAD = bytearray(4)
+        self.Normal       = [0.0, 0.0, 0.0]
+        self.Centroid     = [0.0, 0.0, 0.0]
+        self.PAD          = bytearray(4)
 
     def packBytes(self):
         #init our bytearray
@@ -587,23 +594,53 @@ class PASMVisFace:
              
         return outBytes
 
-#Size :1240h
+class PASMVisPortal:
+    """Visibilty Portal definition for designer placed sightline planes between volumes"""
+    def __init__(self):
+        self.szName   = ""
+        self.ACorners = [PASMVisPoint() for i in range(4)]
+        self.Normal   = [0.0, 0.0, 0.0]
+        self.Centroid = [0.0, 0.0, 0.0]
+        self.nFlags   = 0
+        self.PAD      = bytearray(16)
+
+    def packBytes(self):
+        outBytes = bytearray() # init our bytearray
+        
+        size = bytearray(32)
+        size[0:len(self.szName[0:31])] = bytes(self.szName, "utf-8")[0:31]
+        outBytes += size
+        
+        for i in self.ACorners:
+            outBytes += i.packBytes()
+        for i in self.Normal:
+            outBytes += struct.pack("<f", i)
+        for i in self.Centroid:
+            outBytes += struct.pack("<f", i)
+        
+        outBytes += struct.pack("<i", self.nFlags)[:4]
+            
+        outBytes += self.PAD
+             
+        return outBytes
+
 class PASMCell:
+    """(Size :1240h)"""
     def __init__(self):
         self.szCellName = ""
         
-        self.nNumVerts = 0
-        self.aVisVerts = [PASMVisPoint() for i in range(156)]
-
-        self.nNumEdges = 0
-        self.aVisEdges = [PASMVisEdge() for i in range(79)]
-
-        self.nNumFaces = 0
-        self.aVisFaces = [PASMVisFace() for i in range(26)]
-
-        self.aSphere = [0.0, 0.0, 0.0, 0.0]
-        self.nFlags = 0
-        self.PAD = bytearray(16)
+        self.nNumVerts  = 0
+        self.aVisVerts  = [PASMVisPoint() for i in range(156)]
+                        
+        self.nNumEdges  = 0
+        self.aVisEdges  = [PASMVisEdge() for i in range(79)]
+                        
+        self.nNumFaces  = 0
+        self.aVisFaces  = [PASMVisFace() for i in range(26)]
+                        
+        self.aSphere    = [0.0, 0.0, 0.0, 0.0]
+        self.nFlags     = 0
+        self.PAD        = bytearray(16)
         
     def packBytes(self):
         #init our bytearray
@@ -636,10 +673,10 @@ class PASMCell:
 class PASMVolume:
     def __init__(self):
         self.nNumCells = 0
-        self.aCells = [PASMCell() for i in range(16)]
-        self.Sphere = [0.0, 0.0, 0.0, 0.0]
-        self.nFlags = 0
-        self.PAD = bytearray(16)
+        self.aCells    = [PASMCell() for i in range(16)]
+        self.Sphere    = [0.0, 0.0, 0.0, 0.0]
+        self.nFlags    = 0
+        self.PAD       = bytearray(16)
 
     def packBytes(self):
         #init our bytearray
@@ -658,75 +695,43 @@ class PASMVolume:
         outBytes += self.PAD
 
         return outBytes
-
-#################
-# PORTAL DEFINITIONS
-# Visibilty Portal definition for designer placed sightline planes between volumes
-class PASMVisPortal:
-    def __init__(self):
-        self.szName = ""
-        self.ACorners = [PASMVisPoint() for i in range(4)]
-        self.Normal = [0.0, 0.0, 0.0]
-        self.Centroid = [0.0, 0.0, 0.0]
-
-        self.nFlags = 0
-
-        self.PAD = bytearray(16)
-
-    def packBytes(self):
-        outBytes = bytearray() # init our bytearray
-        
-        size = bytearray(32)
-        size[0:len(self.szName[0:31])] = bytes(self.szName, "utf-8")[0:31]
-        outBytes += size
-        
-        for i in self.ACorners:
-            outBytes += i.packBytes()
-        for i in self.Normal:
-            outBytes += struct.pack("<f", i)
-        for i in self.Centroid:
-            outBytes += struct.pack("<f", i)
-        
-        outBytes += struct.pack("<i", self.nFlags)[:4]
-            
-        outBytes += self.PAD
-             
-        return outBytes
-
-#################
-# MESH DEFINITIONS
-# Flags for special material effect in Layers
-# Size: 80h
+                             
+#  __  __ ___ ___ _  _ 
+# |  \/  | __/ __| || |
+# | |\/| | _|\__ \ __ |
+# |_|  |_|___|___/_||_|
+                      
 class PASMCommands:
+    """Size: 80h"""
     def __init__(self):
-        self.bSort = 0
-        self.nOrderNum = 0
-        self.nShaderNum = 0
-        self.nEmissiveMotifID = 0
-        self.nSpecularMotifID = 0
-        self.nDiffuseMotifID = 0
-        self.bUseEmissiveColor = 0
-        self.bUseSpecularColor = 0
-        self.bUseDiffuseColor = 0
-        self.nNumTexFrames = 0
-        self.fFramesPerSec = 0
-        self.fDeltaUPerSec = 0
-        self.fDeltaVPerSec = 0
-        self.nZTugValue = 0
-        self.nID = 0
-        self.bNoColl = 0
-        self.nCollID = 0
-        self.nFlags = 0
-        self.nCollMask = 0
-        self.nReactType = 0
-        self.nSurfaceType = 0
-        self.TintRGB = [0.0, 0.0, 0.0]
-        self.LightRGBI = [0.0, 0.0, 0.0, 0.0]
-        self.fBumpMapTileFactor = 0
-        self.fDetailMapTileFactor = 0
+        self.bSort                  = 0
+        self.nOrderNum              = 0
+        self.nShaderNum             = 0
+        self.nEmissiveMotifID       = 0
+        self.nSpecularMotifID       = 0
+        self.nDiffuseMotifID        = 0
+        self.bUseEmissiveColor      = 0
+        self.bUseSpecularColor      = 0
+        self.bUseDiffuseColor       = 0
+        self.nNumTexFrames          = 0
+        self.fFramesPerSec          = 0
+        self.fDeltaUPerSec          = 0
+        self.fDeltaVPerSec          = 0
+        self.nZTugValue             = 0
+        self.nID                    = 0
+        self.bNoColl                = 0
+        self.nCollID                = 0
+        self.nFlags                 = 0
+        self.nCollMask              = 0
+        self.nReactType             = 0
+        self.nSurfaceType           = 0
+        self.TintRGB                = [0.0, 0.0, 0.0]
+        self.LightRGBI              = [0.0, 0.0, 0.0, 0.0]
+        self.fBumpMapTileFactor     = 0
+        self.fDetailMapTileFactor   = 0
         self.fDeltaUVRotationPerSec = 0
-        self.vRotateUVAround = [0.0, 0.0]
-        self.PAD = bytearray(12)
+        self.vRotateUVAround        = [0.0, 0.0]
+        self.PAD                    = bytearray(12)
 
     def packBytes(self):
         #init our bytearray
@@ -776,37 +781,37 @@ class PASMCommands:
         return outBytes
  
 class PASMLayerIndex_e():
-    APE_LAYER_TEXTURE_DIFFUSE = 0	
+    APE_LAYER_TEXTURE_DIFFUSE       = 0	
     APE_LAYER_TEXTURE_SPECULAR_MASK = 1	
     APE_LAYER_TEXTURE_EMISSIVE_MASK = 2	
-    APE_LAYER_TEXTURE_ALPHA_MASK = 3	
-    APE_LAYER_TEXTURE_BUMP = 4		
-    APE_LAYER_TEXTURE_DETAIL = 5		
-    APE_LAYER_TEXTURE_ENVIRONMENT = 6
-    APE_LAYER_TEXTURE_UNUSED_3 = 7
-    APE_LAYER_TEXTURE_UNUSED_2 = 8
-    APE_LAYER_TEXTURE_UNUSED_1 = 9	
+    APE_LAYER_TEXTURE_ALPHA_MASK    = 3	
+    APE_LAYER_TEXTURE_BUMP          = 4		
+    APE_LAYER_TEXTURE_DETAIL        = 5		
+    APE_LAYER_TEXTURE_ENVIRONMENT   = 6
+    APE_LAYER_TEXTURE_UNUSED_3      = 7
+    APE_LAYER_TEXTURE_UNUSED_2      = 8
+    APE_LAYER_TEXTURE_UNUSED_1      = 9	
 
-    APE_LAYER_TEXTURE_MAX = 10
+    APE_LAYER_TEXTURE_MAX           = 10
         
-# A Material is made up of either 1 or 2 layers, base and layer1 respectfully
-# Size: 17Ch
 class PASMLayer:
+    """A Material is made up of either 1 or 2 layers, base and layer1 respectfully
+    Size: 17Ch"""
     def __init__(self):
-        self.bTextured = 0
-        self.szTexName = ["" for i in range(10)]
+        self.bTextured            = 0
+        self.szTexName            = ["" for i in range(10)]
         self.fUnitAlphaMultiplier = 0.0
-        self.bDrawAsWire = 0
-        self.bTwoSided = 0
-        self.bTileU = 1
-        self.bTileV = 1
-        self.SpecularRGB = [0.0, 0.0, 0.0]
-        self.IllumRGB = [0.0, 0.0, 0.0]
-        self.DiffuseRGB = [0.0, 0.0, 0.0]
-        self.fShininess = 0.0
-        self.fShinStr = 0.0
-        self.StarCommands = PASMCommands()
-        self.PAD = bytearray(36)
+        self.bDrawAsWire          = 0
+        self.bTwoSided            = 0
+        self.bTileU               = 1
+        self.bTileV               = 1
+        self.SpecularRGB          = [0.0, 0.0, 0.0]
+        self.IllumRGB             = [0.0, 0.0, 0.0]
+        self.DiffuseRGB           = [0.0, 0.0, 0.0]
+        self.fShininess           = 0.0
+        self.fShinStr             = 0.0
+        self.StarCommands         = PASMCommands()
+        self.PAD                  = bytearray(36)
 
     def packBytes(self):
         #init our bytearray
@@ -845,18 +850,18 @@ class PASMLayer:
 
         return outBytes
 
-# A Material is a container for up to 2 layers
 class PASMMaterial:
+    """A Material is a container for up to 2 layers"""
     def __init__(self):
-        self.nLayerCount = 0
-        self.aMatLayers = [PASMLayer() for i in range(4)]
-        self.nFirstIndex = 0
-        self.nNumIndices = 0
-        self.StarCommands = PASMCommands()
-        self.nLODIndex = 0
-        self.nAffectAngle = 0
-        self.nFlags = 0
-        self.PAD = bytearray(24)
+        self.nLayerCount   = 0
+        self.aMatLayers    = [PASMLayer() for i in range(4)]
+        self.nFirstIndex   = 0
+        self.nNumIndices   = 0
+        self.StarCommands  = PASMCommands()
+        self.nLODIndex     = 0
+        self.nAffectAngle  = 0
+        self.nFlags        = 0
+        self.PAD           = bytearray(24)
 
     def packBytes(self):
         #init our bytearray
@@ -881,13 +886,13 @@ class PASMMaterial:
 
 class PASMVert:
     def __init__(self):
-        self.Pos = [0.0, 0.0, 0.0]
-        self.Norm = [0.0, 0.0, 0.0]
-        self.Color = [0.0, 0.0, 0.0, 0.0]
-        self.aUVs = [[0.0, 0.0] for i in range(4)]
+        self.Pos         = [0.0, 0.0, 0.0]
+        self.Norm        = [0.0, 0.0, 0.0]
+        self.Color       = [0.0, 0.0, 0.0, 0.0]
+        self.aUVs        = [[0.0, 0.0] for i in range(4)]
         self.fNumWeights = 0
-        self.aWeights = [PASMWeight() for i in range(4)]
-        self.PAD = bytearray(16)
+        self.aWeights    = [PASMWeight() for i in range(4)]
+        self.PAD         = bytearray(16)
         
     def __hash__(self):
         return hash( (tuple(self.Pos), tuple(self.Norm), tuple(self.Color), tuple(self.aUVs[0]), tuple(self.aUVs[1]), self.fNumWeights, tuple(self.aWeights) ) )
@@ -923,7 +928,7 @@ class PASMVert:
 class PASMVertIndex:
     def __init__(self):
         self.nVertIndex = 0
-        self.PAD = bytearray(16)
+        self.PAD        = bytearray(16)
 
     def packBytes(self):
         #init our bytearray
@@ -936,12 +941,12 @@ class PASMVertIndex:
 
 class PASMSegment:
     def __init__(self):
-        self.szMeshName = ""
-        self.bSkinned = 0
+        self.szMeshName    = ""
+        self.bSkinned      = 0
         self.nNumMaterials = 0
-        self.nNumVerts = 0
-        self.nNumIndices = 0
-        self.PAD = bytearray(16)
+        self.nNumVerts     = 0
+        self.nNumIndices   = 0
+        self.PAD           = bytearray(16)
 
         # NORMALLY in the ape exporter the mats, verts and indices are seperated
         # WELL... we're gonna pack them with the segment / mesh

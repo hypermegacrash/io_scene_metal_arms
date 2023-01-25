@@ -1,16 +1,15 @@
 # Module that processes a volume object and returns byte data
 
+# FANG TOOLKIT
+from . import pasm_file_def  # Get our PASM file classes
+from . import g_class        # Get our global variables for the header data
+# BLENDER
 from mathutils import Vector # Need Vector for computing bounding box
 
-from . import pasm_file_def # Get our PASM file classes
-
-from . import g_class # Get our global variables for the header data
-
 def ExportObjVolume(obj):
-    if obj.type != "MESH":
-        return
-    if obj.name[:5].lower() != "cell_":
-        return
+    if obj.name[:4].lower() == "off_":  return # Doesn't matter it's off bail early
+    if obj.type             != "MESH":  return
+    if obj.name[:5].lower() != "cell_": return
         
     print(obj.name, "is a cell object")    
     

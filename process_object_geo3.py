@@ -106,7 +106,8 @@ def ParseMaterial(matName, fangMatGroup, matStrParser):
         
     return layer
 
-def ExportObjGeo(obj): 
+def ExportObjGeo(obj):
+    if obj.name[:4].lower() == "off_":   return # Doesn't matter it's off bail early
     if obj.type != "MESH":               return # Validate we're working with mesh data and not other stuff
     if obj.name[:5].lower() == "cell_":  return # We don't do cells
     if obj.name[:4].lower() == "obj_":   return # objs could be ANY DATATYPE, so check for that

@@ -1,17 +1,18 @@
 # Module that processes an object object and returns byte data
 
+# FANG TOOLKIT
 from . import pasm_file_def # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
-
 from .process_star_command import CPortalStringParser # Import just thePortal Star Command Parser
-
+# BLENDER
 from math import sqrt       # Compute some quick maths
 
 def ExportObjPortal(obj):
+    if obj.name[:4].lower() == "off_":  return # Doesn't matter it's off bail early
     # First check if this is a portal object
     if obj.name[:5].lower() != "port_": return
-    if obj.type != "CURVE": return
+    if obj.type             != "CURVE": return
         
     print(obj.name, "is a portal object") # Looks good so far
     

@@ -1,16 +1,14 @@
 # Module that processes an object object and returns byte data
 
+# FANG TOOLKIT
 from . import pasm_file_def # Get our PASM file classes
-
-from . import g_class # Get our global variables for the header data
-
-from . import pasm_math # PASM helper defs
-
+from . import g_class       # Get our global variables for the header data
+from . import pasm_math     # PASM helper defs
 from .process_star_command import CObjectStringParser # Import just the Material Star Command Parser
 
 def ExportObjObject(obj):
-    if obj.name[:4].lower() != "obj_":
-        return
+    if obj.name[:4].lower() == "off_": return # Doesn't matter it's off bail early
+    if obj.name[:4].lower() != "obj_": return # No prefix no object
         
     print(obj.name, "is a object object")
     

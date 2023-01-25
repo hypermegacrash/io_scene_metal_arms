@@ -1,9 +1,10 @@
-# Module that provides classes for processing Star Commands found in the name of Material, Object and Lights
+# Module that provides classes for processing Star Commands found in the name of Materials, Objects, Lights and Portals
+# ASCII Banners created at https://manytools.org/hacker-tools/ascii-banner/ using the Small Font
 
+# FANG TOOLKIT
 from .pasm_file_def import PASMCommands # We only need the Star Commands struct
-
-# Dont do this shit, come up with a cleaner solution
-_AUTO_ID = -128
+# GLOBALS
+_AUTO_ID = -128 # Dont do this, shouldn't this be -1???
 
 def _GetParameterString(pszCmd):
     psz1stParenthesis = pszCmd.find("(")
@@ -28,6 +29,11 @@ def _GetParameterString(pszCmd):
 
     nParams = pszCmd[psz1stParenthesis + 1:psz2ndParenthesis].split(",")
     return nParams
+
+#  __  __   _ _____ ___ ___ ___   _   _    
+# |  \/  | /_\_   _| __| _ \_ _| /_\ | |   
+# | |\/| |/ _ \| | | _||   /| | / _ \| |__ 
+# |_|  |_/_/ \_\_| |___|_|_\___/_/ \_\____|
 
 APE_MAT_FLAGS_NO_DRAW            = 0x01    # Polys with this material will not be drawn
 APE_MAT_FLAGS_APPLY_TINT         = 0x02    # This tint is modulated into the texture color in the surface pass
@@ -278,6 +284,10 @@ class CMaterialStringParser:
         if(self._GetParamterString2(pszMatStr, "*react")): 
             self.m_ApeCommands.nReactType = max ( 0, min( int(self.nParams[0]), 7) )
 
+#   ___  ___    _ ___ ___ _____ 
+#  / _ \| _ )_ | | __/ __|_   _|
+# | (_) | _ \ || | _| (__  | |  
+#  \___/|___/\__/|___\___| |_|                                
 
 APE_OB_FLAG_STATIC              = 0x00000001    # Object's bounding sphere has a static footprint in 3D space
 APE_OB_FLAG_POSTER_Y            = 0x00000002    # Poster object around it's Y axis to always face the camera (neg-Z axis of object toward viewer)
@@ -369,7 +379,12 @@ class CObjectStringParser:
             
         if( pszObjectStr.find("*lightperpixel") != -1 ): 
             self.m_ApeObjectFlag |= APE_OB_FLAG_PER_PIXEL
-   
+            
+#  _    ___ ___ _  _ _____ 
+# | |  |_ _/ __| || |_   _|
+# | |__ | | (_ | __ | | |  
+# |____|___\___|_||_| |_|  
+                          
 APE_LIGHT_FLAG_DONT_USE_RGB              = 0x00000001    # Disregard the light's rgb and only use the motif's color (default = off)
 APE_LIGHT_FLAG_LIGHT_SELF                = 0x00000002    # Light the object that the light is attached to (default = off)
 APE_LIGHT_FLAG_OBJ_DONT_LIGHT_TERRAIN    = 0x00000004    # Lights attached to this object don't light the terrain (default = off)
@@ -388,7 +403,7 @@ APE_LIGHT_FLAG_CAST_SHADOWS              = 0x00000200    # This light will cast 
 APE_LIGHT_FLAG_DYNAMIC_ONLY              = 0x00000400    # This light will not affect static objects
 
 APE_LIGHT_FLAG_MESH_MUST_BE_PER_PIXEL    = 0x00000800    # For per-pixel lights that have a projected texture.  If this flag is set, only objects that are flagged
-                                                            # as per pixel lit will have the texture projected on them.  Others will just apply as a dynamic vertex light
+                                                         # as per pixel lit will have the texture projected on them.  Others will just apply as a dynamic vertex light
    
 class CLightStringParser:
     def __init__(self):
@@ -457,6 +472,11 @@ class CLightStringParser:
             self.m_nMotifID = int(self.nParams[0])
             if(int(self.nParams[1]) != 0):
                 self.m_ApeLightFlag |= APE_LIGHT_FLAG_DONT_USE_RGB
+       
+#  ___  ___  ___ _____ _   _    
+# | _ \/ _ \| _ \_   _/_\ | |   
+# |  _/ (_) |   / | |/ _ \| |__ 
+# |_|  \___/|_|_\ |_/_/ \_\____|              
        
 APE_PORTAL_FLAG_MIRROR            = 0x00000001    # the portal is a mirror
 APE_PORTAL_FLAG_SOUND_ONLY        = 0x00000002    # the portal is for sound only

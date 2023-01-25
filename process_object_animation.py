@@ -1,31 +1,28 @@
+# Module for processing the action of an armature for exporting
 
-import struct # For modifying vars into bytes
-
-import mathutils # Need to work with matrix math
-
+# FANG TOOLKIT
 from . import file_def_mtx # Get our PASM file classes
-
-from . import g_class # Get our global variables for the header data
-
-from . import pasm_math  # PASM helper defs
-
-import bpy # For working with Blender data
+from . import g_class      # Get our global variables for the header data
+from . import pasm_math    # PASM helper defs
+# BLENDER
+import struct              # For modifying vars into bytes
+import mathutils           # Need to work with matrix math
+import bpy                 # For working with Blender data
 
 def ExportObjAnim(obj):
-     # Validate we're working with animation data and not other stuff
-    if obj.type != "ARMATURE":
-        return
+    # NOTE: Shhhhhh, we're gonna export bones with off_ for the moment b/c bone hierarchy hard
+    #if obj.name[:4].lower() == "off_":     return # Doesn't matter it's off bail early
+    if obj.type             != "ARMATURE": return # Validate we're working with armature animation data
 
     print(obj.name, "is an armature object")
 
     TIME_TICKSPERSEC = 4800 # Constant ripped from Max SDK Docs
     
     # Find the animation info from the interface
-    nFrameRate = bpy.context.scene.render.fps
     nStartTime = bpy.context.scene.frame_start
-    nEndTime = bpy.context.scene.frame_end
-    nTicksPerFrame = TIME_TICKSPERSEC / 30
-    #nTicksPerFrame = TIME_TICKSPERSEC / nFrameRate
+    nEndTime   = bpy.context.scene.frame_end
+    nFrameRate = bpy.context.scene.render.fps
+    nTicksPerFrame = TIME_TICKSPERSEC / nFrameRate #nTicksPerFrame = TIME_TICKSPERSEC / 30
     
     # Calculate the interval and number of keys
     nInterval = (nTicksPerFrame * nFrameRate) / 30;
@@ -40,7 +37,7 @@ def ExportObjAnim(obj):
     mtxHeader = file_def_mtx.MTXHeader()
     
     # We need the store this data in an array to get offsets
-    aMTXBones = []
+    aMTXBones  = []
     aMTXFrames = []
     
     for pbone in obj.pose.bones:
@@ -50,37 +47,24 @@ def ExportObjAnim(obj):
         mtxBone.nNumFrames = nEndTime - nStartTime
         aMTXBones.append(mtxBone)
         
-        # Our bind pose is the first frame of animation
-        #bpy.context.scene.frame_set(nStartTime)
-        #bindPose = pasm_math.BObj2F43MtxBONE(pbone)
-        # Our first frame of animation could also have a keyframe applied
-        #bindFrame = [0.0 for i in range(3)]
-        #bindPose[9] = bindPose[9] + pbone.location[0]
-        #bindPose[10] = bindPose[10] + pbone.location[2]
-        #bindPose[11] = bindPose[11] + pbone.location[1]
-        #bindFrame[0] = pbone.location[0]
-        #bindFrame[1] = pbone.location[1]
-        #bindFrame[2] = pbone.location[2]
-        
         for curFrame in range(nStartTime, nEndTime):
-            curFrameTick = curFrame * 160
-            #curFrameTick = curFrame * nTicksPerFrame
+            # Navigate to the frame
+            curFrameTick = curFrame * nTicksPerFrame #curFrameTick = curFrame * 160
             bpy.context.scene.frame_set(curFrame)
-            testFrame = file_def_mtx.MTXFrame()
-            number_of_ticks = float((curFrameTick - nStartTime)) * float((1.0/TIME_TICKSPERSEC))
-            testFrame.fStartingSecs = number_of_ticks
             
+            # Fill out the struct
+            testFrame = file_def_mtx.MTXFrame()
+            if curFrame == nStartTime:
+                number_of_ticks = 0.0
+            else:
+                number_of_ticks = float((curFrameTick - nStartTime) - (1 * nTicksPerFrame)) * float((1.0/TIME_TICKSPERSEC)) #number_of_ticks = float((curFrameTick - nStartTime)) * float((1.0/TIME_TICKSPERSEC))
+            testFrame.fStartingSecs = number_of_ticks
             testFrame.mtxOrientation = pasm_math.BObj2F43MtxBONE(pbone)
             
-            # The bones positions is an offset from inital frame
-            # In addition to respecting offset from parent bone
-            #testFrame.mtxOrientation[9] = bindPose[9] + (bindFrame[0] - pbone.location[0])
-            #testFrame.mtxOrientation[10] = bindPose[10] + (bindFrame[2] - pbone.location[2])
-            #testFrame.mtxOrientation[11] = bindPose[11] + (bindFrame[1] - pbone.location[1])
-            
+            # Add it to the list
             aMTXFrames.append(testFrame)
             
-    #print(len(aMTXBones)) # Just number of bones
+    #print(len(aMTXBones))  # Just number of bones
     #print(len(aMTXFrames)) # (Frames + 1) * number of bones
     
     # Now we can fix up our data
@@ -103,7 +87,3 @@ def ExportObjAnim(obj):
         g_class.file.write( x.packBytes() )
     for x in aMTXFrames:
         g_class.file.write( x.packBytes() )
-        
-        
-        
-        

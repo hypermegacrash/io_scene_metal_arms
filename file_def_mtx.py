@@ -3,8 +3,8 @@
 
 import struct # For modifying vars into bytes
 
-# Header for the MTX file
 class MTXHeader:
+    """Header for the MTX file"""
     def __init__(self):
         self.nNumBones = 0
         self.nDataType = 0
@@ -18,8 +18,8 @@ class MTXHeader:
         
         return outBytes
         
-# Bone with all offsets to their orientations
 class MTXBone:
+    """Bone with all offsets to their orientations"""
     def __init__(self):
         self.szBoneName = ""
         self.nNumFrames = 0
@@ -39,8 +39,8 @@ class MTXBone:
         
         return outBytes
         
-# Matrix data for x bone at y time from first frame
 class MTXFrame:
+    """Matrix data for x bone at y time from first frame"""
     def __init__(self):
         self.fStartingSecs = 0
         self.mtxOrientation = [0.0 for i in range(12)]

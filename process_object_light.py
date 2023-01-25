@@ -1,26 +1,21 @@
 # Module that processes a light object and returns byte data
 
-import math # Needed for computing sqrt and pi for light
-
+# FANG TOOLKIT
 from . import pasm_file_def # Get our PASM file classes
-
-from . import g_class # Get our global variables for the header data
-
+from . import g_class       # Get our global variables for the header data
+from . import pasm_math     # PASM helper defs
 from .process_star_command import CLightStringParser # Import just the Light Star Command Parser
-
-from . import pasm_math # PASM helper defs
+# BLENDER
+import math # Needed for computing sqrt and pi for light
 
 def ExportObjLight(obj):
     bExitEarly = False
     
-    if obj.type != "LIGHT":
-        bExitEarly = True
+    if obj.name[:4].lower() == "off_": return # Doesn't matter it's off bail early
+    if obj.type             != "LIGHT":                           bExitEarly = True  # Not a light then we don't export
+    if obj.name[:7].lower() == "ambient" and obj.type == "EMPTY": bExitEarly = False # Ambient lights are empty cube objects
     
-    if obj.name[:7].lower() == "ambient" and obj.type == "EMPTY":
-        bExitEarly = False
-    
-    if(bExitEarly):
-        return
+    if(bExitEarly): return
         
     print(obj.name, "is a light object")
 

@@ -1,10 +1,12 @@
 # Blender runs this module on bootup / addon enable calling register to add all the classes and UI updates, unregister is called when this addon is disabled
 
+# BLENDER
+import bpy # Registering / Unregistering classes
 # Blender looks for this Dictionary for info about this Add-on, viewable in the Add-ons category within Preferences
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 10, 1),
+        "version": (0, 11, 0),
         "blender": (2, 93, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",
@@ -12,14 +14,12 @@ bl_info = {
         "support": "TESTING"
 }
 
-import bpy # Registering / Unregistering classes
-
+# FANG TOOLKIT
 # Import the classes that do the magic
 from .export_wld import *
 from .export_ape import *
 from .export_cam import *
 from .export_mtx import *
-
 # Classes that expose more Metal Arms functionality
 from .ui_custom_properties   import *
 #from .ui_material_properties import *

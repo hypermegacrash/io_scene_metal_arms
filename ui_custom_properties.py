@@ -1,11 +1,10 @@
 # Module that adds a text input window under the 
 
-# Native Blender
+# BLENDER
 import bpy
 from bpy.types import VIEW3D_MT_object_context_menu # We need access to the context menu struct
 from bpy.types import Operator
-
-# Imgui
+# VENDOR IMGUI
 from .thirdparty import blender_imgui
 import imgui
 

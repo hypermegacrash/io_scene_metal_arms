@@ -1,13 +1,17 @@
 # Module for processing the bone hierarchy of a model for exporting
 
+# FANG TOOLKIT
 from . import pasm_file_def # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
+# BLENDER
 import bpy                  # Force a scene update when we change bone pose to REST
 from math import pi
 
 def ExportObjBone(obj): 
-    if obj.type != "ARMATURE": return # Validate we're working with an armature
+    # NOTE: Shhhhhh, we're gonna export bones with off_ for the moment b/c bone hierarchy hard
+    #if obj.name[:4].lower() == "off_":     return # Doesn't matter it's off bail early
+    if obj.type             != "ARMATURE": return # Validate we're working with an armature
         
     print(obj.name, "is an armature / hierarchy object")
     

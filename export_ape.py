@@ -1,13 +1,18 @@
 # Module for exporting a .ape file and adding UI to execute
 
-# For grabbing the Add-On version so we can print it in the exporter menu
-from . import bl_info
+# FANG TOOLKIT
+from . import bl_info       # For grabbing the Add-On version so we can print it in the exporter menu
+from . import g_class       # Get our global variables like header data & I/O file
+# Grab all our defs for exporting Blender data to PASM formatted data
+from . import pasm_file_def # . is the add-on folder directory
+from .process_object_geo3  import ExportObjGeo
+from .process_object_light import ExportObjLight
+from .process_object_bone  import ExportObjBone
 
-# For working with Blender data
-import bpy
-
-# We need these properties for the export settings config
-from bpy.props import (
+# BLENDER
+import bpy              # For working with Blender data
+import os               # We need this for accessing filepath functions
+from bpy.props import ( # We need these properties for the export settings config
         BoolProperty,
         #BoolVectorProperty,
         #CollectionProperty,
@@ -27,20 +32,6 @@ from bpy.types import Operator
 # ExportHelper is a helper class, defines filename and
 # invoke() function which calls the file selector.
 from bpy_extras.io_utils import ExportHelper
-
-# . is the add-on folder directory
-from . import pasm_file_def
-
-# Get our global variables like header data & I/O file
-from . import g_class
-
-# Grab all our defs for exporting Blender data to PASM formatted data
-from .process_object_geo3  import ExportObjGeo
-from .process_object_light import ExportObjLight
-from .process_object_bone  import ExportObjBone
-
-# We need this for accessing filepath functions
-import os
 
 class ExportAPE(Operator, ExportHelper):
         """Export scene to a Pasm compatible .ape file"""
@@ -121,9 +112,38 @@ class ExportAPE(Operator, ExportHelper):
                 # Data for an Object can be a mesh, light, empty etc
                 
                 if (self.m_bUseSelection):
-                    objects = context.selected_objects
+                    objects = [obj for obj in context.selected_objects]
                 else:
-                    objects = context.scene.objects
+                    objects = [obj for obj in context.scene.objects]
+                    
+                # Before we work on any objects we trim the selection set
+                    
+                # REMOVE ALL _off OBJECTS
+                for obj in objects:
+                    if obj.name[:4].lower() == "off_":
+                        print("REMOVE OFF_ OBJECT " + obj.name)
+                        try:    objects.remove(obj)
+                        except: pass
+                
+               # REMOVE ALL CHILDREN OF obj_ OBJECTS
+                for obj in objects:
+                    if obj.name[:4].lower() == "obj_":
+                        print("REMOVE OBJ_ CHILDREN " + obj.name)
+                        for objA in obj.children_recursive:
+                            for objB in objects:
+                                if objA.name == objB.name:
+                                    print("  REMOVE " + objA.name)
+                                    try:    objects.remove(objA)
+                                    except: pass
+                
+               # REMOVE CHILDREN IN off_ COLLECTIONS   
+                for collection in bpy.data.collections:
+                    if collection.name[:4].lower() == "off_":
+                        #print("  REMOVE COLLECTION " + collection.name)
+                        for obj in collection.all_objects:
+                            print("    REMOVE " + obj.name)
+                            try:    objects.remove(obj)
+                            except: pass
 
                 # To mimic the original exporter as closely as possible
                 # We itterate over the entire scene for each section of the PASM file

@@ -1,13 +1,16 @@
 # Module for exporting a .cam file and adding UI to execute
 
-# For grabbing the Add-On version so we can print it in the exporter menu
-from . import bl_info
+# FANG TOOLKIT
+from . import bl_info      # For grabbing the Add-On version so we can print it in the exporter menu
+from . import g_class      # Get our global variables like header data & I/O file
+# Grab all our defs for exporting Blender data to PASM formatted data
+from . import file_def_mtx # . is the add-on folder directory
+from .process_object_animation import ExportObjAnim
 
-# For working with Blender data
-import bpy
-
-# We need these properties for the export settings config
-from bpy.props import (
+# BLENDER
+import bpy              # For working with Blender data
+import os               # We need this for accessing filepath functions
+from bpy.props import ( # We need these properties for the export settings config
         BoolProperty,
         #BoolVectorProperty,
         #CollectionProperty,
@@ -27,18 +30,6 @@ from bpy.types import Operator
 # ExportHelper is a helper class, defines filename and
 # invoke() function which calls the file selector.
 from bpy_extras.io_utils import ExportHelper
-
-# . is the add-on folder directory
-from . import file_def_mtx
-
-# Get our global variables like header data & I/O file
-from . import g_class
-
-# Grab all our defs for exporting Blender data to PASM formatted data
-from .process_object_animation import ExportObjAnim
-
-# We need this for accessing filepath functions
-import os
 
 # The MEAT, when this class is executed it returns a PASM compatible .mtx file
 class ExportMTX(Operator, ExportHelper):

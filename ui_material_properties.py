@@ -1,8 +1,8 @@
 # Module that defines Metal Arms Material Flags + UI
 
+# BLENDER
 import bpy              # For working with Blender data
 from bpy.props import * # Property / UI Cheat Sheet https://docs.blender.org/api/current/bpy.props.html
-
 from bpy.types import (Panel,
                        Menu,
                        Operator,

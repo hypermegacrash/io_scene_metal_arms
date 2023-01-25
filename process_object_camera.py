@@ -1,20 +1,16 @@
 # Module that processes a camera object and returns byte data
 
+# FANG TOOLKIT
 from . import file_def_cam # Get our PASM file classes
-
 from . import g_class # Get our global variables for the header data
-
 from . import pasm_math # PASM helper defs
-
+# BLENDER
 import bpy # For working with Blender data
 
 def ExportObjCam(obj):
-    # Validate we're working with camera data and not other stuff
-    if obj.type != "CAMERA":
-        return
-    # Enforce the user to follow naming scheme
-    if obj.name[:4].lower() != "cam_":
-        return
+    if obj.name[:4].lower() == "off_":   return # Doesn't matter it's off bail early
+    if obj.type             != "CAMERA": return # Validate we're working with camera data and not other stuff
+    if obj.name[:4].lower() != "cam_":   return # Enforce the user to follow naming scheme
         
     print(obj.name, "is a camera object")
 
