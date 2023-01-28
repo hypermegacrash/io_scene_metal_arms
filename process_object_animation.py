@@ -57,7 +57,7 @@ def ExportObjAnim(obj):
             if curFrame == nStartTime:
                 number_of_ticks = 0.0
             else:
-                number_of_ticks = float((curFrameTick - nStartTime) - (1 * nTicksPerFrame)) * float((1.0/TIME_TICKSPERSEC)) #number_of_ticks = float((curFrameTick - nStartTime)) * float((1.0/TIME_TICKSPERSEC))
+                number_of_ticks = float(curFrameTick - (nStartTime * nTicksPerFrame)) * float((1.0/TIME_TICKSPERSEC)) #number_of_ticks = float((curFrameTick - nStartTime)) * float((1.0/TIME_TICKSPERSEC))
             testFrame.fStartingSecs = number_of_ticks
             testFrame.mtxOrientation = pasm_math.BObj2F43MtxBONE(pbone)
             
