@@ -49,7 +49,7 @@ class ExportAPE(Operator, ExportHelper):
         m_bExportLights: BoolProperty(
             name="Export Light Data",
             description="Export all lights from the scene",
-            default=True,
+            default=False,
             )
             
         m_bExportGeo: BoolProperty(
@@ -139,9 +139,9 @@ class ExportAPE(Operator, ExportHelper):
                # REMOVE CHILDREN IN off_ COLLECTIONS   
                 for collection in bpy.data.collections:
                     if collection.name[:4].lower() == "off_":
-                        #print("  REMOVE COLLECTION " + collection.name)
+                        print("REMOVE COLLECTION " + collection.name)
                         for obj in collection.all_objects:
-                            print("    REMOVE " + obj.name)
+                            print("  REMOVE " + obj.name)
                             try:    objects.remove(obj)
                             except: pass
 
@@ -159,7 +159,7 @@ class ExportAPE(Operator, ExportHelper):
                 
                 if(self.m_bExportGeo):                
                     for obj in objects:
-                        ExportObjGeo(obj)
+                        ExportObjGeo(obj, self.m_bExportHierarchy)
                 
                 # Go back to the start and rewrite the header with correct data
                 g_class.file.seek(0)

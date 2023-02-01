@@ -131,6 +131,9 @@ def ExportObjLight(obj):
     if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
         outLight.fSpotInnerAngle = obj.data.spot_size
         outLight.fSpotOuterAngle = obj.data.spot_size
+        
+    # Check to see if this light is attached to an armature
+    if (obj.parent_bone): outLight.szParentBoneName = obj.parent_bone
     
     # Finally, write data to the file, and our header
     g_class.file.write(outLight.packBytes())
