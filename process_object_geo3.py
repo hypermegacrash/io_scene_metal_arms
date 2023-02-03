@@ -236,8 +236,18 @@ def ExportObjGeo(obj, bExportHierarchy):
         layer  = pasm_file_def.PASMLayer()
         layer1 = pasm_file_def.PASMLayer()
         
-        matOut = obj.data.materials[matIndex].node_tree.nodes["Material Output"] # Get the material output
-        fangMatGroup = matOut.inputs["Surface"].links[0].from_node               # Get the Fang Material Node group connected to it
+        # Get the material output
+        for node in obj.data.materials[matIndex].node_tree.nodes:
+            if node.type == "OUTPUT_MATERIAL" and node.is_active_output:
+                matOut = node
+                continue
+                
+        fangMatGroup = matOut.inputs["Surface"].links[0].from_node               # Get the Node connected to it
+        
+        if fangMatGroup.type != "GROUP":
+            string = "The Material Output Node for material " + obj.data.materials[matIndex].name.lower() + " in object " + obj.name + " is not connected to a FANG Material / FANG Composite Node Tree. Please fix and retry exporting."
+            ShowMessageBox(string, "MATERIAL ERROR", 'ERROR')
+            return
         
         if (fangMatGroup.node_tree.name == "FANG Material"):
             print("We got a FANG Material!")
@@ -279,6 +289,9 @@ def ExportObjGeo(obj, bExportHierarchy):
             mat.nLayerCount += 1
         else:
             raise ValueError("NOT A FANG MATERIAL!!!")
+            string = "The Material Output Node for material " + obj.data.materials[matIndex].name.lower() + " in object " + obj.name + " is not connected to a FANG Material / FANG Composite Node Tree. Please fix and retry exporting."
+            ShowMessageBox(string, "MATERIAL ERROR", 'ERROR')
+            return
             
         # Setup a default shader if not supplied
         if mat.StarCommands.nShaderNum < 0:

@@ -858,7 +858,7 @@ class PASMMaterial:
         self.nFirstIndex   = 0
         self.nNumIndices   = 0
         self.StarCommands  = PASMCommands()
-        self.nLODIndex     = 0
+        self.nLODIndex     = 0 # 8 Max
         self.nAffectAngle  = 0
         self.nFlags        = 0
         self.PAD           = bytearray(24)
