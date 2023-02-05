@@ -108,9 +108,9 @@ def ParseMaterial(matName, fangMatGroup, matStrParser):
         layer.IllumRGB[2] = fangMatGroup.inputs["Illumination"].default_value
     
     if(layer.StarCommands.nFlags & 0x02 == 0x02):
-        layer.StarCommands.TintRGB[0] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[0])
-        layer.StarCommands.TintRGB[1] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[1])
-        layer.StarCommands.TintRGB[2] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[2])
+        matStrParser.m_TintRGB[0] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[0])
+        matStrParser.m_TintRGB[1] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[1])
+        matStrParser.m_TintRGB[2] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[2])
         
     return layer
 
@@ -185,11 +185,14 @@ def ExportObjGeo(obj, bExportHierarchy):
     # Get our color layers
     ColorChannel = None
     AlphaChannel = None
-    for vc in geo.vertex_colors:
+    for vc in geo.color_attributes:
         outName = vc.name.lower()[:]
         outName = outName.split(".",1)[0]
         if(outName == "alpha"):   AlphaChannel = vc
         elif(outName == "color"): ColorChannel = vc
+        
+    print(AlphaChannel)
+    print(ColorChannel)
 
     aVertexBuffer  = [] # Array buffer for holding every all unique PASMVerts(), used for file export
     aIndexBuffer   = [] # Array buffer for holding every remapped index as a PASMVertIndex(), used for file export
@@ -224,7 +227,7 @@ def ExportObjGeo(obj, bExportHierarchy):
         # We then use the object star commands as a base for all the materials
         matStrParser = CMaterialStringParser()
         matStrParser.ResetToDefaults()
-        matStrParser.m_ApeCommands = copy.copy ( objStrParser.m_ApeCommands )
+        matStrParser.m_ApeCommands = copy.deepcopy ( objStrParser.m_ApeCommands )
         matStrParser.Parse( obj.data.materials[matIndex].name.lower() ) # Then we parse the material name for star commands & material flags
         
         mat.StarCommands = matStrParser.m_ApeCommands
@@ -254,13 +257,16 @@ def ExportObjGeo(obj, bExportHierarchy):
             
             try:
                 matStrParser.ResetToDefaults()
-                matStrParser.m_ApeCommands = copy.copy ( objStrParser.m_ApeCommands )
+                matStrParser.m_ApeCommands = copy.deepcopy ( objStrParser.m_ApeCommands )
                 layer = ParseMaterial(obj.data.materials[matIndex].name.lower(), fangMatGroup, matStrParser)
             except:
                 string = "Trouble parsing Fang Material " + obj.data.materials[matIndex].name.lower() + " in object " + obj.name + ". Validate your node setup."
                 ShowMessageBox(string, "MATERIAL ERROR", 'ERROR')
                 return
-            mat.aMatLayers[0] = copy.copy( layer ) # Link base layer with our material
+            #print( "BEFORE ASSIGNMENT ", layer.StarCommands.TintRGB )
+            mat.aMatLayers[0] = copy.deepcopy( layer ) # Link base layer with our material
+            mat.StarCommands.TintRGB = copy.deepcopy ( matStrParser.m_TintRGB ) # Tint applied at the material level, NOT the layer level
+            #print( "AFTER ASSIGNMENT ", layer.StarCommands.TintRGB )
             mat.nLayerCount += 1
             
         elif (fangMatGroup.node_tree.name == "FANG Composite"):
@@ -268,28 +274,29 @@ def ExportObjGeo(obj, bExportHierarchy):
             
             try:
                 matStrParser.ResetToDefaults()
-                matStrParser.m_ApeCommands = copy.copy ( objStrParser.m_ApeCommands )
+                matStrParser.m_ApeCommands = copy.deepcopy ( objStrParser.m_ApeCommands )
                 layer = ParseMaterial(fangMatGroup.inputs["Base"].links[0].from_node.name.lower(), fangMatGroup.inputs["Base"].links[0].from_node, matStrParser)
             except:
                 string = "Trouble parsing Base Layer Fang Composite Material " + obj.data.materials[matIndex].name.lower() + " in object " + obj.name + ". Validate your node setup."
                 ShowMessageBox(string, "MATERIAL ERROR", 'ERROR')
                 return
-            mat.aMatLayers[0] = copy.copy( layer ) # Link base layer with our material
+            mat.aMatLayers[0] = copy.deepcopy( layer ) # Link base layer with our material
+            mat.StarCommands.TintRGB = copy.deepcopy ( matStrParser.m_TintRGB ) # Tint applied at the material level, NOT the layer level
             mat.nLayerCount += 1
             
             try:
                 matStrParser.ResetToDefaults()
-                matStrParser.m_ApeCommands = copy.copy ( objStrParser.m_ApeCommands )
+                matStrParser.m_ApeCommands = copy.deepcopy ( objStrParser.m_ApeCommands )
                 layer1 = ParseMaterial(fangMatGroup.inputs["Layer 1"].links[0].from_node.name.lower(), fangMatGroup.inputs["Layer 1"].links[0].from_node, matStrParser)
             except:
                 string = "Trouble parsing Layer 1 Fang Composite Material " + obj.data.materials[matIndex].name.lower() + " in object " + obj.name + ". Validate your node setup."
                 ShowMessageBox(string, "MATERIAL ERROR", 'ERROR')
                 return
-            mat.aMatLayers[1] = copy.copy( layer1 ) # Link layer 1 with our material
+            mat.aMatLayers[1] = copy.deepcopy( layer1 ) # Link layer 1 with our material
             mat.nLayerCount += 1
         else:
             raise ValueError("NOT A FANG MATERIAL!!!")
-            string = "The Material Output Node for material " + obj.data.materials[matIndex].name.lower() + " in object " + obj.name + " is not connected to a FANG Material / FANG Composite Node Tree. Please fix and retry exporting."
+            string = "Unable to parse FANG Material / FANG Composite Node Tree. This is a programmer error."
             ShowMessageBox(string, "MATERIAL ERROR", 'ERROR')
             return
             
@@ -348,12 +355,12 @@ def ExportObjGeo(obj, bExportHierarchy):
                                        
                  # Vertex Color
                 if ColorChannel != None:
-                    entryVertex.Color[0] = copy.copy ( float("%.2f" % ColorChannel.data[loop].color[0]) )
-                    entryVertex.Color[1] = copy.copy ( float("%.2f" % ColorChannel.data[loop].color[1]) )
-                    entryVertex.Color[2] = copy.copy ( float("%.2f" % ColorChannel.data[loop].color[2]) )
+                    entryVertex.Color[0] = copy.copy ( float("%.2f" % ColorChannel.data[vertex].color[0]) )
+                    entryVertex.Color[1] = copy.copy ( float("%.2f" % ColorChannel.data[vertex].color[1]) )
+                    entryVertex.Color[2] = copy.copy ( float("%.2f" % ColorChannel.data[vertex].color[2]) )
                 
                 # Vertex Alpha
-                if AlphaChannel != None: entryVertex.Color[3] = copy.copy ( float("%.2f" % AlphaChannel.data[loop].color[0]) )
+                if AlphaChannel != None: entryVertex.Color[3] = copy.copy ( float("%.2f" % AlphaChannel.data[vertex].color[0]) )
                 else:                    entryVertex.Color[3] = 1.0 # What the... if the default is 1.0 set it on init
                 
                 # Vertex Weights
@@ -363,7 +370,7 @@ def ExportObjGeo(obj, bExportHierarchy):
                 # https://blender.stackexchange.com/questions/14250/how-to-restrict-vertex-weights-to-no-more-than-n-number-of-bones
                 if hSkeleton != None:
                     pWeight = pasm_file_def.PASMWeight()
-                    if(bSkinned):
+                    if(bSkinned): # This is a weight painted mesh
                         for vgroup in geo.vertices[vertex].groups:
                             # Survival of the fittest, largest weight wins
                             if vgroup.weight > pWeight.fWeight:
@@ -372,7 +379,7 @@ def ExportObjGeo(obj, bExportHierarchy):
                         pWeight.fWeight = 1 # If this is the only weight, might as well have it be max influence
                         entryVertex.aWeights[0] = pWeight
                         entryVertex.fNumWeights = 1 # We could support 2 max
-                    else:
+                    else: # This is a unskinned / parented mesh
                         pWeight.fBoneIndex = hSkeleton.pose.bones.find(obj.parent_bone)
                         pWeight.fWeight = 1 # If this is the only weight, might as well have it be max influence
                         entryVertex.aWeights[0] = pWeight
@@ -390,7 +397,9 @@ def ExportObjGeo(obj, bExportHierarchy):
 
         mat.nNumIndices = len(aIndexBuffer) - mat.nFirstIndex
     
-        outSegment.aMaterials.append(mat)
+        #for submat in mat.aMatLayers:
+        #    print(submat.StarCommands.TintRGB)
+        outSegment.aMaterials.append(copy.deepcopy(mat))
         outSegment.nNumMaterials += 1
     
     # Clean up? IDK what this does honestly
@@ -401,6 +410,10 @@ def ExportObjGeo(obj, bExportHierarchy):
     outSegment.aIndicies   = aIndexBuffer   
     outSegment.nNumVerts   = len(aVertexBuffer)
     outSegment.nNumIndices = len(aIndexBuffer)
+    
+    #for mat in outSegment.aMaterials:
+    #    for submat in mat.aMatLayers:
+    #        print(submat.StarCommands.TintRGB)
     
     # Finally, write data to the file, and our header
     g_class.file.write(outSegment.packBytes())

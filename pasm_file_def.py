@@ -764,6 +764,7 @@ class PASMCommands:
         # Strange null bytes
         outBytes += bytearray(2)
 
+        #print("PACKING TintRGB", self.TintRGB)
         for i in self.TintRGB:
             outBytes += struct.pack("<f", i)
         for i in self.LightRGBI:

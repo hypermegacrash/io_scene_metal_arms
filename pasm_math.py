@@ -235,6 +235,7 @@ def BObj2F43MtxHIERARCHY(obj):
 # 23-1-18 Blender might have this function built in, need to find it
 # Blender stores Color RGB values from UI in scene color, PASM expects them in sRGB format
 # https://blender.stackexchange.com/questions/218312/python-how-to-color-accurately-convert-from-rgb-0-255-format-to-values-in-0-0f
+# https://upbge.org/docs/latest/api/mathutils.html
 def color_scene_linear_to_srgb(c):
   if (c < 0.0031308):
     if (c < 0.0):

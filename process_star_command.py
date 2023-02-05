@@ -78,6 +78,7 @@ class CMaterialStringParser:
         self.Params = None
         self.m_nMatFlags = APE_MAT_FLAGS_NONE
         self.m_nAffectAngle = 0
+        self.m_TintRGB = [1.0, 1.0, 1.0] # This gets assigned in a higher level
 
     def _GetParamterString2(self, inStr, Cmd):
         pszCmd = inStr.find(Cmd)            
@@ -90,6 +91,7 @@ class CMaterialStringParser:
     # This is run before EVERY Material is parsed, it's essentially the default PASMLight.PASMCommands
     def ResetToDefaults(self):
         self.Params = None
+        self.m_TintRGB = [1.0, 1.0, 1.0]
 
         self.m_ApeCommands = PASMCommands()
         self.m_ApeCommands.bUseEmissiveColor = 1
