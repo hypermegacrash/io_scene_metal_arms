@@ -5,7 +5,7 @@ from . import bl_info       # For grabbing the Add-On version so we can print it
 from . import g_class       # Get our global variables like header data & I/O file
 # Grab all our defs for exporting Blender data to PASM formatted data
 from . import pasm_file_def # . is the add-on folder directory
-from .process_object_geo3    import ExportObjGeo
+from .process_object_geo4    import ExportObjGeo
 from .process_object_light   import ExportObjLight
 from .process_object_object  import ExportObjObject
 from .process_object_shape   import ExportObjShape
