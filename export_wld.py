@@ -5,11 +5,11 @@ from . import bl_info       # For grabbing the Add-On version so we can print it
 from . import g_class       # Get our global variables like header data & I/O file
 # Grab all our defs for exporting Blender data to PASM formatted data
 from . import pasm_file_def # . is the add-on folder directory
-from .process_object_geo4    import ExportObjGeo
+from .process_object_geo4    import ExportObjGeo2
 from .process_object_light   import ExportObjLight
 from .process_object_object  import ExportObjObject
 from .process_object_shape   import ExportObjShape
-from .process_object_volume2 import ExportObjVolume
+from .process_object_volume3 import ExportObjVolume2
 from .process_object_portal  import ExportObjPortal
 from .process_object_fog     import ExportObjFog
 
@@ -148,6 +148,22 @@ class ExportWLD(Operator, ExportHelper):
                             print("    REMOVE " + obj.name)
                             try:    objects.remove(obj)
                             except: pass
+                            
+                VolumeColls = []
+                
+                # ORGANIZE cell_ COLLECTIONS INTO SEPERATE LISTS
+                print("\nREMOVE CHILDREN IN cell_ COLLECTIONS\n")         
+                for collection in bpy.data.collections:
+                    print(collection.name)
+                    if collection.name[:5].lower() == "cell_":
+                        thisVolume = []
+                        print("  REMOVE COLLECTION " + collection.name)
+                        for obj in collection.all_objects:
+                            print("    ADD TO COLL AND REMOVE FROM SELECTED OBJECTS " + obj.name)
+                            thisVolume.append(obj)
+                            try:    objects.remove(obj)
+                            except: pass
+                        VolumeColls.append(thisVolume)
 
                 # To mimic the original exporter as closely as possible
                 # We itterate over the entire scene for each section of the PASM file
@@ -168,14 +184,16 @@ class ExportWLD(Operator, ExportHelper):
                     ExportObjShape(obj)
 
                 for obj in objects:
-                    ExportObjVolume(obj)
+                    ExportObjVolume2(obj)
+                for Volume in VolumeColls:
+                    ExportObjVolume2(Volume)
                     
                 for obj in objects:
                     ExportObjPortal(obj)
                 
                 if(self.m_bExportGeo):                
                     for obj in objects:
-                        ExportObjGeo(obj, False)
+                        ExportObjGeo2(obj, False)
                 
                 # Go back to the start and rewrite the header with correct data
                 g_class.file.seek(0)

@@ -5,7 +5,7 @@ from . import bl_info       # For grabbing the Add-On version so we can print it
 from . import g_class       # Get our global variables like header data & I/O file
 # Grab all our defs for exporting Blender data to PASM formatted data
 from . import pasm_file_def # . is the add-on folder directory
-from .process_object_geo4  import ExportObjGeo, ExportObjGeo2
+from .process_object_geo4  import ExportObjGeo2
 from .process_object_light import ExportObjLight
 from .process_object_bone  import ExportObjBone
 
@@ -204,7 +204,7 @@ class ExportAPE(Operator, ExportHelper):
                 if(self.m_bExportGeo):
                     if not rootLODColl:
                         for obj in objects:
-                            ExportObjGeo(obj, self.m_bExportHierarchy)
+                            ExportObjGeo2(obj, self.m_bExportHierarchy)
                     else:
                         for LOD in LODMeshes:
                             ExportObjGeo2(LOD, self.m_bExportHierarchy)

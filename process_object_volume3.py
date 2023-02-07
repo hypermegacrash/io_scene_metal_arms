@@ -5,19 +5,14 @@ from . import pasm_file_def  # Get our PASM file classes
 from . import g_class        # Get our global variables for the header data
 # BLENDER
 from mathutils import Vector # Need Vector for computing bounding box
-
-def ExportObjVolume(obj):
-    if obj.name[:4].lower() == "off_":  return # Doesn't matter it's off bail early
-    if obj.type             != "MESH":  return
-    if obj.name[:5].lower() != "cell_": return
-        
-    print(obj.name, "is a cell object")    
+import copy # We need to do a deep copy rather than shallow copy because exported data gets finicky
     
-    #if(len(obj.data.polygons) != 6):
-        #print("The cell", obj.name, "isn't a non-triangulated cube with 6 faces. While convex shapes ARE supported for cells" +
-        #" in the PASM .wld format. That functionality is not currently supported in this itteration of the tool")
-    #    return
-    #print("CELL NAME:", obj.name, "is a cube with 6 faces, good")   
+def ProcessCell(obj):
+    if obj.name[:4].lower() == "off_":  return False # Doesn't matter it's off bail early
+    if obj.type             != "MESH":  return False
+    if obj.name[:5].lower() != "cell_": return False
+        
+    print(obj.name, "is a cell object") 
     
     outCell = pasm_file_def.PASMCell()
     
@@ -42,7 +37,7 @@ def ExportObjVolume(obj):
     
     if(bIsConvex):
         print("Mesh is not convex, skipping cell")
-        return
+        return False
         
     # OK Now we need the following
     # There can be only 6 degrees per face...
@@ -65,7 +60,6 @@ def ExportObjVolume(obj):
         tempVisVert = pasm_file_def.PASMVisPoint()
         
         #Thx stackexchange! https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
-           
         vertPosAfterWTM = obj.matrix_world @ index.co
         tempVisVert.Pos[0] = vertPosAfterWTM[0]
         tempVisVert.Pos[1] = vertPosAfterWTM[2]
@@ -165,16 +159,64 @@ def ExportObjVolume(obj):
     outCell.aSphere[2] = global_bbox_center[2]
     outCell.aSphere[3] = global_bbox_center[1]
     
-    testVolume = pasm_file_def.PASMVolume()
+    return outCell
+
+def ExportObjVolume2(aVolumes):
+    outVolume = pasm_file_def.PASMVolume()
     
-     # For the moment Volumes are hardcoded to only be 1 cell
-    testVolume.nNumCells = 1
-    testVolume.aCells[0] = outCell
-    testVolume.Sphere = outCell.aSphere
+    if type(aVolumes) == list:
+        print("We got a Volume Collection")
+        
+        for cell in aVolumes:
+            outCell = ProcessCell(cell)
+            if outCell != False:
+                outVolume.aCells[outVolume.nNumCells] = copy.deepcopy( outCell )
+                if outVolume.nNumCells == 0:
+                    outVolume.Sphere = outCell.aSphere # Only 1 cell, therefore the volume shares the same sphere properties as the only cell
+                else:
+                    # First, find the point between the center point of each sphere
+                    outVolume.Sphere[1] = (outVolume.Sphere[1] + outCell.aSphere[1]) / 2
+                    outVolume.Sphere[2] = (outVolume.Sphere[2] + outCell.aSphere[2]) / 2
+                    outVolume.Sphere[3] = (outVolume.Sphere[3] + outCell.aSphere[3]) / 2
+    
+                    # This is our new center point we need to reference when calculating radius
+                    vec = Vector((outVolume.Sphere[1], outVolume.Sphere[2], outVolume.Sphere[3]))
+                    
+                    radius = 0
+                    
+                    # Next, Itterate through all the points in the cells already exported to find the furthest point from the center
+                    for cellb in outVolume.aCells:
+                        for x in range(cellb.nNumVerts):
+                            vertPoint = Vector((cellb.aVisVerts[x].Pos[0], cellb.aVisVerts[x].Pos[1], cellb.aVisVerts[x].Pos[2]))
+                            if (vertPoint - vec).length > radius:
+                                radius = (vertPoint - vec).length
+                    
+                    # Then, itterate through all the points in the newly exported cell to potentially find a new furthest point from the center                
+                    for x in range(outCell.nNumVerts):
+                            vertPoint = Vector((outCell.aVisVerts[x].Pos[0], outCell.aVisVerts[x].Pos[1], outCell.aVisVerts[x].Pos[2]))
+                            if (vertPoint - vec).length > radius:
+                                radius = (vertPoint - vec).length
+                        
+                    # Finally, new furthest point found, we're done here
+                    outVolume.Sphere[0] = radius
+                    
+                outVolume.nNumCells += 1
+            else:
+                return # Trouble processing a cell, just bail
+    else:
+        outCell = ProcessCell(aVolumes)
+        if outCell != False:
+             # For the moment Volumes are hardcoded to only be 1 cell
+            outVolume.nNumCells = 1
+            outVolume.aCells[0] = outCell
+            outVolume.Sphere = outCell.aSphere
+        else:
+            return # Trouble processing a cell, just bail
+            
     
     # Finally, write data to the file, and our header
-    g_class.file.write(testVolume.packBytes())
-    g_class.gWldHeader.fileSize += len(testVolume.packBytes())
+    g_class.file.write(outVolume.packBytes())
+    g_class.gWldHeader.fileSize += len(outVolume.packBytes())
     g_class.gWldHeader.nNumCells += 1
     
     
