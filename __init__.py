@@ -6,7 +6,7 @@ import bpy # Registering / Unregistering classes
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 15, 0),
+        "version": (0, 15, 2),
         "blender": (2, 93, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",
@@ -46,6 +46,13 @@ classes = (
     MABSDF2FM,
 )
 
+aExportUI = (
+    exportAPE_MenuFunc,
+    exportWLD_MenuFunc,
+    exportCAM_MenuFunc,
+    exportMTX_MenuFunc,
+)
+
 # When this add-on is enabled in Edit>Preferences>Add-ons, this function is called
 def register():    
     print("Metal Arms Toolbox Add-On enabled!")
@@ -54,10 +61,8 @@ def register():
         bpy.utils.register_class(cls)
     
     # Update UI in File > Export 
-    bpy.types.TOPBAR_MT_file_export.append(exportAPE_MenuFunc)
-    bpy.types.TOPBAR_MT_file_export.append(exportWLD_MenuFunc)
-    bpy.types.TOPBAR_MT_file_export.append(exportCAM_MenuFunc)
-    bpy.types.TOPBAR_MT_file_export.append(exportMTX_MenuFunc)
+    for func in aExportUI:
+        bpy.types.TOPBAR_MT_file_export.append(func)
     
     # Update UI in Right Click > Object Context Menu
     VIEW3D_MT_object_context_menu.append(MAGUI_MenuFunc)
@@ -71,20 +76,18 @@ def register():
 # When this add-on is disabled in Edit>Preferences>Add-ons, this function is called
 def unregister():
     print("Metal Arms Toolbox Add-On disabled!")
+    # We unregister in reverse order because systems initialized latter may rely on systems initalized earlier
     
     # Delete references to data before deleting classes said data are using
     #del bpy.types.Material.ma_mat
-    
-    # Unregistering classes
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
     
     # Update UI in Right Click > Object Context Menu
     VIEW3D_MT_object_context_menu.remove(MAGUI_MenuFunc)
     
     # Update UI in File > Export in reverse order
-    bpy.types.TOPBAR_MT_file_export.remove(exportMTX_MenuFunc)
-    bpy.types.TOPBAR_MT_file_export.remove(exportCAM_MenuFunc)
-    bpy.types.TOPBAR_MT_file_export.remove(exportWLD_MenuFunc)
-    bpy.types.TOPBAR_MT_file_export.remove(exportAPE_MenuFunc)
-
+    for func in reversed(aExportUI):
+        bpy.types.TOPBAR_MT_file_export.append(func)
+    
+    # Unregistering classes
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)

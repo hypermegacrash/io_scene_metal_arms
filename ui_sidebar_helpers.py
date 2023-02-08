@@ -1,9 +1,11 @@
+# Module that defines a sidebar panel containing useful QOL buttons that ease development
+
 import bpy
 import os
 
 class MABSDF2FM(bpy.types.Operator):
     """Replace all Principaled BDSF Surfaces with FANG Material NodeTrees"""
-    bl_label = "Update FANG Material"
+    bl_label  = "Update FANG Material"
     bl_idname = "object.ma_bsdf_to_fang"
     
     def execute(self, context):
@@ -52,7 +54,6 @@ class MABSDF2FM(bpy.types.Operator):
     
         return {'FINISHED'}
         
-# Class to update all FANG Materials to the one currently used in the Add-On
 class MAUpdateFangMaterial(bpy.types.Operator):
     """Add / Update the FANG Materials in the scene"""
     bl_label = "Update FANG Material / Composite"
@@ -94,7 +95,12 @@ class MAUpdateFangMaterial(bpy.types.Operator):
                 print("No output material!")
                 continue
             
-            surface = matOut.inputs["Surface"].links[0].from_node # Get the Node connected to it
+            # Does it have a surface connected to it?
+            try:
+                surface = matOut.inputs["Surface"].links[0].from_node # Get the Node connected to it
+            except:
+                print("No Surface Node Group!")
+                continue
             
             # If it's a group... is this node tree broken?
             # Hypothetically the scene could already have a bad node tree that wasn't
@@ -150,12 +156,17 @@ class MAUpdateFangMaterial(bpy.types.Operator):
                 if surface.node_tree == None:
                     print("Assume this is a broken Data-Block from being replaced")
                     surface.node_tree = bpy.data.node_groups[bpy.data.node_groups.find("FANG Material")]
+                elif surface.node_tree.name == "FANG Composite":
+                    flayer0 = surface.inputs["Base"].links[0].from_node    # Get the Node connected to it
+                    flayer1 = surface.inputs["Layer 1"].links[0].from_node # Get the Node connected to it
+                    
+                    flayer0.node_tree = bpy.data.node_groups[bpy.data.node_groups.find("FANG Material")]
+                    flayer1.node_tree = bpy.data.node_groups[bpy.data.node_groups.find("FANG Material")]
 
         return {'FINISHED'}
 
-#PANEL UI PART 1 DRAW
 class MASidePanel(bpy.types.Panel):
-    """Helper Side Panel for MA Toolkit"""
+    """Helper Side Panel for MA Toolkit containing QOL features for development"""
     bl_label = "MA Toolkit"
     bl_idname = "OBJECT_PT_panel"
     bl_space_type = 'VIEW_3D'
@@ -163,11 +174,8 @@ class MASidePanel(bpy.types.Panel):
     bl_category = "MA Toolkit"
     
     def draw(self, context):
-        
-        #variables
         layout = self.layout
         
-        #add CUSTOM BUTTON
         row = layout.column()
         row.operator("object.ma_update_material", text = "Add / Update FANG Material")
         row.operator("object.ma_bsdf_to_fang",    text = "Convert BSDF to FANG")
