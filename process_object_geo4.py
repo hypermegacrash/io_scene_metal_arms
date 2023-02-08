@@ -113,6 +113,10 @@ def ParseMaterial(matName, fangMatGroup, matStrParser):
         matStrParser.m_TintRGB[1] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[1])
         matStrParser.m_TintRGB[2] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[2])
         
+    layer.bTwoSided = int(fangMatGroup.inputs["Two Sided"].default_value)
+    if layer.bTwoSided > 1: layer.bTwoSided = 1
+    if layer.bTwoSided < 0: layer.bTwoSided = 0
+        
     return layer
   
 # 1 unit of work for a given mesh

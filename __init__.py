@@ -6,7 +6,7 @@ import bpy # Registering / Unregistering classes
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 14, 1),
+        "version": (0, 15, 0),
         "blender": (2, 93, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",
@@ -23,6 +23,7 @@ from .export_mtx import *
 # Classes that expose more Metal Arms functionality
 from .ui_custom_properties   import *
 #from .ui_material_properties import *
+from .ui_sidebar_helpers     import *
 
 # The list of classes we are registering within Blender
 classes = (
@@ -38,6 +39,11 @@ classes = (
     # Material Properties + UI
     #MAMaterialProperty,
     #MAMaterialPanel
+    
+    # Sidebar general help functions
+    MASidePanel,
+    MAUpdateFangMaterial,
+    MABSDF2FM,
 )
 
 # When this add-on is enabled in Edit>Preferences>Add-ons, this function is called
@@ -60,6 +66,7 @@ def register():
     # Being declared in 'bpy.types.Material' means every material gets it's own 'ma_mat'
     # Each 'ma_mat' points to it's own instance of the class 'MAMaterialProperty'
     #bpy.types.Material.ma_mat = bpy.props.PointerProperty(type = MAMaterialProperty)
+    
 
 # When this add-on is disabled in Edit>Preferences>Add-ons, this function is called
 def unregister():
@@ -80,4 +87,4 @@ def unregister():
     bpy.types.TOPBAR_MT_file_export.remove(exportCAM_MenuFunc)
     bpy.types.TOPBAR_MT_file_export.remove(exportWLD_MenuFunc)
     bpy.types.TOPBAR_MT_file_export.remove(exportAPE_MenuFunc)
-    
+
