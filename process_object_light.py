@@ -86,9 +86,10 @@ def ExportObjLight(obj):
             # This methodology only works for small lights, large lights don't work with this
             # For the time being compromise, this is better than before but still not ideal
             if(obj.data.energy < 1000):
+                #light_threshold = bpy.context.scene.eevee.light_threshold
                 # I guess we're doing this mathematically as well
                 # https://www.youtube.com/watch?v=b9HgDScFoTo
-                radius = math.sqrt((( obj.data.energy / 0.02) / ( 4 * math.pi )))     
+                radius = math.sqrt(((( obj.data.energy / 0.01) *  obj.data.diffuse_factor) / ( 4 * math.pi )))     
                 outLight.Intensity = (( obj.data.energy ) / ( radius * radius ))
             else:
                 import colorsys
@@ -119,10 +120,11 @@ def ExportObjLight(obj):
         outLight.Direction[2] =  outLight.mtxOrientation[8]
     
     if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_OMNI or outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
+        # light_threshold = bpy.context.scene.eevee.light_threshold
         # Blender doesn't give a radius of light that we want
         # So we're gonna calculate inverse square law with a distance of 0.02 to try and approximate one
         # Thx The Science Asylum! https://www.youtube.com/watch?v=2FMx2GDqMo4
-        radius2 = math.sqrt((( obj.data.energy / 0.02) / ( 4 * math.pi )))
+        radius2 = math.sqrt(((( obj.data.energy / 0.02) *  obj.data.diffuse_factor) / ( 4 * math.pi )))    
         outLight.Sphere[0] = radius2
         outLight.Sphere[1] = outLight.mtxOrientation[9]
         outLight.Sphere[2] = outLight.mtxOrientation[10]
