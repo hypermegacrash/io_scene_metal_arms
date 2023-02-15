@@ -3,8 +3,25 @@
 
 # FANG TOOLKIT
 from .pasm_file_def import PASMCommands # We only need the Star Commands struct
+# BLENDER
+import bpy # Needed for popping up an error screen
 # GLOBALS
 _AUTO_ID = -128 # Dont do this, shouldn't this be -1???
+
+# https://blender.stackexchange.com/a/110112
+def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
+
+    def draw(self, context):
+        self.layout.label(text=message)
+
+    bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
+    
+def StarCmdCheckNumParams( pszMatStr, nExpectedArgCount, nParams, starCmdName ):
+    if nExpectedArgCount != len(nParams):
+        string = "Trouble parsing " + pszMatStr + ": The Star Command " + starCmdName + " expects " + str(nExpectedArgCount) + " args but " + str(len(nParams)) + " were given."
+        ShowMessageBox(string, "STAR COMMAND ERROR", 'ERROR')
+        return False
+    return True
 
 def _GetParameterString(pszCmd):
     psz1stParenthesis = pszCmd.find("(")
@@ -80,12 +97,14 @@ class CMaterialStringParser:
         self.m_nAffectAngle = 0
         self.m_TintRGB = [1.0, 1.0, 1.0] # This gets assigned in a higher level
 
-    def _GetParamterString2(self, inStr, Cmd):
+    def _GetParamterString2(self, inStr, Cmd, nArgCount):
         pszCmd = inStr.find(Cmd)            
         if(pszCmd != -1):
             if(_GetParameterString(inStr[pszCmd + 1:])):
                 self.nParams = _GetParameterString(inStr[pszCmd + 1:])
-                return True
+                
+                if StarCmdCheckNumParams( inStr, nArgCount, self.nParams, Cmd ):
+                    return True
         return False
     
     # This is run before EVERY Material is parsed, it's essentially the default PASMLight.PASMCommands
@@ -108,31 +127,29 @@ class CMaterialStringParser:
     # The meat, takes a Material String Name as input formats the class's Star Command struct
     def Parse(self, pszMatStr):
 
-        if(self._GetParamterString2(pszMatStr, "*id")):               
+        if(self._GetParamterString2(pszMatStr, "*id", 1)): 
             self.nParams[0] = int(self.nParams[0])
                 
-            if(self.nParams[0] < 127):
-                self.m_ApeCommands.nID = self.nParams[0]
+            if(self.nParams[0] < 127): self.m_ApeCommands.nID = self.nParams[0]
 
-        if(self._GetParamterString2(pszMatStr, "*collid")):         
+        if(self._GetParamterString2(pszMatStr, "*collid", 1)):
             self.nParams[0] = int(self.nParams[0])
                 
             self.m_ApeCommands.nCollID = max(1, min(self.nParams[0], 63))
 
-        if( pszMatStr.find("*sort") != -1 ):
-            self.m_ApeCommands.bSort = True
+        if( pszMatStr.find("*sort") != -1 ): self.m_ApeCommands.bSort = True
         
-        if(self._GetParamterString2(pszMatStr, "*order")): 
+        if(self._GetParamterString2(pszMatStr, "*order", 1)): 
             self.nParams[0] = int(self.nParams[0])
                 
             self.m_ApeCommands.nOrderNum = max(1, min(self.nParams[0], 100))
             
-        if(self._GetParamterString2(pszMatStr, "*shader")):
+        if(self._GetParamterString2(pszMatStr, "*shader", 1)):
             self.nParams[0] = int(self.nParams[0])
             
             self.m_ApeCommands.nShaderNum = max(0, self.nParams[0])
         
-        if(self._GetParamterString2(pszMatStr, "*motif")): 
+        if(self._GetParamterString2(pszMatStr, "*motif", 6)):
             self.m_ApeCommands.nEmissiveMotifID  = int(self.nParams[0])
             self.m_ApeCommands.nDiffuseMotifID   = int(self.nParams[2])
             self.m_ApeCommands.nSpecularMotifID  = int(self.nParams[4])
@@ -140,25 +157,22 @@ class CMaterialStringParser:
             self.m_ApeCommands.bUseDiffuseColor  = int(self.nParams[3])
             self.m_ApeCommands.bUseSpecularColor = int(self.nParams[5])
         
-        if(self._GetParamterString2(pszMatStr, "*anim")):
-            # Takes 2 arguments: (NumFrames, FramesPerSec)
+        if(self._GetParamterString2(pszMatStr, "*anim", 2)):
             self.m_ApeCommands.nNumTexFrames = int(self.nParams[0])
             self.m_ApeCommands.fFramesPerSec = float(self.nParams[1])
             
             # AUTO ID
-            if( self.m_ApeCommands.nID == -1 ):
-                self.m_ApeCommands.nID = _AUTO_ID
+            if( self.m_ApeCommands.nID == -1 ): self.m_ApeCommands.nID = _AUTO_ID
         
-        if(self._GetParamterString2(pszMatStr, "*rotate")):
+        if(self._GetParamterString2(pszMatStr, "*rotate", 3)):
             self.m_ApeCommands.fDeltaUVRotationPerSec = float(self.nParams[0])
             self.m_ApeCommands.vRotateUVAround.Set[0] = float(self.nParams[1])
             self.m_ApeCommands.vRotateUVAround.Set[1] = float(self.nParams[2])
-            
+
             # AUTO ID
-            if( self.m_ApeCommands.nID == -1 ):
-                self.m_ApeCommands.nID = _AUTO_ID
+            if( self.m_ApeCommands.nID == -1 ): self.m_ApeCommands.nID = _AUTO_ID
         
-        if(self._GetParamterString2(pszMatStr, "*scroll")):
+        if(self._GetParamterString2(pszMatStr, "*scroll", 4)):
             self.nParams[0] = float(self.nParams[0])
             self.nParams[1] = float(self.nParams[1])
             self.nParams[2] = float(self.nParams[2])
@@ -170,121 +184,82 @@ class CMaterialStringParser:
                 self.m_ApeCommands.fDeltaVPerSec = self.nParams[2] / self.nParams[3]
             
             # AUTO ID
-            if( self.m_ApeCommands.nID == -1 ):
-                self.m_ApeCommands.nID = _AUTO_ID
+            if( self.m_ApeCommands.nID == -1 ): self.m_ApeCommands.nID = _AUTO_ID
         
-        if(self._GetParamterString2(pszMatStr, "*z")): 
+        if(self._GetParamterString2(pszMatStr, "*z", 1)): 
             self.nParams[0] = int( float( self.nParams[0] ) )                
             self.m_ApeCommands.nZTugValue = max(1, min(self.nParams[0], 1000))
         
-        if( pszMatStr.find("*nocoll") != -1 ): 
-            self.m_ApeCommands.bNoColl = True
+        if( pszMatStr.find("*nocoll") != -1 ): self.m_ApeCommands.bNoColl = True
         
-        if(self._GetParamterString2(pszMatStr, "*coll")): 
-            if( int( float( self.nParams[0] ) )  == 1 ):
-                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_PLAYER
-            else:
-                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_PLAYER
-            if( int( float( self.nParams[1] ) )  == 1 ):
-                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_NPCS
-            else:
-                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_NPCS
-            if( int( float( self.nParams[2] ) )  == 1 ):
-                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_OBSTRUCT_LINE_OF_SIGHT
-            else:
-                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_OBSTRUCT_LINE_OF_SIGHT
-            if( int( float( self.nParams[3] ) )  == 1 ):
-                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_THIN_PROJECTILES
-            else:
-                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_THIN_PROJECTILES
-            if( int( float( self.nParams[4] ) )  == 1 ):
-                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_THICK_PROJECTILTES
-            else:
-                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_THICK_PROJECTILTES
-            if( int( float( self.nParams[5] ) )  == 1 ):
-                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_CAMERA
-            else:
-                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_CAMERA
-            if( int( float( self.nParams[6] ) )  == 1 ):
-                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLL_WITH_OBJECTS
-            else:
-                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_OBJECTS
-            if( int( float( self.nParams[7] ) )  == 1 ):
-                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_WALKABLE
-            else:
-                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_WALKABLE        
-            if( int( float( self.nParams[8] ) )  == 1 ):
-                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_OBSTRUCT_SPLASH_DAMAGE
-            else:
-                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_OBSTRUCT_SPLASH_DAMAGE
-            if( int( float( self.nParams[9] ) )  == 1 ):
-                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLLIDE_WITH_DEBRIS
-            else:
-                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLLIDE_WITH_DEBRIS     
-            if( int( float( self.nParams[10] ) )  == 1 ):
-                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_COLLIDE_WITH_VEHICLES
-            else:
-                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLLIDE_WITH_VEHICLES
-            if( int( float( self.nParams[11] ) )  == 1 ):
-                self.m_ApeCommands.nCollMask |= APE_MAT_COLL_FLAGS_HOVER_COLLIDABLE
-            else:
-                self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_HOVER_COLLIDABLE
-        
-        if( pszMatStr.find("*noascroll") != -1 ):
-            self.m_nMatFlags |= APE_LAYER_FLAGS_NO_ALPHA_SCROLL
-        
-        if( pszMatStr.find("*tint") != -1 ):
-            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_APPLY_TINT
+        if(self._GetParamterString2(pszMatStr, "*coll", 12)):
+            if( int( float( self.nParams[0] ) )  == 1 ): self.m_ApeCommands.nCollMask |=  APE_MAT_COLL_FLAGS_COLL_WITH_PLAYER
+            else:                                        self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_PLAYER
             
-        if( pszMatStr.find("*writez") != -1 ): 
-            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_ZWRITE_ON
-        
-        if( pszMatStr.find("*nomeshtint") != -1 ): 
-            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_DO_NOT_TINT
-        
-        if(self._GetParamterString2(pszMatStr, "*bumptile")): 
-            self.m_ApeCommands.fBumpMapTileFactor = float(self.nParams[0])
-        
-        if(self._GetParamterString2(pszMatStr, "*detailtile")): 
-            self.m_ApeCommands.fDetailMapTileFactor = float(self.nParams[0])
+            if( int( float( self.nParams[1] ) )  == 1 ): self.m_ApeCommands.nCollMask |=  APE_MAT_COLL_FLAGS_COLL_WITH_NPCS
+            else:                                        self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_NPCS
             
-        if(self._GetParamterString2(pszMatStr, "*light")):
+            if( int( float( self.nParams[2] ) )  == 1 ): self.m_ApeCommands.nCollMask |=  APE_MAT_COLL_FLAGS_OBSTRUCT_LINE_OF_SIGHT
+            else:                                        self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_OBSTRUCT_LINE_OF_SIGHT
+            
+            if( int( float( self.nParams[3] ) )  == 1 ): self.m_ApeCommands.nCollMask |=  APE_MAT_COLL_FLAGS_COLL_WITH_THIN_PROJECTILES
+            else:                                        self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_THIN_PROJECTILES
+            
+            if( int( float( self.nParams[4] ) )  == 1 ): self.m_ApeCommands.nCollMask |=  APE_MAT_COLL_FLAGS_COLL_WITH_THICK_PROJECTILTES
+            else:                                        self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_THICK_PROJECTILTES
+            
+            if( int( float( self.nParams[5] ) )  == 1 ): self.m_ApeCommands.nCollMask |=  APE_MAT_COLL_FLAGS_COLL_WITH_CAMERA
+            else:                                        self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_CAMERA
+            
+            if( int( float( self.nParams[6] ) )  == 1 ): self.m_ApeCommands.nCollMask |=  APE_MAT_COLL_FLAGS_COLL_WITH_OBJECTS
+            else:                                        self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLL_WITH_OBJECTS
+            
+            if( int( float( self.nParams[7] ) )  == 1 ): self.m_ApeCommands.nCollMask |=  APE_MAT_COLL_FLAGS_WALKABLE
+            else:                                        self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_WALKABLE        
+            
+            if( int( float( self.nParams[8] ) )  == 1 ): self.m_ApeCommands.nCollMask |=  APE_MAT_COLL_FLAGS_OBSTRUCT_SPLASH_DAMAGE
+            else:                                        self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_OBSTRUCT_SPLASH_DAMAGE
+            
+            if( int( float( self.nParams[9] ) )  == 1 ): self.m_ApeCommands.nCollMask |=  APE_MAT_COLL_FLAGS_COLLIDE_WITH_DEBRIS
+            else:                                        self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLLIDE_WITH_DEBRIS     
+            
+            if( int( float( self.nParams[10] ) ) == 1 ): self.m_ApeCommands.nCollMask |=  APE_MAT_COLL_FLAGS_COLLIDE_WITH_VEHICLES
+            else:                                        self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_COLLIDE_WITH_VEHICLES
+            
+            if( int( float( self.nParams[11] ) ) == 1 ): self.m_ApeCommands.nCollMask |=  APE_MAT_COLL_FLAGS_HOVER_COLLIDABLE
+            else:                                        self.m_ApeCommands.nCollMask &= ~APE_MAT_COLL_FLAGS_HOVER_COLLIDABLE
+        
+        if( pszMatStr.find("*noascroll")  != -1 ): self.m_nMatFlags |= APE_LAYER_FLAGS_NO_ALPHA_SCROLL
+        if( pszMatStr.find("*tint")       != -1 ): self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_APPLY_TINT  
+        if( pszMatStr.find("*writez")     != -1 ): self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_ZWRITE_ON
+        if( pszMatStr.find("*nomeshtint") != -1 ): self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_DO_NOT_TINT
+        
+        if(self._GetParamterString2(pszMatStr, "*bumptile",   1)): self.m_ApeCommands.fBumpMapTileFactor   = float(self.nParams[0])
+        if(self._GetParamterString2(pszMatStr, "*detailtile", 1)): self.m_ApeCommands.fDetailMapTileFactor = float(self.nParams[0])
+            
+        if(self._GetParamterString2(pszMatStr, "*light", 4)):
             self.m_ApeCommands.LightRGBI[0] =  ( max(0.0, min(float(self.nParams[0]), 255.0)) ) / 255.0
             self.m_ApeCommands.LightRGBI[1] =  ( max(0.0, min(float(self.nParams[1]), 255.0)) ) / 255.0
             self.m_ApeCommands.LightRGBI[2] =  ( max(0.0, min(float(self.nParams[2]), 255.0)) ) / 255.0
             self.m_ApeCommands.LightRGBI[3] =  ( max(0.0, min(float(self.nParams[3]), 255.0)) ) / 255.0
         
-        if( pszMatStr.find("*nodraw") != -1 ): 
-            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_NO_DRAW
+        if( pszMatStr.find("*nodraw")    != -1 ): self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_NO_DRAW  
+        if( pszMatStr.find("*notinlm")   != -1 ): self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_DO_NOT_LM   
+        if( pszMatStr.find("*nolmblock") != -1 ): self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_DO_NOT_BLOCK_LM  
+        if( pszMatStr.find("*nolmuse")   != -1 ): self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_NO_LM_USE  
+        if( pszMatStr.find("*vertrad")   != -1 ): self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_VERT_RADIOSITY|APE_MAT_FLAGS_DO_NOT_LM 
+        if( pszMatStr.find("*noshadows") != -1 ): self.m_nMatFlags |= APE_LAYER_FLAGS_DO_NOT_CAST_SHADOWS
             
-        if( pszMatStr.find("*notinlm") != -1 ): 
-            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_DO_NOT_LM
-            
-        if( pszMatStr.find("*nolmblock") != -1 ): 
-            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_DO_NOT_BLOCK_LM
-            
-        if( pszMatStr.find("*nolmuse") != -1 ): 
-            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_NO_LM_USE
-            
-        if( pszMatStr.find("*vertrad") != -1 ): 
-            self.m_ApeCommands.nFlags |= APE_MAT_FLAGS_VERT_RADIOSITY|APE_MAT_FLAGS_DO_NOT_LM
-            
-        if( pszMatStr.find("*noshadows") != -1 ): 
-            self.m_nMatFlags |= APE_LAYER_FLAGS_DO_NOT_CAST_SHADOWS
-            
-        if(self._GetParamterString2(pszMatStr, "*eangle")):
+        if(self._GetParamterString2(pszMatStr, "*eangle", 1)):
             self.m_nAffectAngle = max ( 0, min( int(self.nParams[0]), 180) )
             self.m_nMatFlags |= APE_LAYER_FLAGS_ANGULAR_EMISSIVE
             
-        if(self._GetParamterString2(pszMatStr, "*tangle")): 
+        if(self._GetParamterString2(pszMatStr, "*tangle", 1)): 
             self.m_nAffectAngle = max ( 0, min( int(self.nParams[0]), 180) )
             self.m_nMatFlags |= APE_LAYER_FLAGS_ANGULAR_TRANSLUCENCY
             
-        if(self._GetParamterString2(pszMatStr, "*surf")): 
-            self.m_ApeCommands.nSurfaceType = max ( 0, min( int(self.nParams[0]), 15) )
-            
-        if(self._GetParamterString2(pszMatStr, "*react")): 
-            self.m_ApeCommands.nReactType = max ( 0, min( int(self.nParams[0]), 7) )
+        if(self._GetParamterString2(pszMatStr, "*surf", 1)):  self.m_ApeCommands.nSurfaceType = max ( 0, min( int(self.nParams[0]), 15) )
+        if(self._GetParamterString2(pszMatStr, "*react", 1)): self.m_ApeCommands.nReactType   = max ( 0, min( int(self.nParams[0]), 7) )
 
 #   ___  ___    _ ___ ___ _____ 
 #  / _ \| _ )_ | | __/ __|_   _|
@@ -317,70 +292,46 @@ class CObjectStringParser:
         self.m_TintRGB = [0.0, 0.0, 0.0]
         self.Params = None
         
-    def _GetParamterString2(self, inStr, Cmd):
+    def _GetParamterString2(self, inStr, Cmd, nArgCount):
         pszCmd = inStr.find(Cmd)            
         if(pszCmd != -1):
             if(_GetParameterString(inStr[pszCmd + 1:])):
                 self.nParams = _GetParameterString(inStr[pszCmd + 1:])
-                return True
+                
+                if StarCmdCheckNumParams( inStr, nArgCount, self.nParams, Cmd ):
+                    return True
         return False
         
     def Parse(self, pszObjectStr):
         
-        if( pszObjectStr.find("*postery") != -1 ):
-            self.m_ApeObjectFlag |= APE_OB_FLAG_POSTER_Y
-            
-        if( pszObjectStr.find("*posterx") != -1 ):
-            self.m_ApeObjectFlag |= APE_OB_FLAG_POSTER_X
-            
-        if( pszObjectStr.find("*posterz") != -1 ):
-            self.m_ApeObjectFlag |= APE_OB_FLAG_POSTER_Z
-            
-        if( pszObjectStr.find("*nocoll") != -1 ):
-            self.m_ApeObjectFlag |= APE_OB_FLAG_NO_COLL
-        # LEGACY / UNUSED?    
-        if( pszObjectStr.find("nofog") != -1 ):
-            print("*nofog not implimented")
-            
-        if( pszObjectStr.find("*nolight") != -1 ): 
-            self.m_ApeObjectFlag |= APE_OB_FLAG_NO_LIGHT
+        if( pszObjectStr.find("*postery") != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_POSTER_Y   
+        if( pszObjectStr.find("*posterx") != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_POSTER_X 
+        if( pszObjectStr.find("*posterz") != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_POSTER_Z
+        if( pszObjectStr.find("*nocoll")  != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_NO_COLL 
+        if( pszObjectStr.find("nofog")    != -1 ): print("*nofog not implimented") # LEGACY / UNUSED? 
+        if( pszObjectStr.find("*nolight") != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_NO_LIGHT
         
-        if(self._GetParamterString2(pszObjectStr, "*culldist")): 
-            self.m_fCullDist = float(self.nParams[0])
+        if(self._GetParamterString2(pszObjectStr, "*culldist", 1)): self.m_fCullDist = float(self.nParams[0])
             
-        if(self._GetParamterString2(pszObjectStr, "*tint")): 
+        if(self._GetParamterString2(pszObjectStr, "*tint", 3)): 
             self.m_ApeCommands.TintRGB[0] =  ( max(0.0, min(float(self.nParams[0]), 255.0)) ) / 255.0
             self.m_ApeCommands.TintRGB[1] =  ( max(0.0, min(float(self.nParams[1]), 255.0)) ) / 255.0
             self.m_ApeCommands.TintRGB[2] =  ( max(0.0, min(float(self.nParams[2]), 255.0)) ) / 255.0
             
-        # LEGACY / UNUSED?    
-        if( pszObjectStr.find("*sort") != -1 ):
-            print("*sort not implimented")
             
-        if( pszObjectStr.find("*nodraw") != -1 ): 
-            self.m_ApeObjectFlag |= APE_OB_FLAG_NO_DRAW
-            
-        if( pszObjectStr.find("*acceptlm") != -1 ): 
-            self.m_ApeObjectFlag |= APE_OB_FLAG_LM
-            
-        if( pszObjectStr.find("*vertrad") != -1 ):
-            self.m_ApeObjectFlag |= APE_OB_FLAG_VERT_RADIOSITY
-        
-        if( pszObjectStr.find("acceptshadows") != -1 ):
-            self.m_ApeObjectFlag |= APE_OB_FLAG_ACCEPT_SHADOWS
-            
-        if( pszObjectStr.find("*castshadows") != -1 ): 
-            self.m_ApeObjectFlag |= APE_OB_FLAG_CAST_SHADOWS
-            
-        if( pszObjectStr.find("*dynamic") != -1 ): 
-            self.m_ApeObjectFlag &= ~(APE_OB_FLAG_STATIC|APE_OB_FLAG_LM|APE_OB_FLAG_VERT_RADIOSITY)
+        if( pszObjectStr.find("*sort")         != -1 ): print("*sort not implimented") # LEGACY / UNUSED?
+        if( pszObjectStr.find("*nodraw")       != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_NO_DRAW
+        if( pszObjectStr.find("*acceptlm")     != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_LM
+        if( pszObjectStr.find("*vertrad")      != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_VERT_RADIOSITY
+        if( pszObjectStr.find("acceptshadows") != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_ACCEPT_SHADOWS
+        if( pszObjectStr.find("*castshadows")  != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_CAST_SHADOWS
+        if( pszObjectStr.find("*dynamic")      != -1 ): self.m_ApeObjectFlag &= ~(APE_OB_FLAG_STATIC|APE_OB_FLAG_LM|APE_OB_FLAG_VERT_RADIOSITY)
             
         if( pszObjectStr.find("*nolmuse") != -1 ): 
             self.m_ApeObjectFlag |= APE_OB_FLAG_NO_LM_USE
             self.m_ApeObjectFlag &= ~(APE_OB_FLAG_LM|APE_OB_FLAG_VERT_RADIOSITY)
             
-        if( pszObjectStr.find("*lightperpixel") != -1 ): 
-            self.m_ApeObjectFlag |= APE_OB_FLAG_PER_PIXEL
+        if( pszObjectStr.find("*lightperpixel") != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_PER_PIXEL
             
 #  _    ___ ___ _  _ _____ 
 # | |  |_ _/ __| || |_   _|
@@ -415,46 +366,40 @@ class CLightStringParser:
         self.m_szCoronaTexture = ""
         self.m_szPerPixelTexture = ""
         self.m_nLightID = -1
-        
-    def _GetParamterString2(self, inStr, Cmd):
+      
+    def _GetParamterString2(self, inStr, Cmd, nArgCount):
         pszCmd = inStr.find(Cmd)            
         if(pszCmd != -1):
             if(_GetParameterString(inStr[pszCmd + 1:])):
                 self.nParams = _GetParameterString(inStr[pszCmd + 1:])
-                return True
+                
+                if StarCmdCheckNumParams( inStr, nArgCount, self.nParams, Cmd ):
+                    return True
         return False
         
     def Parse(self, pszLightStr):
     
-        if( pszLightStr.find("*self") != -1 ):
-            self.m_ApeLightFlag |= APE_LIGHT_FLAG_LIGHT_SELF
+        if( pszLightStr.find("*self")        != -1 ): self.m_ApeLightFlag |= APE_LIGHT_FLAG_LIGHT_SELF
+        if( pszLightStr.find("*castshadows") != -1 ): self.m_ApeLightFlag |= APE_LIGHT_FLAG_CAST_SHADOWS
             
-        if( pszLightStr.find("*castshadows") != -1 ):
-            self.m_ApeLightFlag |= APE_LIGHT_FLAG_CAST_SHADOWS
-            
-        if(self._GetParamterString2(pszLightStr, "*scalecorona")): 
+        if(self._GetParamterString2(pszLightStr, "*scalecorona", 1)): 
             self.m_fCoronaScale = float(self.nParams[0])
             
-        if(self._GetParamterString2(pszLightStr, "*fadingcorona")): 
+        if(self._GetParamterString2(pszLightStr, "*fadingcorona", 1)): 
             self.m_ApeLightFlag |= APE_LIGHT_FLAG_CORONA|APE_LIGHT_FLAG_CORONA_PROXFADE
             self.m_szCoronaTexture = self.nParams[0]
             
-        if(self._GetParamterString2(pszLightStr, "*corona")): 
+        if(self._GetParamterString2(pszLightStr, "*corona", 1)): 
             self.m_ApeLightFlag |= APE_LIGHT_FLAG_CORONA
             self.m_szCoronaTexture = self.nParams[0]
             
-        if(self._GetParamterString2(pszLightStr, "*perpixel")): 
+        if(self._GetParamterString2(pszLightStr, "*perpixel", 1)): 
             self.m_ApeLightFlag |= APE_LIGHT_FLAG_PER_PIXEL
             self.m_szPerPixelTexture = self.nParams[0]
         
-        if( pszLightStr.find("*onlyppmesh") != -1 ):
-            self.m_ApeLightFlag |= APE_LIGHT_FLAG_MESH_MUST_BE_PER_PIXEL
-        
-        if( pszLightStr.find("*onlydynamic") != -1 ):
-            self.m_ApeLightFlag |= APE_LIGHT_FLAG_DYNAMIC_ONLY
-        
-        if( pszLightStr.find("*lm") != -1 ):
-            self.m_ApeLightFlag |= APE_LIGHT_FLAG_LIGHTMAP_LIGHT
+        if( pszLightStr.find("*onlyppmesh")  != -1 ): self.m_ApeLightFlag |= APE_LIGHT_FLAG_MESH_MUST_BE_PER_PIXEL
+        if( pszLightStr.find("*onlydynamic") != -1 ): self.m_ApeLightFlag |= APE_LIGHT_FLAG_DYNAMIC_ONLY
+        if( pszLightStr.find("*lm")          != -1 ): self.m_ApeLightFlag |= APE_LIGHT_FLAG_LIGHTMAP_LIGHT
         
         if( pszLightStr.find("*uniquelm") != -1 ):
             self.m_ApeLightFlag &= ~APE_LIGHT_FLAG_DYNAMIC_ONLY
@@ -464,13 +409,12 @@ class CLightStringParser:
             self.m_ApeLightFlag &= ~APE_LIGHT_FLAG_DYNAMIC_ONLY
             self.m_ApeLightFlag |= APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT|APE_LIGHT_FLAG_LIGHTMAP_LIGHT
         
-        if( pszLightStr.find("*noterrain") != -1 ):
-            self.m_ApeLightFlag |= APE_LIGHT_FLAG_OBJ_DONT_LIGHT_TERRAIN
+        if( pszLightStr.find("*noterrain") != -1 ): self.m_ApeLightFlag |= APE_LIGHT_FLAG_OBJ_DONT_LIGHT_TERRAIN
             
-        if(self._GetParamterString2(pszLightStr, "*id")): 
+        if(self._GetParamterString2(pszLightStr, "*id", 1)): 
             self.m_nLightID = max(0, min( int(self.nParams[0]), 0xffff))
             
-        if(self._GetParamterString2(pszLightStr, "*motif")): 
+        if(self._GetParamterString2(pszLightStr, "*motif", 1)): 
             self.m_nMotifID = int(self.nParams[0])
             if(int(self.nParams[1]) != 0):
                 self.m_ApeLightFlag |= APE_LIGHT_FLAG_DONT_USE_RGB
@@ -492,12 +436,14 @@ class CPortalStringParser:
         self.m_ApePortalFlag = 0
         self.Params = None
         
-    def _GetParamterString2(self, inStr, Cmd):
+    def _GetParamterString2(self, inStr, Cmd, nArgCount):
         pszCmd = inStr.find(Cmd)            
         if(pszCmd != -1):
             if(_GetParameterString(inStr[pszCmd + 1:])):
                 self.nParams = _GetParameterString(inStr[pszCmd + 1:])
-                return True
+                
+                if StarCmdCheckNumParams( inStr, nArgCount, self.nParams, Cmd ):
+                    return True
         return False
     
     def ResetToDefaults(self):
@@ -505,18 +451,10 @@ class CPortalStringParser:
         self.Params = None
     
     def Parse(self, pszPortalStr):
-    
-        if( pszPortalStr.find("*mirror") != -1 ):
-            self.m_ApePortalFlag |= APE_PORTAL_FLAG_MIRROR
-            
-        if( pszPortalStr.find("*sound") != -1 ): 
-            self.m_ApePortalFlag |= APE_PORTAL_FLAG_SOUND_ONLY
-            
-        if( pszPortalStr.find("*oneway") != -1 ):
-            self.m_ApePortalFlag |= APE_PORTAL_FLAG_ONE_WAY
-            
-        if( pszPortalStr.find("*anti") != -1 ):
-            self.m_ApePortalFlag |= APE_PORTAL_FLAG_ANTI
+        if( pszPortalStr.find("*mirror") != -1 ): self.m_ApePortalFlag |= APE_PORTAL_FLAG_MIRROR
+        if( pszPortalStr.find("*sound")  != -1 ): self.m_ApePortalFlag |= APE_PORTAL_FLAG_SOUND_ONLY 
+        if( pszPortalStr.find("*oneway") != -1 ): self.m_ApePortalFlag |= APE_PORTAL_FLAG_ONE_WAY  
+        if( pszPortalStr.find("*anti")   != -1 ): self.m_ApePortalFlag |= APE_PORTAL_FLAG_ANTI
        
        
        
