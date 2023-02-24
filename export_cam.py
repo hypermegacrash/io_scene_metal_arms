@@ -31,6 +31,14 @@ from bpy.types import Operator
 # invoke() function which calls the file selector.
 from bpy_extras.io_utils import ExportHelper
 
+# https://blender.stackexchange.com/a/110112
+def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
+
+    def draw(self, context):
+        self.layout.label(text=message)
+
+    bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
+
 # The MEAT, when this class is executed it returns a PASM compatible .cam file
 class ExportCAM(Operator, ExportHelper):
         """Export scene to a Pasm compatible .cam file"""
@@ -72,11 +80,13 @@ class ExportCAM(Operator, ExportHelper):
             
             objects = context.selected_objects
             if(len(objects) == 0):
-                print("No Camera Object selected!")
-                return {'FINISHED'}
+                string =  "No Camera Object selected!"
+                ShowMessageBox(string, "CAMERA ERROR", 'ERROR')
+                return {'CANCELLED'}
             elif(len(objects) != 1):
-                print("Can only export 1 cam at a time!")
-                return {'FINISHED'}
+                string =  "Can only export 1 cam at a time!"
+                ShowMessageBox(string, "CAMERA ERROR", 'ERROR')
+                return {'CANCELLED'}
 
             # To mimic the original exporter as closely as possible
             # We itterate over the entire scene for each section of the PASM file

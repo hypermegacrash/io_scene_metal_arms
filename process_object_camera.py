@@ -7,10 +7,24 @@ from . import pasm_math # PASM helper defs
 # BLENDER
 import bpy # For working with Blender data
 
+# https://blender.stackexchange.com/a/110112
+def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
+
+    def draw(self, context):
+        self.layout.label(text=message)
+
+    bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
+
 def ExportObjCam(obj):
     if obj.name[:4].lower() == "off_":   return # Doesn't matter it's off bail early
-    if obj.type             != "CAMERA": return # Validate we're working with camera data and not other stuff
-    if obj.name[:4].lower() != "cam_":   return # Enforce the user to follow naming scheme
+    if obj.type             != "CAMERA": # Validate we're working with camera data and not other stuff
+        string = "The selected object " + obj.name + " is not a camera! Please select a camera and retry exporting."
+        ShowMessageBox(string, "CAMERA ERROR", 'ERROR')
+        return 
+    if obj.name[:4].lower() != "cam_": # Enforce the user to follow naming scheme
+        string = "The selected camera " + obj.name + " does not contain the cam_ prefix! Please fix and retry exporting."
+        ShowMessageBox(string, "CAMERA ERROR", 'ERROR')
+        return 
         
     print(obj.name, "is a camera object")
 
