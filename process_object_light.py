@@ -7,6 +7,7 @@ from . import pasm_math     # PASM helper defs
 from .process_star_command import CLightStringParser # Import just the Light Star Command Parser
 # BLENDER
 import math # Needed for computing sqrt and pi for light
+import colorsys # Light intensity
 
 def ExportObjLight(obj):
     bExitEarly = False
@@ -22,14 +23,11 @@ def ExportObjLight(obj):
     outLight = pasm_file_def.PASMLight()
     
     if obj.type == "LIGHT":
-        if obj.data.type == "SUN":
-            outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_DIR
-        elif obj.data.type == "POINT":
-            outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_OMNI
-        elif obj.data.type == "SPOT":
-            outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT
-    if obj.name[:7].lower() == "ambient" and obj.type == "EMPTY":
-        outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_AMBIENT
+        if   obj.data.type == "SUN":   outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_DIR
+        elif obj.data.type == "POINT": outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_OMNI
+        elif obj.data.type == "SPOT":  outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT
+        
+    if obj.name[:7].lower() == "ambient" and obj.type == "EMPTY": outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_AMBIENT
         
     if outLight.nApeLightType == -1:
         print("Unable to assign nApeLightType, skipping " + obj.name)
@@ -55,17 +53,17 @@ def ExportObjLight(obj):
                 while index[j] == " ":
                     j = j + 1
                 dictProperties[index[:i + 1]] = int(index[j:])
-            nRed = dictProperties["red"]
+            nRed   = dictProperties["red"]
             nGreen = dictProperties["green"]
-            nBlue = dictProperties["blue"]
+            nBlue  = dictProperties["blue"]
             # Floor it
-            nRed = max(0, min(nRed, 255))
+            nRed   = max(0, min(nRed,   255))
             nGreen = max(0, min(nGreen, 255))
-            nBlue = max(0, min(nBlue, 255))
+            nBlue  = max(0, min(nBlue,  255))
             # Convert to float
-            nRed = nRed * float((1/255))
+            nRed   = nRed   * float((1/255))
             nGreen = nGreen * float((1/255))
-            nBlue = nBlue * float((1/255))
+            nBlue  = nBlue  * float((1/255))
         except:
             print("Unable to find integer custom property values for red green blue, skipping " + obj.name)
             return       
@@ -92,9 +90,12 @@ def ExportObjLight(obj):
                 radius = math.sqrt(((( obj.data.energy / 0.01) *  obj.data.diffuse_factor) / ( 4 * math.pi )))     
                 outLight.Intensity = (( obj.data.energy ) / ( radius * radius ))
             else:
-                import colorsys
-                tempHSV = colorsys.rgb_to_hsv(obj.data.color[0], obj.data.color[1], obj.data.color[2])
-                outLight.Intensity = tempHSV[2]
+                if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
+                    radius = math.sqrt(((( obj.data.energy / 0.02) *  obj.data.diffuse_factor) / ( 4 * math.pi )))     
+                    outLight.Intensity = (( obj.data.energy ) / ( radius * radius ))
+                else:
+                    tempHSV = colorsys.rgb_to_hsv(obj.data.color[0], obj.data.color[1], obj.data.color[2])
+                    outLight.Intensity = tempHSV[2]
     elif obj.name[:7].lower() == "ambient" and obj.type == "EMPTY":
         outLight.Intensity = 1.0
     else:
@@ -131,8 +132,21 @@ def ExportObjLight(obj):
         outLight.Sphere[3] = outLight.mtxOrientation[11]
         
     if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
-        outLight.fSpotInnerAngle = obj.data.spot_size
-        outLight.fSpotOuterAngle = obj.data.spot_size
+        if obj.data.spot_blend == 1.0: # This is a super soft light
+            outLight.fSpotInnerAngle = 0.0
+        else: # Regular light
+            outLight.fSpotInnerAngle = (1 - obj.data.spot_blend) * obj.data.spot_size
+
+        # If fSpotInnerAngle > fSpotOuterAngle the light will become inverted
+        if outLight.fSpotInnerAngle >= obj.data.spot_size:
+            outLight.fSpotInnerAngle = obj.data.spot_size - 2
+        if outLight.fSpotInnerAngle <= 0.5:
+            outLight.fSpotInnerAngle = 0.5
+
+        if obj.data.spot_size <= 1.0:
+            outLight.fSpotOuterAngle = 1.0
+        else:
+            outLight.fSpotOuterAngle = obj.data.spot_size
         
     # Check to see if this light is attached to an armature
     if (obj.parent_bone): outLight.szParentBoneName = obj.parent_bone

@@ -3,23 +3,15 @@
 
 # FANG TOOLKIT
 from .pasm_file_def import PASMCommands # We only need the Star Commands struct
+from . import g_class                   # Error handler
 # BLENDER
 import bpy # Needed for popping up an error screen
 # GLOBALS
 _AUTO_ID = -128 # Dont do this, shouldn't this be -1???
-
-# https://blender.stackexchange.com/a/110112
-def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
-
-    def draw(self, context):
-        self.layout.label(text=message)
-
-    bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
     
 def StarCmdCheckNumParams( pszMatStr, nExpectedArgCount, nParams, starCmdName ):
     if nExpectedArgCount != len(nParams):
-        string = "Trouble parsing " + pszMatStr + ": The Star Command " + starCmdName + " expects " + str(nExpectedArgCount) + " args but " + str(len(nParams)) + " were given."
-        ShowMessageBox(string, "STAR COMMAND ERROR", 'ERROR')
+        g_class.logError("STAR COMMAND ERROR: Trouble parsing " + pszMatStr + ": The Star Command " + starCmdName + " expects " + str(nExpectedArgCount) + " args but " + str(len(nParams)) + " were given.")
         return False
     return True
 
@@ -287,7 +279,7 @@ APE_OB_FLAG_NONE                = 0x00000000
 
 class CObjectStringParser:
     def __init__(self):
-        self.m_ApeObjectFlag = 0
+        self.m_ApeObjectFlag = 1 # Every object starts with APE_OB_FLAG_STATIC flag enabled
         self.m_fCullDist = 0
         self.m_TintRGB = [0.0, 0.0, 0.0]
         self.Params = None
@@ -308,7 +300,7 @@ class CObjectStringParser:
         if( pszObjectStr.find("*posterx") != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_POSTER_X 
         if( pszObjectStr.find("*posterz") != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_POSTER_Z
         if( pszObjectStr.find("*nocoll")  != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_NO_COLL 
-        if( pszObjectStr.find("nofog")    != -1 ): print("*nofog not implimented") # LEGACY / UNUSED? 
+        #if( pszObjectStr.find("nofog")    != -1 ): print("*nofog not implimented") # LEGACY / UNUSED? 
         if( pszObjectStr.find("*nolight") != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_NO_LIGHT
         
         if(self._GetParamterString2(pszObjectStr, "*culldist", 1)): self.m_fCullDist = float(self.nParams[0])
@@ -319,7 +311,7 @@ class CObjectStringParser:
             self.m_ApeCommands.TintRGB[2] =  ( max(0.0, min(float(self.nParams[2]), 255.0)) ) / 255.0
             
             
-        if( pszObjectStr.find("*sort")         != -1 ): print("*sort not implimented") # LEGACY / UNUSED?
+        #if( pszObjectStr.find("*sort")         != -1 ): print("*sort not implimented") # LEGACY / UNUSED?
         if( pszObjectStr.find("*nodraw")       != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_NO_DRAW
         if( pszObjectStr.find("*acceptlm")     != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_LM
         if( pszObjectStr.find("*vertrad")      != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_VERT_RADIOSITY
@@ -382,8 +374,7 @@ class CLightStringParser:
         if( pszLightStr.find("*self")        != -1 ): self.m_ApeLightFlag |= APE_LIGHT_FLAG_LIGHT_SELF
         if( pszLightStr.find("*castshadows") != -1 ): self.m_ApeLightFlag |= APE_LIGHT_FLAG_CAST_SHADOWS
             
-        if(self._GetParamterString2(pszLightStr, "*scalecorona", 1)): 
-            self.m_fCoronaScale = float(self.nParams[0])
+        if(self._GetParamterString2(pszLightStr, "*scalecorona", 1)): self.m_fCoronaScale = float(self.nParams[0])
             
         if(self._GetParamterString2(pszLightStr, "*fadingcorona", 1)): 
             self.m_ApeLightFlag |= APE_LIGHT_FLAG_CORONA|APE_LIGHT_FLAG_CORONA_PROXFADE

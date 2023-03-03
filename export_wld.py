@@ -1,15 +1,14 @@
 # Module for exporting a .wld file and adding UI to execute
 
 # FANG TOOLKIT
-from . import bl_info       # For grabbing the Add-On version so we can print it in the exporter menu
 from . import g_class       # Get our global variables like header data & I/O file
 # Grab all our defs for exporting Blender data to PASM formatted data
 from . import pasm_file_def # . is the add-on folder directory
-from .process_object_geo4    import ExportObjGeo2
+from .process_object_geo     import ExportObjGeo
 from .process_object_light   import ExportObjLight
 from .process_object_object  import ExportObjObject
 from .process_object_shape   import ExportObjShape
-from .process_object_volume3 import ExportObjVolume2
+from .process_object_volume  import ExportObjVolume
 from .process_object_portal  import ExportObjPortal
 from .process_object_fog     import ExportObjFog
 
@@ -41,102 +40,72 @@ from bpy_extras.io_utils import ExportHelper
 class ExportWLD(Operator, ExportHelper):
         """Export scene to a Pasm compatible .wld file"""
         # Should this stuff be in the menu_func func? something to consider
-        bl_idname = 'export_scene.wld'
-        bl_label = 'Export WLD'
+        bl_idname    = 'export_scene.wld'
+        bl_label     = 'Export WLD'
         filename_ext = '.wld'
         
-        m_bUseSelection: BoolProperty(
-            name="Selection Only",
-            description="Export selected objects only",
-            default=False,
-            )
-            
-        m_bExportLights: BoolProperty(
-            name="Export Light Data",
-            description="Export all lights from the scene",
-            default=True,
-            )
-            
-        m_bExportGeo: BoolProperty(
-            name="Export Geometry Data",
-            description="Export all geometry from the scene",
-            default=True,
-            )
-          
-        m_bExportObjects: BoolProperty(
-            name="Export Object Data",
-            description="Export all objects from the scene",
-            default=True,
-            )
+        # UI Variables
+        m_bUseSelection:  BoolProperty( name="Selection Only",       description="Export selected objects only",       default=False )
+        m_bExportLights:  BoolProperty( name="Export Light Data",    description="Export all lights from the scene",   default=True  ) 
+        m_bExportGeo:     BoolProperty( name="Export Geometry Data", description="Export all geometry from the scene", default=True  )
+        m_bExportObjects: BoolProperty( name="Export Object Data",   description="Export all objects from the scene",  default=True  )
 
         # Draw the export properties which are then stored in self to be accessed later
         def draw(self, context):
             layout = self.layout
             
-            box = layout.box()
-            box.label(text="Wld File Exporter")
+            boxHeader = layout.box()
+            boxHeader.label(text="Wld File Exporter")
         
             layout.prop(self, "m_bUseSelection")
             
-            testA = layout.box()
+            boxSettings = layout.box()
             
-            testA.prop(self, "m_bExportLights")
-            testA.prop(self, "m_bExportGeo")
-            testA.prop(self, "m_bExportObjects")
+            boxSettings.prop(self, "m_bExportLights")
+            boxSettings.prop(self, "m_bExportGeo")
+            boxSettings.prop(self, "m_bExportObjects")
             
-            fileRevision = layout.row()
-            fileRevision.label(text = "PASM File Version # 1.5.0")
-                      
-            # This might be the worst thing I've ever wrote
-            toolRevision = layout.row()
-            strToolRevision = str(bl_info["version"])
-            strToolRevision = strToolRevision[1:-1]
-            strToolRevision = strToolRevision.replace(",", ".")
-            strToolRevision = strToolRevision.replace(" ", "")
-            strToolRevision = "MA Toolkit Version # " + strToolRevision
-            toolRevision.label(text = strToolRevision)
+            g_class.writeFooterInfo(layout)
                     
         # The Blender Python API's equivalent of C/C++ main()
         def execute(self, context):
               
-                # Init and dress a fresh header
-                g_class.gWldHeader = pasm_file_def.PASMHeader() 
-                
-                filename = os.path.basename(self.filepath)
-                filename = filename[:len(filename)-4]
-                g_class.gWldHeader.sceneName = filename
-                
-                g_class.gWldHeader.bWld = 1
-                           
-                g_class.file = open(self.filepath, 'wb') # Init our none var in the global g_class
+            # Init and dress a fresh header
+            g_class.gWldHeader = pasm_file_def.PASMHeader() 
+            
+            filename = os.path.basename(self.filepath)
+            filename = filename[:len(filename)-4]
+            g_class.gWldHeader.sceneName = filename
+            
+            g_class.gWldHeader.bWld = 1
+                       
+            # Init our out file and error log in the global g_class for other modules to access
+            with open(self.filepath, 'wb')     as g_class.file, \
+                 open(g_class.fpErrorLog, 'a') as g_class.errorLogFile:
+                             
                 g_class.file.write(g_class.gWldHeader.packBytes()) # This will be overwritten at the very end with the correct data
+                g_class.bShowErrorLog = False # Init our error log file
                 
-                # The data we want from the scene are the "objects"
-                # Objects are generic containers that contain "data"
-                # Data for an Object can be a mesh, light, empty etc
-                
-                if (self.m_bUseSelection):
-                    objects = [obj for obj in context.selected_objects]
-                else:
-                    objects = [obj for obj in context.scene.objects]
+                if (self.m_bUseSelection): objects = [obj for obj in context.selected_objects]
+                else:                      objects = [obj for obj in context.scene.objects]
                     
                 # Before we work on any objects we trim the selection set
                     
                 # REMOVE ALL _off OBJECTS
                 for obj in objects:
                     if obj.name[:4].lower() == "off_":
-                        print("REMOVE OFF_ OBJECT " + obj.name)
+                        #print("REMOVE OFF_ OBJECT " + obj.name)
                         try:    objects.remove(obj)
                         except: pass
                 
                # REMOVE ALL CHILDREN OF obj_ OBJECTS
                 for obj in objects:
                     if obj.name[:4].lower() == "obj_":
-                        print("REMOVE OBJ_ CHILDREN " + obj.name)
+                        #print("REMOVE OBJ_ CHILDREN " + obj.name)
                         for objA in obj.children_recursive:
                             for objB in objects:
                                 if objA.name == objB.name:
-                                    print("  REMOVE " + objA.name)
+                                    #print("  REMOVE " + objA.name)
                                     try:    objects.remove(objA)
                                     except: pass
                 
@@ -145,21 +114,21 @@ class ExportWLD(Operator, ExportHelper):
                     if collection.name[:4].lower() == "off_":
                         #print("  REMOVE COLLECTION " + collection.name)
                         for obj in collection.all_objects:
-                            print("    REMOVE " + obj.name)
+                            #print("    REMOVE " + obj.name)
                             try:    objects.remove(obj)
                             except: pass
                             
                 VolumeColls = []
                 
                 # ORGANIZE cell_ COLLECTIONS INTO SEPERATE LISTS
-                print("\nREMOVE CHILDREN IN cell_ COLLECTIONS\n")         
+                #print("\nREMOVE CHILDREN IN cell_ COLLECTIONS\n")         
                 for collection in bpy.data.collections:
-                    print(collection.name)
+                    #print(collection.name)
                     if collection.name[:5].lower() == "cell_":
                         thisVolume = []
-                        print("  REMOVE COLLECTION " + collection.name)
+                        #print("  REMOVE COLLECTION " + collection.name)
                         for obj in collection.all_objects:
-                            print("    ADD TO COLL AND REMOVE FROM SELECTED OBJECTS " + obj.name)
+                            #print("    ADD TO COLL AND REMOVE FROM SELECTED OBJECTS " + obj.name)
                             thisVolume.append(obj)
                             try:    objects.remove(obj)
                             except: pass
@@ -177,34 +146,36 @@ class ExportWLD(Operator, ExportHelper):
                     for obj in objects:
                         ExportObjObject(obj)
 	
-                for obj in objects:
-                    ExportObjFog(obj)
+                # Fog got deprecated and moved to level .csv
+                #for obj in objects:
+                #    ExportObjFog(obj)
 	
                 for obj in objects:
                     ExportObjShape(obj)
 
                 for obj in objects:
-                    ExportObjVolume2(obj)
+                    ExportObjVolume(obj)
                 for Volume in VolumeColls:
-                    ExportObjVolume2(Volume)
+                    ExportObjVolume(Volume)
                     
                 for obj in objects:
                     ExportObjPortal(obj)
                 
                 if(self.m_bExportGeo):                
                     for obj in objects:
-                        ExportObjGeo2(obj, False)
+                        ExportObjGeo(obj, False)
                 
                 # Go back to the start and rewrite the header with correct data
                 g_class.file.seek(0)
                 g_class.file.write(g_class.gWldHeader.packBytes())
-                             
-                g_class.file.close() # Remember folks, always close your files when your done playing with them
-                
-                print("WLD Export Finished!")
-                self.report({'INFO'}, "WLD Export Finished!")
+              
+            # Did we encounter any errors?
+            if(g_class.bShowErrorLog): os.startfile(g_class.fpErrorLog)
+            
+            print("WLD Export Finished!")
+            self.report({'INFO'}, "WLD Export Finished!")
         
-                return {'FINISHED'}
+            return {'FINISHED'}
                 
 def exportWLD_MenuFunc(self, context):
     self.layout.operator(

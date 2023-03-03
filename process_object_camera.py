@@ -7,23 +7,13 @@ from . import pasm_math # PASM helper defs
 # BLENDER
 import bpy # For working with Blender data
 
-# https://blender.stackexchange.com/a/110112
-def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
-
-    def draw(self, context):
-        self.layout.label(text=message)
-
-    bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
-
 def ExportObjCam(obj):
     if obj.name[:4].lower() == "off_":   return # Doesn't matter it's off bail early
     if obj.type             != "CAMERA": # Validate we're working with camera data and not other stuff
-        string = "The selected object " + obj.name + " is not a camera! Please select a camera and retry exporting."
-        ShowMessageBox(string, "CAMERA ERROR", 'ERROR')
+        g_class.logError("CAMERA ERROR: The selected object " + obj.name + " is not a camera! Please select a camera and retry exporting.")
         return 
     if obj.name[:4].lower() != "cam_": # Enforce the user to follow naming scheme
-        string = "The selected camera " + obj.name + " does not contain the cam_ prefix! Please fix and retry exporting."
-        ShowMessageBox(string, "CAMERA ERROR", 'ERROR')
+        g_class.logError("CAMERA ERROR: The selected camera " + obj.name + " does not contain the cam_ prefix! Please fix and retry exporting.")
         return 
         
     print(obj.name, "is a camera object")
@@ -32,9 +22,9 @@ def ExportObjCam(obj):
     
     # Find the animation info from the interface
     nTicksPerFrame = TIME_TICKSPERSEC / 30
-    nFrameRate = bpy.context.scene.render.fps
-    nStartTime = bpy.context.scene.frame_start
-    nEndTime = bpy.context.scene.frame_end
+    nFrameRate     = bpy.context.scene.render.fps
+    nStartTime     = bpy.context.scene.frame_start
+    nEndTime       = bpy.context.scene.frame_end
     
     # Calculate the interval and number of keys
     nInterval = (nTicksPerFrame * nFrameRate) / 30;
@@ -44,13 +34,6 @@ def ExportObjCam(obj):
     camHeader = file_def_cam.PASMCamInfo()
     camHeader.szCameraName = obj.name[4:]
     aFrames = []
-    
-    #print("nFrameRate: ", nFrameRate)
-    #print("nStartTime: ", nStartTime)
-    #print("nEndTime: ", nEndTime)
-    #print("CurrentCam: ", obj.name)
-    #print("szCameraName: ", camHeader.szCameraName)
-    #print("CurrentCam FOV: ", obj.data.angle)
     
     # Scrub through the timeline for snapshots we want
     for curFrame in range(nStartTime, nEndTime):
