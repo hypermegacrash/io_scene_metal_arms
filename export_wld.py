@@ -102,9 +102,16 @@ class ExportWLD(Operator, ExportHelper):
                 for obj in objects:
                     if obj.name[:4].lower() == "obj_":
                         #print("REMOVE OBJ_ CHILDREN " + obj.name)
+                        # NOTE: Could have a pattern like
+                        # obj_thingyA -> whatever -> obj_thingyB
+                        # This would cause issues as the parent of obj_thingyB wouldn't be exported
                         for objA in obj.children_recursive:
                             for objB in objects:
-                                if objA.name == objB.name:
+                                # We don't export shapes parented under objects because said shape could exist in the .ape
+                                # the obj_ is referencing and we might have merged the mesh into the scene under a obj_ dummy for reference
+                                # EX: No reason to export a obj_ with a tack_ child when the tack_ exists in the .ape
+                                # obj_ is allowed to have obj_ children, EX: Victory screen with obj glitch parent with obj spew child
+                                if objA.name == objB.name and objA.name[:4].lower() != "obj_":
                                     #print("  REMOVE " + objA.name)
                                     try:    objects.remove(objA)
                                     except: pass

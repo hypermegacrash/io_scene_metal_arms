@@ -20,13 +20,13 @@ def ExportObjObject(obj):
     
     outObject.szObjectName = outName
     
-    # Hard coded flag to this but there are alot more to consider in the future
-    #outObject.nFlags = 1
-    
     # Parse object name for star commands
-    objStrParser = CObjectStringParser()       
+    objStrParser = CObjectStringParser()
     objStrParser.Parse(obj.name.lower())
     outObject.nFlags = objStrParser.m_ApeObjectFlag
+    outObject.TintRGB[0] = objStrParser.m_TintRGB[0]
+    outObject.TintRGB[1] = objStrParser.m_TintRGB[1]
+    outObject.TintRGB[2] = objStrParser.m_TintRGB[2]
     
     outObject.mtxOrientation = pasm_math.BObj2F43MtxSCALE(obj)
     

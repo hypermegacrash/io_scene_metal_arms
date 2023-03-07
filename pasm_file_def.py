@@ -4,6 +4,12 @@
 
 import struct # For modifying vars into bytes
 
+# Convert in string to a bytearray that is padded with null bytes
+def writePaddedStringBytes(inStr, inSize):
+    outStr = bytearray(inSize)
+    outStr[0:len(inStr[ 0:(inSize - 1) ])] = bytes(inStr, "utf-8")[ 0:(inSize - 1) ]
+    return outStr
+
 #  _  _ ___   _   ___  ___ ___ 
 # | || | __| /_\ |   \| __| _ \
 # | __ | _| / _ \| |) | _||   /
@@ -30,7 +36,7 @@ class PASMHeader:
         self.nSizeOfBoneStruct      = 176
         self.nSizeOfLightStruct     = 228
         self.nSizeOfObjectStruct    = 112
-        self.nSizeOfFogStruct       = 44
+        self.nSizeOfFogStruct       = 44 # Deprecated
         self.nSizeOfSegmentStruct   = 48
         self.nSizeOfMaterialStruct  = 1692
         self.nSizeOfVertStruct      = 188
@@ -55,10 +61,7 @@ class PASMHeader:
         outBytes += struct.pack("<b", self.FVersion_Platform)
 
         outBytes += struct.pack("<I", self.fileSize)
-        
-        size = bytearray(16)
-        size[0:len(self.sceneName[0:15])] = bytes(self.sceneName, "utf-8")[0:15]
-        outBytes += size
+        outBytes += writePaddedStringBytes(self.sceneName, 16)
         
         # There was an issue on one person's Mac where the length of this was becoming 8 instead of 4, even with "<" format char
         # No idea why this happens but forcing struct.pack to return only the first 4 bytes fixes this
@@ -107,21 +110,17 @@ class PASMBone:
         #init our bytearray
         outBytes = bytearray()
         
-        size = bytearray(32)
-        size[0:len(self.szBoneName[0:31])] = bytes(self.szBoneName, "utf-8")[0:31]
-        outBytes += size
+        outBytes += writePaddedStringBytes(self.szBoneName, 32)
         
         outBytes += struct.pack("<i", self.nFlags)[:4]
         outBytes += struct.pack("<i", self.nBoneIndex)[:4]
         outBytes += struct.pack("<i", self.nParentIndex)[:4]
         
-        for i in self.mtxOrientation:
-            outBytes += struct.pack("<f", i)
+        for i in self.mtxOrientation: outBytes += struct.pack("<f", i)
             
         outBytes += struct.pack("<i", self.nNumChildren)[:4]
         
-        for i in self.auChildIndices:
-            outBytes += struct.pack("<b", i)
+        for i in self.auChildIndices: outBytes += struct.pack("<b", i)
 
         outBytes += self.PAD
         
@@ -202,18 +201,11 @@ class PASMLight:
 
         outBytes += struct.pack("<i", self.nApeLightType)[:4]
 
-        size = bytearray(16)
-        size[0:len(self.szLightName[0:15])] = bytes(self.szLightName, "utf-8")[0:15]
-        outBytes += size
+        outBytes += writePaddedStringBytes(self.szLightName, 16)
 
-        for i in self.Sphere:
-            outBytes += struct.pack("<f", i)
-
-        for i in self.Direction:
-            outBytes += struct.pack("<f", i)
-
-        for i in self.Color:
-            outBytes += struct.pack("<f", i)
+        for i in self.Sphere:    outBytes += struct.pack("<f", i)
+        for i in self.Direction: outBytes += struct.pack("<f", i)
+        for i in self.Color:     outBytes += struct.pack("<f", i)
 
         outBytes += struct.pack("<f", self.Intensity)
         outBytes += struct.pack("<f", self.fSpotInnerAngle)
@@ -222,22 +214,14 @@ class PASMLight:
         outBytes += struct.pack("<i", self.nMotifID)[:4]
         outBytes += struct.pack("<f", self.fCoronaScale)
 
-        for i in self.mtxOrientation:
-            outBytes += struct.pack("<f", i)
+        for i in self.mtxOrientation: outBytes += struct.pack("<f", i)
 
-        size = bytearray(16)
-        size[0:len(self.szCoronaTexture[0:15])] = bytes(self.szCoronaTexture, "utf-8")[0:15]
-        outBytes += size
-
-        size = bytearray(16)
-        size[0:len(self.szPerPixelTexture[0:15])] = bytes(self.szPerPixelTexture, "utf-8")[0:15]
-        outBytes += size
+        outBytes += writePaddedStringBytes(self.szCoronaTexture,   16)
+        outBytes += writePaddedStringBytes(self.szPerPixelTexture, 16)
 
         outBytes += struct.pack("<h", self.nLightID)
 
-        size = bytearray(32)
-        size[0:len(self.szParentBoneName[0:31])] = bytes(self.szParentBoneName, "utf-8")[0:31]
-        outBytes += size
+        outBytes += writePaddedStringBytes(self.szParentBoneName, 32)
 
         outBytes += self.PAD
         
@@ -264,26 +248,24 @@ class PASMObject:
         #init our bytearray
         outBytes = bytearray()
         
+        # This is a special padded string because an object name can be an .ape which can only be 11 chars long
         size = bytearray(16)
         size[0:len(self.szObjectName[0:11])] = bytes(self.szObjectName, "utf-8")[0:11]
         outBytes += size
         
         outBytes += struct.pack("<i", self.nFlags)[:4]
         
-        for i in self.mtxOrientation:
-            outBytes += struct.pack("<f", i)
+        for i in self.mtxOrientation: outBytes += struct.pack("<f", i)
             
         outBytes += struct.pack("<i", self.nBytesOfUserData)[:4]
         outBytes += struct.pack("<i", self.fCullDistance)[:4]
         outBytes += struct.pack("<i", self.nParentIndex)[:4]
         
-        for i in self.TintRGB:
-            outBytes += struct.pack("<f", i)
+        for i in self.TintRGB: outBytes += struct.pack("<f", i)
         
         outBytes += self.PAD
         
-        for data in self.userData:
-            outBytes += bytes(data, "utf-8")
+        for data in self.userData: outBytes += bytes(data, "utf-8")
         
         return outBytes
 
@@ -489,8 +471,7 @@ class PASMSplinePt:
         #init our bytearray
         outBytes = bytearray()
    
-        for i in self.Pos:
-            outBytes += struct.pack("<f", i)
+        for i in self.Pos: outBytes += struct.pack("<f", i)
         
         return outBytes
 
@@ -500,7 +481,8 @@ class PASMShape:
         self.typeData         = None # Will become one of the classes defined above based on nType
         self.mtxOrientation   = [0.0 for i in range(12)]
         self.nBytesOfUserData = 0
-        self.PAD              = bytearray(16)
+        self.nParentIndex     = 0
+        self.PAD              = bytearray(12)
         self.userData         = [] # User Data is gonna be an array of string commands
 
     def packBytes(self):
@@ -511,10 +493,10 @@ class PASMShape:
         
         outBytes += self.typeData.packBytes()
         
-        for i in self.mtxOrientation:
-            outBytes += struct.pack("<f", i)
+        for i in self.mtxOrientation: outBytes += struct.pack("<f", i)
             
         outBytes += struct.pack("<i", self.nBytesOfUserData)[:4]
+        outBytes += struct.pack("<i", self.nParentIndex)[:4]
         
         outBytes += self.PAD
         
@@ -533,13 +515,13 @@ class PASMShape:
                                   
 class PASMVisPoint:
     def __init__(self):
-        self.Pos = [0.0, 0.0, 0.0]
+        self.Pos = [0.0 for i in range(3)]
 
     def packBytes(self):
         #init our bytearray
         outBytes = bytearray()
-        for i in self.Pos:
-            outBytes += struct.pack("<f", i)
+        
+        for i in self.Pos: outBytes += struct.pack("<f", i)
         
         return outBytes
 
@@ -554,13 +536,11 @@ class PASMVisEdge:
         #init our bytearray
         outBytes = bytearray()
         
-        for i in self.anVertIndices:
-            outBytes += struct.pack("<h", i)
+        for i in self.anVertIndices: outBytes += struct.pack("<h", i)
 
         outBytes += struct.pack("<i", self.nNumFaces)[:4]
 
-        for i in self.anFaceIndices:
-            outBytes += struct.pack("<h", i)
+        for i in self.anFaceIndices: outBytes += struct.pack("<h", i)
 
         outBytes += self.PAD
         
@@ -570,10 +550,10 @@ class PASMVisFace:
     def __init__(self):
         self.nDegree      = 0 # Number of aVertIndicies / aEdgeIndicies used, usually 4
         # Not all these values have to be filled out, EX: cube only needs 4
-        self.aVertIndices = [0 for i in range(6)]
-        self.aEdgeIndices = [0 for i in range(6)]
-        self.Normal       = [0.0, 0.0, 0.0]
-        self.Centroid     = [0.0, 0.0, 0.0]
+        self.aVertIndices = [0   for i in range(6)]
+        self.aEdgeIndices = [0   for i in range(6)]
+        self.Normal       = [0.0 for i in range(3)]
+        self.Centroid     = [0.0 for i in range(3)]
         self.PAD          = bytearray(4)
 
     def packBytes(self):
@@ -582,14 +562,10 @@ class PASMVisFace:
 
         outBytes += struct.pack("<i", self.nDegree)[:4]
 
-        for i in self.aVertIndices:
-            outBytes += struct.pack("<h", i)
-        for i in self.aEdgeIndices:
-            outBytes += struct.pack("<h", i)
-        for i in self.Normal:
-            outBytes += struct.pack("<f", i)
-        for i in self.Centroid:
-            outBytes += struct.pack("<f", i)
+        for i in self.aVertIndices: outBytes += struct.pack("<h", i)
+        for i in self.aEdgeIndices: outBytes += struct.pack("<h", i)
+        for i in self.Normal:       outBytes += struct.pack("<f", i)
+        for i in self.Centroid:     outBytes += struct.pack("<f", i)
         outBytes += self.PAD
              
         return outBytes
@@ -599,24 +575,19 @@ class PASMVisPortal:
     def __init__(self):
         self.szName   = ""
         self.ACorners = [PASMVisPoint() for i in range(4)]
-        self.Normal   = [0.0, 0.0, 0.0]
-        self.Centroid = [0.0, 0.0, 0.0]
+        self.Normal   = [0.0 for i in range(3)]
+        self.Centroid = [0.0 for i in range(3)]
         self.nFlags   = 0
         self.PAD      = bytearray(16)
 
     def packBytes(self):
         outBytes = bytearray() # init our bytearray
         
-        size = bytearray(32)
-        size[0:len(self.szName[0:31])] = bytes(self.szName, "utf-8")[0:31]
-        outBytes += size
+        outBytes += writePaddedStringBytes(self.szName, 32)
         
-        for i in self.ACorners:
-            outBytes += i.packBytes()
-        for i in self.Normal:
-            outBytes += struct.pack("<f", i)
-        for i in self.Centroid:
-            outBytes += struct.pack("<f", i)
+        for i in self.ACorners: outBytes += i.packBytes()
+        for i in self.Normal:   outBytes += struct.pack("<f", i)
+        for i in self.Centroid: outBytes += struct.pack("<f", i)
         
         outBytes += struct.pack("<i", self.nFlags)[:4]
             
@@ -638,7 +609,7 @@ class PASMCell:
         self.nNumFaces  = 0
         self.aVisFaces  = [PASMVisFace() for i in range(26)]
                         
-        self.aSphere    = [0.0, 0.0, 0.0, 0.0]
+        self.aSphere    = [0.0 for i in range(4)]
         self.nFlags     = 0
         self.PAD        = bytearray(16)
         
@@ -646,24 +617,18 @@ class PASMCell:
         #init our bytearray
         outBytes = bytearray()
         
-        size = bytearray(32)
-        size[0:len(self.szCellName[0:31])] = bytes(self.szCellName, "utf-8")[0:31]
-        outBytes += size
+        outBytes += writePaddedStringBytes(self.szCellName, 32)
 
         outBytes += struct.pack("<i", self.nNumVerts)[:4]
-        for i in self.aVisVerts:
-            outBytes += i.packBytes()
+        for i in self.aVisVerts: outBytes += i.packBytes()
 
         outBytes += struct.pack("<i", self.nNumEdges)[:4]
-        for i in self.aVisEdges:
-            outBytes += i.packBytes()
+        for i in self.aVisEdges: outBytes += i.packBytes()
 
         outBytes += struct.pack("<i", self.nNumFaces)[:4]
-        for i in self.aVisFaces:
-            outBytes += i.packBytes()
+        for i in self.aVisFaces: outBytes += i.packBytes()
 
-        for i in self.aSphere:
-            outBytes += struct.pack("<f", i)
+        for i in self.aSphere: outBytes += struct.pack("<f", i)
 
         outBytes += struct.pack("<i", self.nFlags)[:4]
         outBytes += self.PAD
@@ -674,7 +639,7 @@ class PASMVolume:
     def __init__(self):
         self.nNumCells = 0
         self.aCells    = [PASMCell() for i in range(16)]
-        self.Sphere    = [0.0, 0.0, 0.0, 0.0]
+        self.Sphere    = [0.0 for i in range(4)]
         self.nFlags    = 0
         self.PAD       = bytearray(16)
 
@@ -684,11 +649,8 @@ class PASMVolume:
 
         outBytes += struct.pack("<i", self.nNumCells)[:4]
 
-        for i in self.aCells:
-            outBytes += i.packBytes()
-
-        for i in self.Sphere:
-            outBytes += struct.pack("<f", i)
+        for i in self.aCells: outBytes += i.packBytes()
+        for i in self.Sphere: outBytes += struct.pack("<f", i)
 
         outBytes += struct.pack("<i", self.nFlags)[:4]
 
@@ -725,12 +687,12 @@ class PASMCommands:
         self.nCollMask              = 0
         self.nReactType             = 0
         self.nSurfaceType           = 0
-        self.TintRGB                = [0.0, 0.0, 0.0]
-        self.LightRGBI              = [0.0, 0.0, 0.0, 0.0]
+        self.TintRGB                = [0.0 for i in range(3)]
+        self.LightRGBI              = [0.0 for i in range(4)]
         self.fBumpMapTileFactor     = 0
         self.fDetailMapTileFactor   = 0
         self.fDeltaUVRotationPerSec = 0
-        self.vRotateUVAround        = [0.0, 0.0]
+        self.vRotateUVAround        = [0.0 for i in range(2)]
         self.PAD                    = bytearray(12)
 
     def packBytes(self):
@@ -764,18 +726,14 @@ class PASMCommands:
         # Strange null bytes
         outBytes += bytearray(2)
 
-        #print("PACKING TintRGB", self.TintRGB)
-        for i in self.TintRGB:
-            outBytes += struct.pack("<f", i)
-        for i in self.LightRGBI:
-            outBytes += struct.pack("<f", i)
+        for i in self.TintRGB:   outBytes += struct.pack("<f", i)
+        for i in self.LightRGBI: outBytes += struct.pack("<f", i)
 
         outBytes += struct.pack("<f", self.fBumpMapTileFactor)
         outBytes += struct.pack("<f", self.fDetailMapTileFactor)
         outBytes += struct.pack("<f", self.fDeltaUVRotationPerSec)
 
-        for i in self.vRotateUVAround:
-            outBytes += struct.pack("<f", i)
+        for i in self.vRotateUVAround: outBytes += struct.pack("<f", i)
 
         outBytes += self.PAD
 
@@ -806,9 +764,9 @@ class PASMLayer:
         self.bTwoSided            = 0
         self.bTileU               = 1
         self.bTileV               = 1
-        self.SpecularRGB          = [0.0, 0.0, 0.0]
-        self.IllumRGB             = [0.0, 0.0, 0.0]
-        self.DiffuseRGB           = [0.0, 0.0, 0.0]
+        self.SpecularRGB          = [0.0 for i in range(3)]
+        self.IllumRGB             = [0.0 for i in range(3)]
+        self.DiffuseRGB           = [0.0 for i in range(3)]
         self.fShininess           = 0.0
         self.fShinStr             = 0.0
         self.StarCommands         = PASMCommands()
@@ -835,12 +793,9 @@ class PASMLayer:
         outBytes += struct.pack("<b", self.bTileU)
         outBytes += struct.pack("<b", self.bTileV)
 
-        for i in self.SpecularRGB:
-            outBytes += struct.pack("<f", i)
-        for i in self.IllumRGB:
-            outBytes += struct.pack("<f", i)
-        for i in self.DiffuseRGB:
-            outBytes += struct.pack("<f", i)
+        for i in self.SpecularRGB: outBytes += struct.pack("<f", i)
+        for i in self.IllumRGB:    outBytes += struct.pack("<f", i)
+        for i in self.DiffuseRGB:  outBytes += struct.pack("<f", i)
 
         outBytes += struct.pack("<f", self.fShininess)
         outBytes += struct.pack("<f", self.fShinStr)
@@ -870,8 +825,7 @@ class PASMMaterial:
 
         outBytes += struct.pack("<i", self.nLayerCount)[:4]
 
-        for i in self.aMatLayers:
-            outBytes += i.packBytes()
+        for i in self.aMatLayers: outBytes += i.packBytes()
 
         outBytes += struct.pack("<i", self.nFirstIndex)[:4]
         outBytes += struct.pack("<i", self.nNumIndices)[:4]
@@ -887,40 +841,33 @@ class PASMMaterial:
 
 class PASMVert:
     def __init__(self):
-        self.Pos         = [0.0, 0.0, 0.0]
-        self.Norm        = [0.0, 0.0, 0.0]
-        self.Color       = [0.0, 0.0, 0.0, 0.0]
+        self.Pos         = [0.0 for i in range(3)]
+        self.Norm        = [0.0 for i in range(3)]
+        self.Color       = [0.0 for i in range(4)]
         self.aUVs        = [[0.0, 0.0] for i in range(4)]
         self.fNumWeights = 0
         self.aWeights    = [PASMWeight() for i in range(4)]
         self.PAD         = bytearray(16)
         
+    # When comparing if two verts are identical it is quicker to compare hashes rather than a custom __eq__ function
     def __hash__(self):
         return hash( (tuple(self.Pos), tuple(self.Norm), tuple(self.Color), tuple(self.aUVs[0]), tuple(self.aUVs[1]), self.fNumWeights, tuple(self.aWeights) ) )
-        
-    # Class comparison doesn't work by default b/c it doesn't know what to compare so we do this
-    # Stupid, half assed function, blah
-    def __eq__(self, other) : 
-        return self.Pos == other.Pos and self.Norm == other.Norm and self.Color == other.Color and self.aUVs[0] == other.aUVs[0] and self.aUVs[1] == other.aUVs[1]
         
     def packBytes(self):
         #init our bytearray
         outBytes = bytearray()
 
-        for i in self.Pos:
-            outBytes += struct.pack("<f", i)
-        for i in self.Norm:
-            outBytes += struct.pack("<f", i)
-        for i in self.Color:
-            outBytes += struct.pack("<f", i)
+        for i in self.Pos:   outBytes += struct.pack("<f", i)
+        for i in self.Norm:  outBytes += struct.pack("<f", i)
+        for i in self.Color: outBytes += struct.pack("<f", i)
+        
         for i in self.aUVs:
             for j in i:
                 outBytes += struct.pack("<f", j)
 
         outBytes += struct.pack("<f", self.fNumWeights)
 
-        for i in self.aWeights:
-            outBytes += i.packBytes()
+        for i in self.aWeights: outBytes += i.packBytes()
 
         outBytes += self.PAD
 
@@ -953,16 +900,14 @@ class PASMSegment:
         # WELL... we're gonna pack them with the segment / mesh
 
         self.aMaterials = []
-        self.aVertices = []
-        self.aIndicies =  []
+        self.aVertices  = []
+        self.aIndicies  = []
 
     def packBytes(self):
         #init our bytearray
         outBytes = bytearray()
         
-        size = bytearray(16)
-        size[0:len(self.szMeshName[0:15])] = bytes(self.szMeshName, "utf-8")[0:15]
-        outBytes += size
+        outBytes += writePaddedStringBytes(self.szMeshName, 16)
         
         outBytes += struct.pack("<i", self.bSkinned)[:4]
         outBytes += struct.pack("<i", self.nNumMaterials)[:4]
@@ -970,11 +915,8 @@ class PASMSegment:
         outBytes += struct.pack("<i", self.nNumIndices)[:4]
         outBytes += self.PAD
         
-        for i in self.aMaterials:
-            outBytes += i.packBytes()
-        for i in self.aVertices:
-            outBytes += i.packBytes()
-        for i in self.aIndicies:
-            outBytes += i.packBytes()
+        for i in self.aMaterials: outBytes += i.packBytes()
+        for i in self.aVertices:  outBytes += i.packBytes()
+        for i in self.aIndicies:  outBytes += i.packBytes()
      
         return outBytes

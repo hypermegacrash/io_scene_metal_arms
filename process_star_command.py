@@ -300,18 +300,18 @@ class CObjectStringParser:
         if( pszObjectStr.find("*posterx") != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_POSTER_X 
         if( pszObjectStr.find("*posterz") != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_POSTER_Z
         if( pszObjectStr.find("*nocoll")  != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_NO_COLL 
-        #if( pszObjectStr.find("nofog")    != -1 ): print("*nofog not implimented") # LEGACY / UNUSED? 
+        #if( pszObjectStr.find("nofog")    != -1 ): print("*nofog not implimented") # LEGACY
         if( pszObjectStr.find("*nolight") != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_NO_LIGHT
         
         if(self._GetParamterString2(pszObjectStr, "*culldist", 1)): self.m_fCullDist = float(self.nParams[0])
             
         if(self._GetParamterString2(pszObjectStr, "*tint", 3)): 
-            self.m_ApeCommands.TintRGB[0] =  ( max(0.0, min(float(self.nParams[0]), 255.0)) ) / 255.0
-            self.m_ApeCommands.TintRGB[1] =  ( max(0.0, min(float(self.nParams[1]), 255.0)) ) / 255.0
-            self.m_ApeCommands.TintRGB[2] =  ( max(0.0, min(float(self.nParams[2]), 255.0)) ) / 255.0
+            self.m_TintRGB[0] = ( max(0.0, min(float(self.nParams[0]), 255.0)) ) / 255.0
+            self.m_TintRGB[1] = ( max(0.0, min(float(self.nParams[1]), 255.0)) ) / 255.0
+            self.m_TintRGB[2] = ( max(0.0, min(float(self.nParams[2]), 255.0)) ) / 255.0
             
             
-        #if( pszObjectStr.find("*sort")         != -1 ): print("*sort not implimented") # LEGACY / UNUSED?
+        #if( pszObjectStr.find("*sort")         != -1 ): print("*sort not implimented") # LEGACY
         if( pszObjectStr.find("*nodraw")       != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_NO_DRAW
         if( pszObjectStr.find("*acceptlm")     != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_LM
         if( pszObjectStr.find("*vertrad")      != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_VERT_RADIOSITY

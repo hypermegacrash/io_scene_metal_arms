@@ -101,9 +101,8 @@ def BObj2F43MtxSCALE(obj):
     
 # PASM Lights are special and calculate their 4x3 matrix in a different way
 def BObj2F43MtxLIGHT(obj):
-    # Rotation Matrix fun
-    rotMtx = obj.rotation_euler
-    rotMtx = rotMtx.to_matrix()
+    # Grab the rotation matrix
+    rotMtx = obj.matrix_world.to_3x3()
     
     # Negating column [2]
     rotMtx[0][2] = -rotMtx[0][2]
@@ -147,7 +146,7 @@ def BObj2F43MtxLIGHT(obj):
     outOrientation[11] =  obj.matrix_world.translation[1]
     
     return outOrientation
-    
+
 # DONT TOUCH IT
 def BObj2F43MtxBONE(obj):
     # This is so stupid, should be a matrix not an array of floats
@@ -155,10 +154,8 @@ def BObj2F43MtxBONE(obj):
     
     hArmature = obj.id_data
     
-    if obj.parent:
-        rotMtx = obj.parent.matrix.inverted() @ obj.matrix
-    else:
-        rotMtx = hArmature.matrix_world @ obj.matrix
+    if obj.parent: rotMtx = obj.parent.matrix.inverted() @ obj.matrix
+    else:          rotMtx = hArmature.matrix_world @ obj.matrix
     
     # Construct our left-handed matrix
     left2RightMtx = mathutils.Matrix.Identity(4)

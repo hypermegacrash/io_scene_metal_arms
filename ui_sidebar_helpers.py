@@ -67,9 +67,10 @@ class MAUpdateFangMaterial(bpy.types.Operator):
         
         # Remove the old nodetree
         ng = bpy.data.node_groups
-        n = ng.find("FANG Composite")
-        if n > -1:
-            ng.remove(ng[n])
+        for node in ng:
+            if (node.name.lower().split(".",1)[0] == "fang composite"):
+                n = ng.find(node.name)
+                ng.remove(ng[n])
         
         # Add the new nodetree
         # We do this AFTER removing old nodetree so we dont get the .001
@@ -114,9 +115,10 @@ class MAUpdateFangMaterial(bpy.types.Operator):
         
         # Remove the old nodetree
         ng = bpy.data.node_groups
-        n = ng.find("FANG Material")
-        if n > -1:
-            ng.remove(ng[n])
+        for node in ng:
+            if (node.name.lower().split(".",1)[0] == "fang material"):
+                n = ng.find(node.name)
+                ng.remove(ng[n])
         
         # Add the new nodetree
         # We do this AFTER removing old nodetree so we dont get the .001

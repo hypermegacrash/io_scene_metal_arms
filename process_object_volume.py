@@ -36,8 +36,13 @@ def ProcessCell(obj):
                 break
     
     if(bIsConvex):
-        print("Mesh is not convex, skipping cell")
+        g_class.logError("VOLUME / CELL ERROR: The cell " + obj.name + " is not convex, skipping cell.")
         return False
+       
+    for v in bm.edges:
+        if not v.is_manifold:
+            g_class.logError("VOLUME / CELL ERROR: The cell " + obj.name + " is not manifold, skipping cell.")
+            return False
         
     # OK Now we need the following
     # There can be only 6 degrees per face...
@@ -165,7 +170,7 @@ def ExportObjVolume(aVolumes):
     outVolume = pasm_file_def.PASMVolume()
     
     if type(aVolumes) == list:
-        print("We got a Volume Collection")
+        #print("We got a Volume Collection")
         
         for cell in aVolumes:
             outCell = ProcessCell(cell)
