@@ -35,6 +35,8 @@ def ExportObjObject(obj):
         cmds = obj["ma"].split('\n')
         x = 0
         for index in cmds: 
+            if index == "" or index.isspace(): continue # Check if string is empty
+            if index[0] == "#":                continue # Check if comment line
             x += 1
             a = index.find("=")
             i = a - 1

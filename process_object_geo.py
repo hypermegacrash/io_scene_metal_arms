@@ -85,15 +85,15 @@ def ProcessSegment(obj, outSegment, bExportHierarchy, nLODIdx):
     # we can therefore skip None entries
     if obj == None: return True
     if(len(obj.data.materials) == 0):
-        g_class.printWARNING("The object", obj.name, "has no materials, skipping")
+        g_class.printWARNING("The object ", obj.name, " has no materials, skipping")
         return False # Don't work with meshes that have no material
         
     if(len(obj.data.loop_triangles) == 0):
-        g_class.printWARNING("The object", obj.name, "has no triangles, skipping")
+        g_class.printWARNING("The object ", obj.name, " has no triangles, skipping")
         return False # Don't work with meshes that have no material
         
     if(len(obj.data.vertices) == 0):
-        g_class.printWARNING("The object", obj.name, "has no vertices, skipping")
+        g_class.printWARNING("The object ", obj.name, " has no vertices, skipping")
         return False # Don't work with meshes that have no material
         
     #print(obj.name, "is a geo object")
@@ -170,7 +170,11 @@ def ProcessSegment(obj, outSegment, bExportHierarchy, nLODIdx):
     
     # Itterate through every loop to seperate faces by material
     for face in geo.loop_triangles:
-        material = obj.material_slots[face.material_index].material
+        try:
+            material = obj.material_slots[face.material_index].material
+        except:
+            g_class.logError("MATERIAL ERROR: The object " + obj.name + " has faces not assigned to any of it's materials, skipping mesh.")
+            return False
         if material is None:
             g_class.printWARNING("There are some faces on the mesh " + obj.name + " that are assigned to an empty material slot.")
         faceDict[face.material_index].append(face)

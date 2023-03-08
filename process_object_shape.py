@@ -42,6 +42,10 @@ def ExportObjShape(obj):
             outShape.typeData = pasm_file_def.PASMShapeSphere()
             
     if obj.type == "CURVE":
+        if obj.data.splines[0].type != "POLY":
+            g_class.logError("SPLINE ERROR: The spline object " + obj.name + " is a " + obj.data.splines[0].type + " spline but only POLY splines are supported.\n" +
+                             "FIX: Select " + obj.name + " in OBJECT mode > EDIT mode > Object Context Menu (Default is right click) > Set Spline Type > Poly")
+            return
         outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPLINE
         outShape.typeData = pasm_file_def.PASMShapeSpline()
     
@@ -79,7 +83,9 @@ def ExportObjShape(obj):
     try:
         cmds = obj["ma"].split('\n')
         x = 0
-        for index in cmds: 
+        for index in cmds:
+            if index == "" or index.isspace(): continue # Check if string is empty
+            if index[0] == "#":                continue # Check if comment line
             x += 1
             a = index.find("=")
             i = a - 1

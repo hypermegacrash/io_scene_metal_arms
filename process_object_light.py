@@ -45,6 +45,8 @@ def ExportObjLight(obj):
             dictProperties = {}
             cmds = obj["ma"].split('\n')
             for index in cmds:   
+                if index == "" or index.isspace(): continue # Check if string is empty
+                if index[0] == "#":                continue # Check if comment line
                 a = index.find("=")
                 i = a - 1
                 j = a + 1
