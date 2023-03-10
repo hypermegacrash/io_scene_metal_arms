@@ -1,7 +1,7 @@
 # Module that processes an shape object and returns byte data
 
 # FANG TOOLKIT
-from . import pasm_file_def # Get our PASM file classes
+from . import file_def_ape  # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
 
@@ -20,48 +20,48 @@ def ExportObjShape(obj):
         
     print(obj.name, "is a shape object")
     
-    outShape = pasm_file_def.PASMShape()
+    outShape = file_def_ape.PASMShape()
     
     # Little hack PT 2 for Vissova so a mesh can represent a player start
     if obj.name[:6].lower() == "start_" and obj.type == "MESH":
-        outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT
-        outShape.typeData = pasm_file_def.PASMShapeStartPoint()
+        outShape.nType = file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT
+        outShape.typeData = file_def_ape.PASMShapeStartPoint()
     
     # Because we deal with shapes that aren't always empties
     if obj.type == "EMPTY":
         if obj.empty_display_type == "CUBE":
             if(obj.name.find("start_", 0, 6) != -1):
-                outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT
-                outShape.typeData = pasm_file_def.PASMShapeStartPoint()
+                outShape.nType = file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT
+                outShape.typeData = file_def_ape.PASMShapeStartPoint()
             else:
                 # Making an assumption by process of elimination it must be a box volume
-                outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_BOX
-                outShape.typeData = pasm_file_def.PASMShapeBox()
+                outShape.nType = file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_BOX
+                outShape.typeData = file_def_ape.PASMShapeBox()
         if obj.empty_display_type == "SPHERE":
-            outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE
-            outShape.typeData = pasm_file_def.PASMShapeSphere()
+            outShape.nType = file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE
+            outShape.typeData = file_def_ape.PASMShapeSphere()
             
     if obj.type == "CURVE":
         if obj.data.splines[0].type != "POLY":
             g_class.logError("SPLINE ERROR: The spline object " + obj.name + " is a " + obj.data.splines[0].type + " spline but only POLY splines are supported.\n" +
                              "FIX: Select " + obj.name + " in OBJECT mode > EDIT mode > Object Context Menu (Default is right click) > Set Spline Type > Poly")
             return
-        outShape.nType = pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPLINE
-        outShape.typeData = pasm_file_def.PASMShapeSpline()
+        outShape.nType = file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_SPLINE
+        outShape.typeData = file_def_ape.PASMShapeSpline()
     
     if outShape.nType == -1:
         # Couldn't associate our object with any shape
         return
         
-    if outShape.nType == pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_BOX:
+    if outShape.nType == file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_BOX:
         outShape.typeData.fLength = obj.scale[1]
         outShape.typeData.fWidth  = obj.scale[0]
         outShape.typeData.fHeight = obj.scale[2]
         
-    if outShape.nType == pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE:
+    if outShape.nType == file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE:
         outShape.typeData.fRadius = obj.empty_display_size
         
-    if outShape.nType == pasm_file_def.PASMShapeType_e.APE_SHAPE_TYPE_SPLINE:
+    if outShape.nType == file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_SPLINE:
         outShape.typeData.nNumPts = len(obj.data.splines[0].points)
         # Actually check this
         outShape.typeData.bClosed = 0 
@@ -111,5 +111,5 @@ def ExportObjShape(obj):
     
     # Finally, write data to the file, and our header
     g_class.file.write(outShape.packBytes())
-    g_class.gWldHeader.fileSize += len(outShape.packBytes())
-    g_class.gWldHeader.nNumShapes += 1
+    g_class.gApeHeader.fileSize += len(outShape.packBytes())
+    g_class.gApeHeader.nNumShapes += 1

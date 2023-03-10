@@ -1,7 +1,7 @@
 # Module for processing the bone hierarchy of a model for exporting
 
 # FANG TOOLKIT
-from . import pasm_file_def # Get our PASM file classes
+from . import file_def_ape # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
 # BLENDER
@@ -27,7 +27,7 @@ def ExportObjBone(obj):
     
     for pBoneInst in obj.pose.bones:
         print("BONE:", pBoneInst.name)
-        apeBone = pasm_file_def.PASMBone()
+        apeBone = file_def_ape.PASMBone()
         
         boneInst = pBoneInst.bone
         
@@ -49,5 +49,5 @@ def ExportObjBone(obj):
     for bone in aBones:
         #print(bone.szBoneName, bone.mtxOrientation[9], bone.mtxOrientation[10], bone.mtxOrientation[11])
         g_class.file.write(bone.packBytes())
-        g_class.gWldHeader.fileSize += len(bone.packBytes())
-        g_class.gWldHeader.nNumBones += 1
+        g_class.gApeHeader.fileSize += len(bone.packBytes())
+        g_class.gApeHeader.nNumBones += 1

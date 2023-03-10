@@ -1,7 +1,7 @@
 # This module is for sharing a single instance of data between modules
 
 # FANG TOOLKIT
-from . import pasm_file_def # . is the add-on folder directory
+from . import file_def_ape  # . is the add-on folder directory
 from . import bl_info       # For grabbing the Add-On version so we can print it in the exporter menu
 # BLENDER
 import bpy # We write the filename when writting out the error
@@ -10,7 +10,7 @@ import datetime # We write the time the error occured
 import os       # Need the filepath of this file
 
 # GLOBAL VARIABLES
-gWldHeader = pasm_file_def.PASMHeader() # The header we need to modify by different process_object* modules
+gApeHeader = file_def_ape.PASMHeader() # The header we need to modify by different process_object* modules
 file          = None  # The output file that is adjusted by different process_object* modules
 errorLogFile  = None  # The error log file that we write errors to from different process_object* modules
 fpErrorLog    = os.path.dirname(os.path.realpath(__file__)) + "\\blender_ma_error_log.txt"  # Path to the export file

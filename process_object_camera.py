@@ -2,8 +2,8 @@
 
 # FANG TOOLKIT
 from . import file_def_cam # Get our PASM file classes
-from . import g_class # Get our global variables for the header data
-from . import pasm_math # PASM helper defs
+from . import g_class      # Get our global variables for the header data
+from . import pasm_math    # PASM helper defs
 # BLENDER
 import bpy # For working with Blender data
 

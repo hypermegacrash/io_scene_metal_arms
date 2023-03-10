@@ -2,7 +2,7 @@
 # NOTE: This module is outdated, fog was moved from .wld to level .csv file and deprecated in the PASM2 compiler
 
 # FANG TOOLKIT
-from . import pasm_file_def # Get our PASM file classes
+from . import file_def_ape  # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 
 def ExportObjFog(obj):

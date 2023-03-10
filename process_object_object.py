@@ -1,7 +1,7 @@
 # Module that processes an object object and returns byte data
 
 # FANG TOOLKIT
-from . import pasm_file_def # Get our PASM file classes
+from . import file_def_ape  # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
 from .process_star_command import CObjectStringParser # Import just the Material Star Command Parser
@@ -12,7 +12,7 @@ def ExportObjObject(obj):
         
     print(obj.name, "is a object object")
     
-    outObject = pasm_file_def.PASMObject()
+    outObject = file_def_ape.PASMObject()
     
     # Prepare object name by ripping off obj_ prefix and reading only up until first .
     outName = obj.name.lower()[4:]
@@ -59,5 +59,5 @@ def ExportObjObject(obj):
                         
     # Finally, write data to the file, and our header
     g_class.file.write(outObject.packBytes())
-    g_class.gWldHeader.fileSize += len(outObject.packBytes())
-    g_class.gWldHeader.nNumObjects += 1
+    g_class.gApeHeader.fileSize += len(outObject.packBytes())
+    g_class.gApeHeader.nNumObjects += 1

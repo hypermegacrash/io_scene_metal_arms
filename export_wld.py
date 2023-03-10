@@ -3,7 +3,7 @@
 # FANG TOOLKIT
 from . import g_class       # Get our global variables like header data & I/O file
 # Grab all our defs for exporting Blender data to PASM formatted data
-from . import pasm_file_def # . is the add-on folder directory
+from . import file_def_ape # . is the add-on folder directory
 from .process_object_geo     import ExportObjGeo
 from .process_object_light   import ExportObjLight
 from .process_object_object  import ExportObjObject
@@ -71,19 +71,19 @@ class ExportWLD(Operator, ExportHelper):
         def execute(self, context):
               
             # Init and dress a fresh header
-            g_class.gWldHeader = pasm_file_def.PASMHeader() 
+            g_class.gApeHeader = file_def_ape.PASMHeader() 
             
             filename = os.path.basename(self.filepath)
             filename = filename[:len(filename)-4]
-            g_class.gWldHeader.sceneName = filename
+            g_class.gApeHeader.sceneName = filename
             
-            g_class.gWldHeader.bWld = 1
+            g_class.gApeHeader.bWld = 1
                        
             # Init our out file and error log in the global g_class for other modules to access
             with open(self.filepath, 'wb')     as g_class.file, \
                  open(g_class.fpErrorLog, 'a') as g_class.errorLogFile:
                              
-                g_class.file.write(g_class.gWldHeader.packBytes()) # This will be overwritten at the very end with the correct data
+                g_class.file.write(g_class.gApeHeader.packBytes()) # This will be overwritten at the very end with the correct data
                 g_class.bShowErrorLog = False # Init our error log file
                 
                 if (self.m_bUseSelection): objects = [obj for obj in context.selected_objects]
@@ -174,7 +174,7 @@ class ExportWLD(Operator, ExportHelper):
                 
                 # Go back to the start and rewrite the header with correct data
                 g_class.file.seek(0)
-                g_class.file.write(g_class.gWldHeader.packBytes())
+                g_class.file.write(g_class.gApeHeader.packBytes())
               
             # Did we encounter any errors?
             if(g_class.bShowErrorLog): os.startfile(g_class.fpErrorLog)

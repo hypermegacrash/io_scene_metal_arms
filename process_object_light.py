@@ -1,7 +1,7 @@
 # Module that processes a light object and returns byte data
 
 # FANG TOOLKIT
-from . import pasm_file_def # Get our PASM file classes
+from . import file_def_ape  # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
 from .process_star_command import CLightStringParser # Import just the Light Star Command Parser
@@ -20,14 +20,14 @@ def ExportObjLight(obj):
         
     print(obj.name, "is a light object")
 
-    outLight = pasm_file_def.PASMLight()
+    outLight = file_def_ape.PASMLight()
     
     if obj.type == "LIGHT":
-        if   obj.data.type == "SUN":   outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_DIR
-        elif obj.data.type == "POINT": outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_OMNI
-        elif obj.data.type == "SPOT":  outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT
+        if   obj.data.type == "SUN":   outLight.nApeLightType = file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_DIR
+        elif obj.data.type == "POINT": outLight.nApeLightType = file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_OMNI
+        elif obj.data.type == "SPOT":  outLight.nApeLightType = file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_SPOT
         
-    if obj.name[:7].lower() == "ambient" and obj.type == "EMPTY": outLight.nApeLightType = pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_AMBIENT
+    if obj.name[:7].lower() == "ambient" and obj.type == "EMPTY": outLight.nApeLightType = file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_AMBIENT
         
     if outLight.nApeLightType == -1:
         print("Unable to assign nApeLightType, skipping " + obj.name)
@@ -78,7 +78,7 @@ def ExportObjLight(obj):
         return
          
     if obj.type == "LIGHT":
-         if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_DIR:
+         if outLight.nApeLightType == file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_DIR:
             outLight.Intensity = obj.data.energy
          else:
             # Pretty kludgely hack
@@ -92,7 +92,7 @@ def ExportObjLight(obj):
                 radius = math.sqrt(((( obj.data.energy / 0.01) *  obj.data.diffuse_factor) / ( 4 * math.pi )))     
                 outLight.Intensity = (( obj.data.energy ) / ( radius * radius ))
             else:
-                if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
+                if outLight.nApeLightType == file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
                     radius = math.sqrt(((( obj.data.energy / 0.02) *  obj.data.diffuse_factor) / ( 4 * math.pi )))     
                     outLight.Intensity = (( obj.data.energy ) / ( radius * radius ))
                 else:
@@ -116,13 +116,13 @@ def ExportObjLight(obj):
     # Lights calculate their rotation matrix in a different way to everything else
     outLight.mtxOrientation = pasm_math.BObj2F43MtxLIGHT(obj)
     
-    if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_DIR or outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
+    if outLight.nApeLightType == file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_DIR or outLight.nApeLightType == file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
         # This is the 3rd row of the rotation matrix
         outLight.Direction[0] =  outLight.mtxOrientation[6]
         outLight.Direction[1] =  outLight.mtxOrientation[7]
         outLight.Direction[2] =  outLight.mtxOrientation[8]
     
-    if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_OMNI or outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
+    if outLight.nApeLightType == file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_OMNI or outLight.nApeLightType == file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
         # light_threshold = bpy.context.scene.eevee.light_threshold
         # Blender doesn't give a radius of light that we want
         # So we're gonna calculate inverse square law with a distance of 0.02 to try and approximate one
@@ -133,7 +133,7 @@ def ExportObjLight(obj):
         outLight.Sphere[2] = outLight.mtxOrientation[10]
         outLight.Sphere[3] = outLight.mtxOrientation[11]
         
-    if outLight.nApeLightType == pasm_file_def.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
+    if outLight.nApeLightType == file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
         if obj.data.spot_blend == 1.0: # This is a super soft light
             outLight.fSpotInnerAngle = 0.0
         else: # Regular light
@@ -155,8 +155,8 @@ def ExportObjLight(obj):
     
     # Finally, write data to the file, and our header
     g_class.file.write(outLight.packBytes())
-    g_class.gWldHeader.fileSize += len(outLight.packBytes())
-    g_class.gWldHeader.nNumLights += 1
+    g_class.gApeHeader.fileSize += len(outLight.packBytes())
+    g_class.gApeHeader.nNumLights += 1
     
 
 

@@ -1,4 +1,4 @@
-# This file is a collection of classes that represents sections of the PASM file format
+# This file is a collection of classes that represents sections of the PASM .ape / .wld file format
 # Each of them contain a function to take the class contents and pack them into an array of bytes
 # ASCII Banners created at https://manytools.org/hacker-tools/ascii-banner/ using the Small Font
 
@@ -155,24 +155,24 @@ class PASMLightType_e():
     APE_LIGHT_TYPE_AMBIENT = 3
 
 class PASMLightFlag_e():
-    APE_LIGHT_FLAG_DONT_USE_RGB				= 0x00000001	# Disregard the light's rgb and only use the motif's color (default = off)
-    APE_LIGHT_FLAG_LIGHT_SELF				= 0x00000002	# Light the object that the light is attached to (default = off)
-    APE_LIGHT_FLAG_OBJ_DONT_LIGHT_TERRAIN	= 0x00000004	# Lights attached to this object don't light the terrain (default = off)
+    APE_LIGHT_FLAG_DONT_USE_RGB              = 0x00000001   # Disregard the light's rgb and only use the motif's color (default = off)
+    APE_LIGHT_FLAG_LIGHT_SELF                = 0x00000002   # Light the object that the light is attached to (default = off)
+    APE_LIGHT_FLAG_OBJ_DONT_LIGHT_TERRAIN    = 0x00000004   # Lights attached to this object don't light the terrain (default = off)
 
-    APE_LIGHT_FLAG_PER_PIXEL				= 0x00000008	# This light casts a projection on the environment (may or may not have a texture)
+    APE_LIGHT_FLAG_PER_PIXEL                 = 0x00000008   # This light casts a projection on the environment (may or may not have a texture)
 
-    APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT		= 0x00000010	# This light will only be used in the lightmap portion of PASM and will not be exported to the engine.
-    APE_LIGHT_FLAG_LIGHTMAP_LIGHT			= 0x00000020	# This light is to be used for generating lightmaps (If it is not dynamic, it can be discarded prior to the engine)
-    APE_LIGHT_FLAG_UNIQUE_LIGHTMAP			= 0x00000040	# This light will generate its own unique lightmap in the lightmapping phase (it must also have a unique m_nLightID)
+    APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT       = 0x00000010   # This light will only be used in the lightmap portion of PASM and will not be exported to the engine.
+    APE_LIGHT_FLAG_LIGHTMAP_LIGHT            = 0x00000020   # This light is to be used for generating lightmaps (If it is not dynamic, it can be discarded prior to the engine)
+    APE_LIGHT_FLAG_UNIQUE_LIGHTMAP           = 0x00000040   # This light will generate its own unique lightmap in the lightmapping phase (it must also have a unique m_nLightID)
 
-    APE_LIGHT_FLAG_CORONA					= 0x00000080	# This light has a corona
-    APE_LIGHT_FLAG_CORONA_PROXFADE			= 0x00000100	# Fade the corona as the camera gets closer.
+    APE_LIGHT_FLAG_CORONA                    = 0x00000080   # This light has a corona
+    APE_LIGHT_FLAG_CORONA_PROXFADE           = 0x00000100   # Fade the corona as the camera gets closer.
 
-    APE_LIGHT_FLAG_CAST_SHADOWS				= 0x00000200	# This light will cast shadows (only relevant for engine lights)
+    APE_LIGHT_FLAG_CAST_SHADOWS              = 0x00000200   # This light will cast shadows (only relevant for engine lights)
 
-    APE_LIGHT_FLAG_DYNAMIC_ONLY				= 0x00000400	# This light will not affect static objects
+    APE_LIGHT_FLAG_DYNAMIC_ONLY              = 0x00000400   # This light will not affect static objects
 
-    APE_LIGHT_FLAG_MESH_MUST_BE_PER_PIXEL	= 0x00000800	# For per-pixel lights that have a projected texture.  If this flag is set, only objects that are flagged
+    APE_LIGHT_FLAG_MESH_MUST_BE_PER_PIXEL    = 0x00000800   # For per-pixel lights that have a projected texture.  If this flag is set, only objects that are flagged
                                                             # as per pixel lit will have the texture projected on them.  Others will just apply as a dynamic vertex light
 
 class PASMLight:
@@ -192,7 +192,7 @@ class PASMLight:
         self.szCoronaTexture   = ""
         self.szPerPixelTexture = ""
         self.nLightID          = -1
-        self.szParentBoneName  = "Scene Root"
+        self.szParentBoneName  = "Scene Root" # This should be updated
         self.PAD               = bytearray(30)
 
     def packBytes(self):
@@ -249,9 +249,8 @@ class PASMObject:
         outBytes = bytearray()
         
         # This is a special padded string because an object name can be an .ape which can only be 11 chars long
-        size = bytearray(16)
-        size[0:len(self.szObjectName[0:11])] = bytes(self.szObjectName, "utf-8")[0:11]
-        outBytes += size
+        outBytes += writePaddedStringBytes(self.szObjectName, 12)
+        outBytes += bytearray(4)
         
         outBytes += struct.pack("<i", self.nFlags)[:4]
         
@@ -278,15 +277,15 @@ class PASMShapeType_e:
     APE_SHAPE_TYPE_SPHERE            = 0
     APE_SHAPE_TYPE_CYLINDER          = 1
     APE_SHAPE_TYPE_BOX               = 2
-    APE_SHAPE_TYPE_CAMERA            = 3
-    APE_SHAPE_TYPE_SPEAKER           = 4
-    #APE_SHAPE_TYPE_SPAWN_POINT       = 5
+    #APE_SHAPE_TYPE_CAMERA            = 3  # Deprecated baking into .wld, replaced by .cam files
+    #APE_SHAPE_TYPE_SPEAKER           = 4  # Deprecated, superseded by sound_ambient_* gamedata in entities
+    APE_SHAPE_TYPE_SPAWN_POINT       = 5  # Functionally equivalent as APE_SHAPE_TYPE_START_POINT
     APE_SHAPE_TYPE_START_POINT       = 6
-    #APE_SHAPE_TYPE_ROOM              = 7
-    #APE_SHAPE_TYPE_ARENA             = 8
-    APE_SHAPE_TYPE_PARTICLE_BOX      = 9
-    APE_SHAPE_TYPE_PARTICLE_SPHERE   = 10
-    APE_SHAPE_TYPE_PARTICLE_CYLINDER = 11
+    #APE_SHAPE_TYPE_ROOM              = 7  # AIRooms module deprecated, treated by PASM as APE_SHAPE_TYPE_BOX
+    #APE_SHAPE_TYPE_ARENA             = 8  # Deprecated, treated by PASM as APE_SHAPE_TYPE_BOX
+    #APE_SHAPE_TYPE_PARTICLE_BOX      = 9  # Unimplimented in max exporter and treated by PASM as APE_SHAPE_TYPE_BOX
+    #APE_SHAPE_TYPE_PARTICLE_SPHERE   = 10 # Unimplimented in max exporter and treated by PASM as APE_SHAPE_TYPE_SPHERE
+    #APE_SHAPE_TYPE_PARTICLE_CYLINDER = 11 # Unimplimented in max exporter and treated by PASM as APE_SHAPE_TYPE_CYLINDER
     APE_SHAPE_TYPE_SPLINE            = 12
         
 class PASMShapeSphere:
@@ -305,12 +304,16 @@ class PASMShapeSphere:
 
 class PASMShapeCylinder:
     def __init__(self):
-        self.PAD = bytearray(16)
+        self.fRadius = 0.0
+        self.fHeight = 0.0
+        self.PAD     = bytearray(8)
 
     def packBytes(self):
         #init our bytearray
         outBytes = bytearray()
    
+        outBytes += struct.pack("<f", self.fRadius)
+        outBytes += struct.pack("<f", self.fHeight)
         outBytes += self.PAD
         
         return outBytes
@@ -334,25 +337,37 @@ class PASMShapeBox:
         return outBytes
         
 class PASMShapeCamera:
+    """Deprecated"""
     def __init__(self):
-        self.PAD = bytearray(16)
+        self.fFOV            = 0.0
+        self.nFrames         = 0
+        self.nOffsetToFrames = 0
+        self.nOffsetToString = 0
 
     def packBytes(self):
         #init our bytearray
         outBytes = bytearray()
    
-        outBytes += self.PAD
+        outBytes += struct.pack("<f", self.fFOV)
+        outBytes += struct.pack("<i", self.nFrames)[:4]
+        outBytes += struct.pack("<i", self.nOffsetToFrames)[:4]
+        outBytes += struct.pack("<i", self.nOffsetToString)[:4]
         
         return outBytes
         
 class PASMShapeSpeaker:
+    """Deprecated"""
     def __init__(self):
-        self.PAD = bytearray(16)
+        self.fRadius     = 0.0
+        self.fUnitVolume = 0.0
+        self.PAD         = bytearray(8)
 
     def packBytes(self):
         #init our bytearray
         outBytes = bytearray()
    
+        outBytes += struct.pack("<f", self.fRadius)
+        outBytes += struct.pack("<f", self.fUnitVolume)
         outBytes += self.PAD
         
         return outBytes
@@ -385,61 +400,88 @@ class PASMShapeStartPoint:
 class PASMShapeRoom:
     """Deprecated"""
     def __init__(self):
-        self.PAD = bytearray(16)
+        self.fLength = 0
+        self.fWidth  = 0
+        self.fHeight = 0
+        self.nRoomID = 0
 
     def packBytes(self):
         #init our bytearray
         outBytes = bytearray()
    
-        outBytes += self.PAD
+        outBytes += struct.pack("<f", self.fLength)
+        outBytes += struct.pack("<f", self.fWidth)
+        outBytes += struct.pack("<f", self.fHeight)
+        outBytes += struct.pack("<i", self.nRoomID)[:4]
         
         return outBytes
         
 class PASMShapeArena:
     """Deprecated"""
     def __init__(self):
-        self.PAD = bytearray(16)
+        self.fLength = 0
+        self.fWidth  = 0
+        self.fHeight = 0
+        self.PAD     = bytearray(4)
 
     def packBytes(self):
         #init our bytearray
         outBytes = bytearray()
    
+        outBytes += struct.pack("<f", self.fLength)
+        outBytes += struct.pack("<f", self.fWidth)
+        outBytes += struct.pack("<f", self.fHeight)
         outBytes += self.PAD
         
         return outBytes
         
 class PASMShapeParticleBox:
+    """Deprecated"""
     def __init__(self):
-        self.PAD = bytearray(16)
+        self.fLength = 0
+        self.fWidth  = 0
+        self.fHeight = 0
+        self.PAD     = bytearray(4)
 
     def packBytes(self):
         #init our bytearray
         outBytes = bytearray()
    
+        outBytes += struct.pack("<f", self.fLength)
+        outBytes += struct.pack("<f", self.fWidth)
+        outBytes += struct.pack("<f", self.fHeight)
         outBytes += self.PAD
         
         return outBytes
         
 class PASMShapeParticleSphere:
+    """Deprecated"""
     def __init__(self):
-        self.PAD = bytearray(16)
+        self.fRadius     = 0.0
+        self.PAD         = bytearray(12)
 
     def packBytes(self):
         #init our bytearray
         outBytes = bytearray()
    
+        outBytes += struct.pack("<f", self.fRadius)
         outBytes += self.PAD
         
         return outBytes
         
 class PASMShapeParticleCylinder:
+    """Deprecated"""
     def __init__(self):
-        self.PAD = bytearray(16)
+        self.fRadius = 0.0
+        self.fHeight = 0.0
+        self.PAD     = bytearray(8)
 
     def packBytes(self):
         #init our bytearray
         outBytes = bytearray()
    
+        outBytes += struct.pack("<f", self.fRadius)
+        outBytes += struct.pack("<f", self.fHeight)
         outBytes += self.PAD
         
         return outBytes
@@ -740,16 +782,16 @@ class PASMCommands:
         return outBytes
  
 class PASMLayerIndex_e():
-    APE_LAYER_TEXTURE_DIFFUSE       = 0	
-    APE_LAYER_TEXTURE_SPECULAR_MASK = 1	
-    APE_LAYER_TEXTURE_EMISSIVE_MASK = 2	
-    APE_LAYER_TEXTURE_ALPHA_MASK    = 3	
-    APE_LAYER_TEXTURE_BUMP          = 4		
-    APE_LAYER_TEXTURE_DETAIL        = 5		
+    APE_LAYER_TEXTURE_DIFFUSE       = 0
+    APE_LAYER_TEXTURE_SPECULAR_MASK = 1
+    APE_LAYER_TEXTURE_EMISSIVE_MASK = 2
+    APE_LAYER_TEXTURE_ALPHA_MASK    = 3
+    APE_LAYER_TEXTURE_BUMP          = 4
+    APE_LAYER_TEXTURE_DETAIL        = 5
     APE_LAYER_TEXTURE_ENVIRONMENT   = 6
     APE_LAYER_TEXTURE_UNUSED_3      = 7
     APE_LAYER_TEXTURE_UNUSED_2      = 8
-    APE_LAYER_TEXTURE_UNUSED_1      = 9	
+    APE_LAYER_TEXTURE_UNUSED_1      = 9
 
     APE_LAYER_TEXTURE_MAX           = 10
         

@@ -1,7 +1,7 @@
 # Third rewrite after hiatus. Module that processes a geo object and returns byte data
 
 # FANG TOOLKIT
-from . import pasm_file_def # Get our PASM file classes
+from . import file_def_ape  # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
 from .process_star_command import CMaterialStringParser # Import just the Material Star Command Parser
@@ -13,7 +13,7 @@ import bpy  # Pass this into the func or something so we aren't constantly grabb
 def ParseMaterial(matName, fangMatGroup, matStrParser):
     # Construct a layer containing all information to create a surface
     # This Layer is based on Floor & Wall Mesh from testwld scene... Are these good default values?
-    layer = pasm_file_def.PASMLayer()
+    layer = file_def_ape.PASMLayer()
     layer.bTextured = 1
     layer.fUnitAlphaMultiplier = 1.0
     
@@ -37,27 +37,27 @@ def ParseMaterial(matName, fangMatGroup, matStrParser):
     layer.StarCommands = layerStrParser.m_ApeCommands
     
     try:
-        layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_DIFFUSE] = fangMatGroup.inputs["Diffuse Color"].links[0].from_node.image.name.split(".",1)[0]
+        layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_DIFFUSE] = fangMatGroup.inputs["Diffuse Color"].links[0].from_node.image.name.split(".",1)[0]
     except:
         g_class.printWARNING("Error extracing Diffuse Color Texture for material" + matName + " defaulting to 'grid_64_pur'")
-        layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_DIFFUSE] = "grid_64_pur" 
+        layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_DIFFUSE] = "grid_64_pur" 
     
-    try:    layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_ALPHA_MASK] = fangMatGroup.inputs["Alpha Mask"].links[0].from_node.image.name.split(".",1)[0]
+    try:    layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_ALPHA_MASK] = fangMatGroup.inputs["Alpha Mask"].links[0].from_node.image.name.split(".",1)[0]
     except: pass
         
-    try:    layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_SPECULAR_MASK] = fangMatGroup.inputs["Specular Mask"].links[0].from_node.image.name.split(".",1)[0]
+    try:    layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_SPECULAR_MASK] = fangMatGroup.inputs["Specular Mask"].links[0].from_node.image.name.split(".",1)[0]
     except: pass
         
-    try:    layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_EMISSIVE_MASK] = fangMatGroup.inputs["Emissive Mask"].links[0].from_node.image.name.split(".",1)[0]
+    try:    layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_EMISSIVE_MASK] = fangMatGroup.inputs["Emissive Mask"].links[0].from_node.image.name.split(".",1)[0]
     except: pass
         
-    try:    layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_ENVIRONMENT] = fangMatGroup.inputs["Environment Map"].links[0].from_node.image.name.split(".",1)[0]
+    try:    layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_ENVIRONMENT] = fangMatGroup.inputs["Environment Map"].links[0].from_node.image.name.split(".",1)[0]
     except: pass
         
-    try:    layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_BUMP] = fangMatGroup.inputs["Bump Map"].links[0].from_node.image.name.split(".",1)[0]
+    try:    layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_BUMP] = fangMatGroup.inputs["Bump Map"].links[0].from_node.image.name.split(".",1)[0]
     except: pass
         
-    try:    layer.szTexName[pasm_file_def.PASMLayerIndex_e.APE_LAYER_TEXTURE_DETAIL] = fangMatGroup.inputs["Detail Map"].links[0].from_node.image.name.split(".",1)[0]
+    try:    layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_DETAIL] = fangMatGroup.inputs["Detail Map"].links[0].from_node.image.name.split(".",1)[0]
     except: pass
     
     if(fangMatGroup.inputs["Illumination"].default_value != 0):
@@ -189,7 +189,7 @@ def ProcessSegment(obj, outSegment, bExportHierarchy, nLODIdx):
     for matIndex in range(len(obj.data.materials)):
         if not faceDict[matIndex]: continue # If material is unused, bail early
             
-        mat = pasm_file_def.PASMMaterial()  # Construct our material
+        mat = file_def_ape.PASMMaterial()  # Construct our material
         mat.StarCommands.nShaderNum = -1    # Set shader # to -1 to signal we need to set a default
         mat.nLODIndex = nLODIdx
             
@@ -206,8 +206,8 @@ def ProcessSegment(obj, outSegment, bExportHierarchy, nLODIdx):
             
         mat.nFirstIndex = len(aIndexBuffer) + outSegment.nNumIndices
         
-        layer  = pasm_file_def.PASMLayer()
-        layer1 = pasm_file_def.PASMLayer()
+        layer  = file_def_ape.PASMLayer()
+        layer1 = file_def_ape.PASMLayer()
         
         # Get the material output
         for node in obj.data.materials[matIndex].node_tree.nodes:
@@ -304,7 +304,7 @@ def ProcessSegment(obj, outSegment, bExportHierarchy, nLODIdx):
                 continue
     
             for loop, vertex, normal in zip(triangle.loops, triangle.vertices, triangle.split_normals):
-                entryVertex = pasm_file_def.PASMVert() # Assemble a PASMVert for this vertex
+                entryVertex = file_def_ape.PASMVert() # Assemble a PASMVert for this vertex
                 
                 entryVertex.Pos[0] = copy.copy ( geo.vertices[vertex].co[0] )
                 entryVertex.Pos[1] = copy.copy ( geo.vertices[vertex].co[2] )
@@ -336,7 +336,7 @@ def ProcessSegment(obj, outSegment, bExportHierarchy, nLODIdx):
                 # This Blender implimentation could support that, but for brevity's sake we use only the largest weight group per vertex and assign it max influence (1.0f)
                 # https://blender.stackexchange.com/questions/14250/how-to-restrict-vertex-weights-to-no-more-than-n-number-of-bones
                 if hSkeleton != None:
-                    pWeight = pasm_file_def.PASMWeight()
+                    pWeight = file_def_ape.PASMWeight()
                     if(bSkinned): # This is a weight painted mesh
                         for vgroup in geo.vertices[vertex].groups:
                             # Survival of the fittest, largest weight wins
@@ -353,7 +353,7 @@ def ProcessSegment(obj, outSegment, bExportHierarchy, nLODIdx):
                         entryVertex.fNumWeights = 1 # We could support 2 max
                     
                 # We need to check if we've seen this PASMVert yet, use a hashmap / dict for super fast lookups ( hashmap is O(n), list is O(n^2) )
-                indexBuf = pasm_file_def.PASMVertIndex()
+                indexBuf = file_def_ape.PASMVertIndex()
                 if entryVertex in vertexMap: # We've seem this PASMVert already
                     indexBuf.nVertIndex = vertexMap[entryVertex] # Find the PASMVert in the hashmap
                 else: # We have not seen this PASMVert yet
@@ -381,7 +381,7 @@ def ProcessSegment(obj, outSegment, bExportHierarchy, nLODIdx):
     return True
 
 def ExportObjGeo(aLODs, bExportHierarchy):
-    outSegment = pasm_file_def.PASMSegment()
+    outSegment = file_def_ape.PASMSegment()
     
     if type(aLODs) == list: inObj = aLODs[0]
     else:                   inObj = aLODs
@@ -410,5 +410,5 @@ def ExportObjGeo(aLODs, bExportHierarchy):
     
     # Finally, write data to the file, and our header
     g_class.file.write(outSegment.packBytes())
-    g_class.gWldHeader.fileSize += len(outSegment.packBytes())
-    g_class.gWldHeader.nNumSegments += 1
+    g_class.gApeHeader.fileSize += len(outSegment.packBytes())
+    g_class.gApeHeader.nNumSegments += 1

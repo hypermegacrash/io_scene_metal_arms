@@ -2,7 +2,7 @@
 # ASCII Banners created at https://manytools.org/hacker-tools/ascii-banner/ using the Small Font
 
 # FANG TOOLKIT
-from .pasm_file_def import PASMCommands # We only need the Star Commands struct
+from .file_def_ape import PASMCommands # We only need the Star Commands struct
 from . import g_class                   # Error handler
 # BLENDER
 import bpy # Needed for popping up an error screen
@@ -83,11 +83,11 @@ APE_LAYER_FLAGS_NONE                             = 0x00000000
 
 class CMaterialStringParser:
     def __init__(self):
-        self.m_ApeCommands = PASMCommands()
-        self.Params = None
-        self.m_nMatFlags = APE_MAT_FLAGS_NONE
+        self.m_ApeCommands  = PASMCommands()
+        self.Params         = None
+        self.m_nMatFlags    = APE_MAT_FLAGS_NONE
         self.m_nAffectAngle = 0
-        self.m_TintRGB = [1.0, 1.0, 1.0] # This gets assigned in a higher level
+        self.m_TintRGB      = [1.0, 1.0, 1.0] # This gets assigned in a higher level
 
     def _GetParamterString2(self, inStr, Cmd, nArgCount):
         pszCmd = inStr.find(Cmd)            
@@ -101,20 +101,20 @@ class CMaterialStringParser:
     
     # This is run before EVERY Material is parsed, it's essentially the default PASMLight.PASMCommands
     def ResetToDefaults(self):
-        self.Params = None
+        self.Params    = None
         self.m_TintRGB = [1.0, 1.0, 1.0]
 
-        self.m_ApeCommands = PASMCommands()
-        self.m_ApeCommands.bUseEmissiveColor = 1
-        self.m_ApeCommands.bUseSpecularColor = 1
-        self.m_ApeCommands.TintRGB = [1.0, 1.0, 1.0]
-        self.m_ApeCommands.nShaderNum = -1
-        self.m_ApeCommands.fBumpMapTileFactor = 1
+        self.m_ApeCommands                      = PASMCommands()
+        self.m_ApeCommands.bUseEmissiveColor    = 1
+        self.m_ApeCommands.bUseSpecularColor    = 1
+        self.m_ApeCommands.TintRGB              = [1.0, 1.0, 1.0]
+        self.m_ApeCommands.nShaderNum           = -1
+        self.m_ApeCommands.fBumpMapTileFactor   = 1
         self.m_ApeCommands.fDetailMapTileFactor = 4
-        self.m_ApeCommands.nCollMask = APE_MAT_COLL_FLAGS_COLL_WITH_EVERYTHING
-        self.m_ApeCommands.nReactType = 0
-        self.m_ApeCommands.nSurfaceType = 0
-        self.m_ApeCommands.nID = -1
+        self.m_ApeCommands.nCollMask            = APE_MAT_COLL_FLAGS_COLL_WITH_EVERYTHING
+        self.m_ApeCommands.nReactType           = 0
+        self.m_ApeCommands.nSurfaceType         = 0
+        self.m_ApeCommands.nID                  = -1
     
     # The meat, takes a Material String Name as input formats the class's Star Command struct
     def Parse(self, pszMatStr):
@@ -158,8 +158,8 @@ class CMaterialStringParser:
         
         if(self._GetParamterString2(pszMatStr, "*rotate", 3)):
             self.m_ApeCommands.fDeltaUVRotationPerSec = float(self.nParams[0])
-            self.m_ApeCommands.vRotateUVAround.Set[0] = float(self.nParams[1])
-            self.m_ApeCommands.vRotateUVAround.Set[1] = float(self.nParams[2])
+            self.m_ApeCommands.vRotateUVAround[0]     = float(self.nParams[1])
+            self.m_ApeCommands.vRotateUVAround[1]     = float(self.nParams[2])
 
             # AUTO ID
             if( self.m_ApeCommands.nID == -1 ): self.m_ApeCommands.nID = _AUTO_ID
@@ -280,9 +280,9 @@ APE_OB_FLAG_NONE                = 0x00000000
 class CObjectStringParser:
     def __init__(self):
         self.m_ApeObjectFlag = 1 # Every object starts with APE_OB_FLAG_STATIC flag enabled
-        self.m_fCullDist = 0
-        self.m_TintRGB = [0.0, 0.0, 0.0]
-        self.Params = None
+        self.m_fCullDist     = 0
+        self.m_TintRGB       = [0.0, 0.0, 0.0]
+        self.Params          = None
         
     def _GetParamterString2(self, inStr, Cmd, nArgCount):
         pszCmd = inStr.find(Cmd)            
@@ -352,12 +352,12 @@ APE_LIGHT_FLAG_MESH_MUST_BE_PER_PIXEL    = 0x00000800    # For per-pixel lights 
    
 class CLightStringParser:
     def __init__(self):
-        self.m_ApeLightFlag = 0
-        self.Params = None
-        self.m_fCoronaScale = 1.0
-        self.m_szCoronaTexture = ""
+        self.m_ApeLightFlag      = 0
+        self.Params              = None
+        self.m_fCoronaScale      = 1.0
+        self.m_szCoronaTexture   = ""
         self.m_szPerPixelTexture = ""
-        self.m_nLightID = -1
+        self.m_nLightID          = -1
       
     def _GetParamterString2(self, inStr, Cmd, nArgCount):
         pszCmd = inStr.find(Cmd)            
@@ -425,7 +425,7 @@ APE_PORTAL_FLAG_NONE              = 0x00000000
 class CPortalStringParser:
     def __init__(self):
         self.m_ApePortalFlag = 0
-        self.Params = None
+        self.Params          = None
         
     def _GetParamterString2(self, inStr, Cmd, nArgCount):
         pszCmd = inStr.find(Cmd)            

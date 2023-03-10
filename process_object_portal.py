@@ -1,7 +1,7 @@
 # Module that processes an object object and returns byte data
 
 # FANG TOOLKIT
-from . import pasm_file_def # Get our PASM file classes
+from . import file_def_ape  # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
 from .process_star_command import CPortalStringParser # Import just thePortal Star Command Parser
@@ -35,7 +35,7 @@ def ExportObjPortal(obj):
         print("WARNING: SPLINE NOT 4 POINTS HAS ", len(spline.points) )
         return
     
-    outPortal = pasm_file_def.PASMVisPortal()
+    outPortal = file_def_ape.PASMVisPortal()
     outPortal.szName = obj.name
     
     # Parse layer / child material name for star commands
@@ -46,7 +46,7 @@ def ExportObjPortal(obj):
      
     VisVerts = []
     for point in spline.points:
-        tempVisVert = pasm_file_def.PASMVisPoint()
+        tempVisVert = file_def_ape.PASMVisPoint()
            
         vertPosAfterWTM = obj.matrix_world @ point.co
         tempVisVert.Pos[0] = vertPosAfterWTM[0]
@@ -96,5 +96,5 @@ def ExportObjPortal(obj):
                         
     # Finally, write data to the file, and our header
     g_class.file.write(outPortal.packBytes())
-    g_class.gWldHeader.fileSize += len(outPortal.packBytes())
-    g_class.gWldHeader.nNumVisPortals += 1
+    g_class.gApeHeader.fileSize += len(outPortal.packBytes())
+    g_class.gApeHeader.nNumVisPortals += 1

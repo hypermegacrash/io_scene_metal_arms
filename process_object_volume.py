@@ -1,7 +1,7 @@
 # Module that processes a volume object and returns byte data
 
 # FANG TOOLKIT
-from . import pasm_file_def  # Get our PASM file classes
+from . import file_def_ape  # Get our PASM file classes
 from . import g_class        # Get our global variables for the header data
 # BLENDER
 from mathutils import Vector # Need Vector for computing bounding box
@@ -14,7 +14,7 @@ def ProcessCell(obj):
         
     print(obj.name, "is a cell object") 
     
-    outCell = pasm_file_def.PASMCell()
+    outCell = file_def_ape.PASMCell()
     
     outCell.szCellName = obj.name
     
@@ -62,7 +62,7 @@ def ProcessCell(obj):
     # Dump the verts
     VisVerts = []
     for index in testM.vertices:
-        tempVisVert = pasm_file_def.PASMVisPoint()
+        tempVisVert = file_def_ape.PASMVisPoint()
         
         #Thx stackexchange! https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
         vertPosAfterWTM = obj.matrix_world @ index.co
@@ -79,7 +79,7 @@ def ProcessCell(obj):
     # Dump the edges
     VisEdges = []
     for index in testM.edges:
-        tempVisEdge = pasm_file_def.PASMVisEdge()
+        tempVisEdge = file_def_ape.PASMVisEdge()
         
         for x in range(len(index.vertices)):
             tempVisEdge.anVertIndices[x] = index.vertices[x]
@@ -103,7 +103,7 @@ def ProcessCell(obj):
     # Dump the faces
     VisFaces = []
     for index in testM.polygons:
-        tempVisFace = pasm_file_def.PASMVisFace()
+        tempVisFace = file_def_ape.PASMVisFace()
         
         # Degrees is # of vertices / edges for this face
         # A face always shares the same number of vertices & edges
@@ -167,7 +167,7 @@ def ProcessCell(obj):
     return outCell
 
 def ExportObjVolume(aVolumes):
-    outVolume = pasm_file_def.PASMVolume()
+    outVolume = file_def_ape.PASMVolume()
     
     if type(aVolumes) == list:
         #print("We got a Volume Collection")
@@ -221,8 +221,8 @@ def ExportObjVolume(aVolumes):
     
     # Finally, write data to the file, and our header
     g_class.file.write(outVolume.packBytes())
-    g_class.gWldHeader.fileSize += len(outVolume.packBytes())
-    g_class.gWldHeader.nNumCells += 1
+    g_class.gApeHeader.fileSize += len(outVolume.packBytes())
+    g_class.gApeHeader.nNumCells += 1
     
     
     
