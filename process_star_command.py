@@ -11,7 +11,24 @@ _AUTO_ID = -128 # Dont do this, shouldn't this be -1???
     
 def StarCmdCheckNumParams( pszMatStr, nExpectedArgCount, nParams, starCmdName ):
     if nExpectedArgCount != len(nParams):
-        g_class.logError("STAR COMMAND ERROR: Trouble parsing " + pszMatStr + ": The Star Command " + starCmdName + " expects " + str(nExpectedArgCount) + " args but " + str(len(nParams)) + " were given.")
+    
+        # We don't know where the star command input string came from so we are hunting it down
+        # If we find it we write it's location in this string to direct the user
+        fixStr = ""
+        
+        # Check for if this is a blender node group
+        for mat in bpy.data.materials:
+            if mat.use_nodes == False: continue
+            for node in mat.node_tree.nodes:
+                if node.name.lower() == pszMatStr:
+                    if fixStr == "":
+                        fixStr = "\nFIX: "
+                    if node.node_tree.name.split(".",1)[0] == "FANG Material":    fixStr += str(pszMatStr + " is a FANG Material NODE GROUP found in " + mat.name)
+                    elif node.node_tree.name.split(".",1)[0] == "FANG Composite": fixStr += str(pszMatStr + " is a FANG Composite NODE GROUP found in " + mat.name)
+                    else:                                                         fixStr += str(pszMatStr + " is a BLENDER NODE GROUP found in " + mat.name)
+                    continue
+
+        g_class.logError("STAR COMMAND ERROR: Trouble parsing " + pszMatStr + ": The Star Command " + starCmdName + " expects " + str(nExpectedArgCount) + " args but " + str(len(nParams)) + " were given." + fixStr)
         return False
     return True
 
