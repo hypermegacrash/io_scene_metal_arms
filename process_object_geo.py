@@ -85,15 +85,15 @@ def ProcessSegment(obj, outSegment, bExportHierarchy, nLODIdx):
     # we can therefore skip None entries
     if obj == None: return True
     if(len(obj.data.materials) == 0):
-        g_class.printWARNING("The object ", obj.name, " has no materials, skipping")
+        g_class.printWARNING("The object " + obj.name + " has no materials, skipping")
         return False # Don't work with meshes that have no material
         
     if(len(obj.data.loop_triangles) == 0):
-        g_class.printWARNING("The object ", obj.name, " has no triangles, skipping")
+        g_class.printWARNING("The object " + obj.name + " has no triangles, skipping")
         return False # Don't work with meshes that have no material
         
     if(len(obj.data.vertices) == 0):
-        g_class.printWARNING("The object ", obj.name, " has no vertices, skipping")
+        g_class.printWARNING("The object " + obj.name + " has no vertices, skipping")
         return False # Don't work with meshes that have no material
         
     #print(obj.name, "is a geo object")
@@ -271,6 +271,13 @@ def ProcessSegment(obj, outSegment, bExportHierarchy, nLODIdx):
         if mat.StarCommands.nShaderNum < 0:
             if mat.nLayerCount == 1: mat.StarCommands.nShaderNum = 0
             else:                    mat.StarCommands.nShaderNum = 11
+            
+        # This can get annoying showing up everytime so commenting it out until a better solution
+        if mat.StarCommands.nShaderNum == 11:
+            if mat.aMatLayers[0].szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_DETAIL] != "":
+                g_class.printWARNING("MATERIAL WARNING: If you are exporting for Xbox ignore this. Shader 11 is broken on GameCube. Layer 1 will incorrectly " +
+                                     "render only the detail map found in the base layer.\n" +
+                                     "FIX: Disconnect the detail map from your base layer FANG Material in the FANG Composite material " + obj.data.materials[matIndex].name)
         
         # Buffer of UVs
         # The hacky hack that smells... hacky
