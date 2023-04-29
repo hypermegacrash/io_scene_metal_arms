@@ -6,12 +6,12 @@ import bpy # Registering / Unregistering classes
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 15, 12),
+        "version": (0, 15, 13),
         "blender": (2, 93, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",
         "description": "Rewrite of the Ape Exporter plugin from 3DS MAX 5 for Blender 2.93+. This is a tool for exporting files to then be compiled into an MST using PASM",
-        "support": "TESTING"
+        "support": "COMMUNITY"
 }
 
 # FANG TOOLKIT
