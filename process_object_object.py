@@ -5,6 +5,7 @@ from . import file_def_ape  # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
 from .process_star_command import CObjectStringParser # Import just the Material Star Command Parser
+from .process_gamedata     import ProcessGamedata     # Import just the Gmaedata Parser
 
 def ExportObjObject(obj):
     if obj.name[:4].lower() == "off_": return # Doesn't matter it's off bail early
@@ -30,32 +31,7 @@ def ExportObjObject(obj):
     
     outObject.mtxOrientation = pasm_math.BObj2F43MtxSCALE(obj)
     
-    # Grab custom properties from the object
-    try:
-        cmds = obj["ma"].split('\n')
-        x = 0
-        for index in cmds: 
-            if index == "" or index.isspace(): continue # Check if string is empty
-            if index[0] == "#":                continue # Check if comment line
-            x += 1
-            a = index.find("=")
-            i = a - 1
-            j = a + 1
-            while index[i] == " ":
-                i = i - 1
-            while index[j] == " ":
-                j = j + 1
-            outObject.userData.append(index[:i + 1] + "=" + index[j:])
-            if x < len(cmds):
-                outObject.userData.append(str('\x0D\x0A'))
-    except:
-        print("No Custom Properties")
-     
-    # Go back and patch up userData length
-    dataLen = 0
-    for data in outObject.userData:
-        dataLen = dataLen + len(data)
-    outObject.nBytesOfUserData = dataLen
+    ProcessGamedata(obj, outObject)
                         
     # Finally, write data to the file, and our header
     g_class.file.write(outObject.packBytes())

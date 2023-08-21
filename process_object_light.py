@@ -5,6 +5,9 @@ from . import file_def_ape  # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
 from .process_star_command import CLightStringParser # Import just the Light Star Command Parser
+APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT       = 0x00000010    # This light will only be used in the lightmap portion of PASM and will not be exported to the engine.
+APE_LIGHT_FLAG_LIGHTMAP_LIGHT            = 0x00000020    # This light is to be used for generating lightmaps (If it is not dynamic, it can be discarded prior to the engine)
+APE_LIGHT_FLAG_UNIQUE_LIGHTMAP           = 0x00000040    # This light will generate its own unique lightmap in the lightmapping phase (it must also have a unique m_nLightID)
 # BLENDER
 import math # Needed for computing sqrt and pi for light
 import colorsys # Light intensity
@@ -76,7 +79,16 @@ def ExportObjLight(obj):
     else:
         print("Unable to assign Light color, skipping " + obj.name)
         return
-         
+        
+    # Parse light name for star commands
+    lightStrParser = CLightStringParser()
+    lightStrParser.Parse(obj.name.lower())
+    outLight.nFlags = lightStrParser.m_ApeLightFlag
+    outLight.fCoronaScale = lightStrParser.m_fCoronaScale
+    outLight.szCoronaTexture = lightStrParser.m_szCoronaTexture
+    outLight.szPerPixelTexture = lightStrParser.m_szPerPixelTexture
+    outLight.nLightID = lightStrParser.m_nLightID
+  
     if obj.type == "LIGHT":
          if outLight.nApeLightType == file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_DIR:
             outLight.Intensity = obj.data.energy
@@ -85,10 +97,13 @@ def ExportObjLight(obj):
             # If the light is small, you need to calculate intensity in a specific way,
             # This methodology only works for small lights, large lights don't work with this
             # For the time being compromise, this is better than before but still not ideal
-            if(obj.data.energy < 1000):
+            if(obj.data.energy < 1000) and\
+            ((outLight.nFlags & APE_LIGHT_FLAG_LIGHTMAP_LIGHT == APE_LIGHT_FLAG_LIGHTMAP_LIGHT) or\
+            (outLight.nFlags & APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT == APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT)):
                 #light_threshold = bpy.context.scene.eevee.light_threshold
                 # I guess we're doing this mathematically as well
                 # https://www.youtube.com/watch?v=b9HgDScFoTo
+                g_class.printDEBUG("FOUND A LIGHTMAP LIGHT!")
                 radius = math.sqrt(((( obj.data.energy / 0.01) *  obj.data.diffuse_factor) / ( 4 * math.pi )))     
                 outLight.Intensity = (( obj.data.energy ) / ( radius * radius ))
             else:
@@ -103,15 +118,6 @@ def ExportObjLight(obj):
     else:
         print("Unable to assign Light intensity, skipping " + obj.name)
         return
-    
-    # Parse light name for star commands
-    lightStrParser = CLightStringParser()
-    lightStrParser.Parse(obj.name.lower())
-    outLight.nFlags = lightStrParser.m_ApeLightFlag
-    outLight.fCoronaScale = lightStrParser.m_fCoronaScale
-    outLight.szCoronaTexture = lightStrParser.m_szCoronaTexture
-    outLight.szPerPixelTexture = lightStrParser.m_szPerPixelTexture
-    outLight.nLightID = lightStrParser.m_nLightID
       
     # Lights calculate their rotation matrix in a different way to everything else
     outLight.mtxOrientation = pasm_math.BObj2F43MtxLIGHT(obj)

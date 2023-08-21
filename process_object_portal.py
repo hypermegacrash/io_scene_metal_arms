@@ -20,19 +20,19 @@ def ExportObjPortal(obj):
     if len(obj.data.splines) == 1:
         spline = obj.data.splines[0]
     else:
-        print("CURVE SHOULD HAVE ONLY 1 SPLINE FOUND ", len(obj.data.splines))
+        g_class.logError("PORTAL ERROR: The spline object " + obj.name + " should only have 1 spline, found " + len(obj.data.splines))
         return
     
     if not spline.use_cyclic_u:
-        print("SPLINE IS NOT SET TO CLOSED")
+        g_class.logError("PORTAL ERROR: The spline object " + obj.name + " is not set to closed")
         return
     
     if spline.type != "POLY":
-        print("UNSUPORTED SPLINE TYPE ", spline.type)
+        g_class.logError("PORTAL ERROR: The spline object " + obj.name + " is using an unsuported spline type " + spline.type)
         return
     
     if len(spline.points) != 4:
-        print("WARNING: SPLINE NOT 4 POINTS HAS ", len(spline.points) )
+        g_class.logError("PORTAL ERROR: The spline object " + obj.name + " does not have 4 points, found " + len(spline.points) )
         return
     
     outPortal = file_def_ape.PASMVisPortal()

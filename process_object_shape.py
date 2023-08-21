@@ -4,6 +4,7 @@
 from . import file_def_ape  # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
+from .process_gamedata import ProcessGamedata # Import just the Gmaedata Parser
 
 def ExportObjShape(obj):
     bExitEarly = False
@@ -54,6 +55,10 @@ def ExportObjShape(obj):
         return
         
     if outShape.nType == file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_BOX:
+        if obj.empty_display_size != 0.5:
+            g_class.logError("TRIPWIRE ERROR: The empty object " + obj.name + " has a display size of " + str(obj.empty_display_size) + " which MUST be set to 0.5m to show dimensions of the tripwire as it will appear ingame.\n" +
+                             "FIX: Select " + obj.name + " in OBJECT mode > Properties > Object Data Properties > Set Size to 0.5")
+            return
         outShape.typeData.fLength = obj.scale[1]
         outShape.typeData.fWidth  = obj.scale[0]
         outShape.typeData.fHeight = obj.scale[2]
@@ -63,10 +68,13 @@ def ExportObjShape(obj):
         
     if outShape.nType == file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_SPLINE:
         outShape.typeData.nNumPts = len(obj.data.splines[0].points)
-        # Actually check this
-        outShape.typeData.bClosed = 0 
-        # I think you can have multiple seperate chains of splines
-        # in a single node, must be tested but assume 1 for now
+        
+        if obj.data.splines[0].use_cyclic_u:
+            outShape.typeData.bClosed = 1
+        else:
+            outShape.typeData.bClosed = 0
+            
+        # Metal Arms only supports one chain of splines
         outShape.typeData.nNumSegments = 1
         
         for point in obj.data.splines[0].points:
@@ -79,35 +87,7 @@ def ExportObjShape(obj):
     # Rotation Matrix fun
     outShape.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
     
-    # Grab custom properties from the object
-    try:
-        cmds = obj["ma"].split('\n')
-        x = 0
-        for index in cmds:
-            if index == "" or index.isspace(): continue # Check if string is empty
-            if index[0] == "#":                continue # Check if comment line
-            x += 1
-            a = index.find("=")
-            i = a - 1
-            j = a + 1
-            while index[i] == " ":
-                i = i - 1
-            while index[j] == " ":
-                j = j + 1
-            outShape.userData.append(index[:i + 1] + "=" + index[j:])
-            if x < len(cmds):
-                outShape.userData.append(str('\x0D\x0A'))
-    except:
-        print("No Custom Properties")
-    
-    # Go back and patch up userData length
-    dataLen = 0
-    for data in outShape.userData:
-        if type(data) == float:
-            dataLen = dataLen + 4
-        else:
-            dataLen = dataLen + len(data)
-    outShape.nBytesOfUserData = dataLen
+    ProcessGamedata(obj, outShape)
     
     # Finally, write data to the file, and our header
     g_class.file.write(outShape.packBytes())

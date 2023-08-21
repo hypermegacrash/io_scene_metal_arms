@@ -329,12 +329,12 @@ def ProcessSegment(obj, outSegment, bExportHierarchy, nLODIdx):
                                     
                 # Vertex Color
                 if ColorChannel != None:
-                    entryVertex.Color[0] = copy.copy ( float("%.2f" % ColorChannel.data[vertex].color[0]) )
-                    entryVertex.Color[1] = copy.copy ( float("%.2f" % ColorChannel.data[vertex].color[1]) )
-                    entryVertex.Color[2] = copy.copy ( float("%.2f" % ColorChannel.data[vertex].color[2]) )
+                    entryVertex.Color[0] = copy.copy ( pasm_math.color_scene_linear_to_srgb(float(ColorChannel.data[vertex].color[0]) ) )
+                    entryVertex.Color[1] = copy.copy ( pasm_math.color_scene_linear_to_srgb(float(ColorChannel.data[vertex].color[1]) ) )
+                    entryVertex.Color[2] = copy.copy ( pasm_math.color_scene_linear_to_srgb(float(ColorChannel.data[vertex].color[2]) ) )
                 
                 # Vertex Alpha
-                if AlphaChannel != None: entryVertex.Color[3] = copy.copy ( float("%.2f" % AlphaChannel.data[vertex].color[0]) )
+                if AlphaChannel != None: entryVertex.Color[3] = copy.copy ( pasm_math.color_scene_linear_to_srgb(float(AlphaChannel.data[vertex].color[0]) ) )
                 else:                    entryVertex.Color[3] = 1.0 # What the... if the default is 1.0 set it on init
                 
                 # Vertex Weights
