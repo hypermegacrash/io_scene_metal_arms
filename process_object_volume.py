@@ -59,13 +59,26 @@ def ProcessCell(obj):
     bm.to_mesh(testM)
     bm.free()
     
+    # If negative scaling normals will flip when world matrix is applied
+    if obj.matrix_world.determinant() < 0.0:
+        testM.flip_normals()
+    
+    # Transform the verts from local space to world space
+    from mathutils import Matrix
+    # Objects are in local space when part of hierarchy, they are driven by bone location
+    testM.transform(Matrix() @ obj.matrix_world)
+    
+    # Prep
+    testM.calc_loop_triangles()
+    testM.calc_normals_split()
+    
     # Dump the verts
     VisVerts = []
     for index in testM.vertices:
         tempVisVert = file_def_ape.PASMVisPoint()
         
         #Thx stackexchange! https://blender.stackexchange.com/questions/6155/how-to-convert-coordinates-from-vertex-to-world-space
-        vertPosAfterWTM = obj.matrix_world @ index.co
+        vertPosAfterWTM = index.co
         tempVisVert.Pos[0] = vertPosAfterWTM[0]
         tempVisVert.Pos[1] = vertPosAfterWTM[2]
         tempVisVert.Pos[2] = vertPosAfterWTM[1]
@@ -125,7 +138,7 @@ def ProcessCell(obj):
         tempVisFace.Normal[1] = index.normal[2]
         tempVisFace.Normal[2] = index.normal[1]
         
-        faceCenterAfterWTM = obj.matrix_world @ index.center
+        faceCenterAfterWTM = index.center
         tempVisFace.Centroid[0] = faceCenterAfterWTM[0]
         tempVisFace.Centroid[1] = faceCenterAfterWTM[2]
         tempVisFace.Centroid[2] = faceCenterAfterWTM[1]
@@ -146,7 +159,7 @@ def ProcessCell(obj):
     # There was a syntax change from <2.79 -> 2.8+, fix here
     # https://blender.stackexchange.com/questions/129473/typeerror-element-wise-multiplication-not-supported-between-matrix-and-vect/129474
     local_bbox_center = 0.125 * sum((Vector(b) for b in obj.bound_box), Vector())
-    global_bbox_center = obj.matrix_world @ local_bbox_center
+    global_bbox_center = local_bbox_center
     #print("local_bbox_center:", local_bbox_center)
     #print("global_bbox_center:", global_bbox_center)
     

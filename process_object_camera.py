@@ -21,10 +21,10 @@ def ExportObjCam(obj):
     TIME_TICKSPERSEC = 4800
     
     # Find the animation info from the interface
-    nTicksPerFrame = TIME_TICKSPERSEC / 30
-    nFrameRate     = bpy.context.scene.render.fps
-    nStartTime     = bpy.context.scene.frame_start
-    nEndTime       = bpy.context.scene.frame_end
+    nStartTime = bpy.context.scene.frame_start
+    nEndTime   = bpy.context.scene.frame_end
+    nFrameRate = bpy.context.scene.render.fps
+    nTicksPerFrame = TIME_TICKSPERSEC / nFrameRate #nTicksPerFrame = TIME_TICKSPERSEC / 30
     
     # Calculate the interval and number of keys
     nInterval = (nTicksPerFrame * nFrameRate) / 30;
@@ -37,10 +37,17 @@ def ExportObjCam(obj):
     
     # Scrub through the timeline for snapshots we want
     for curFrame in range(nStartTime, nEndTime):
-        curFrameTick = curFrame * 160
+        # Navigate to the frame
+        curFrameTick = curFrame * nTicksPerFrame #curFrameTick = curFrame * 160
         bpy.context.scene.frame_set(curFrame)
+        
+        # Fill out the struct
         testFrame = file_def_cam.PASMCamFrame()
-        number_of_ticks = float((curFrameTick - nStartTime)) * float((1.0/TIME_TICKSPERSEC))
+        if curFrame == nStartTime:
+            number_of_ticks = 0.0
+        else:
+            number_of_ticks = float(curFrameTick - (nStartTime * nTicksPerFrame)) * float((1.0/TIME_TICKSPERSEC)) #number_of_ticks = float((curFrameTick - nStartTime)) * float((1.0/TIME_TICKSPERSEC))
+
         testFrame.fSecsFromStart = number_of_ticks
         testFrame.fFOV = obj.data.angle
         testFrame.mtxOrientation = pasm_math.BObj2F43MtxLIGHT(obj)

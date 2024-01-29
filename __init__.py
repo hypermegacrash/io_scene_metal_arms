@@ -24,6 +24,7 @@ from .export_mtx import *
 from .ui_custom_properties   import *
 #from .ui_material_properties import *
 from .ui_sidebar_helpers     import *
+from .process_gamedata import setupgdkeys
 
 # The list of classes we are registering within Blender
 classes = (
@@ -44,6 +45,7 @@ classes = (
     MASidePanel,
     MAUpdateFangMaterial,
     MABSDF2FM,
+    MA_OpenGDKeys,
 )
 
 aExportUI = (
@@ -71,6 +73,8 @@ def register():
     # Being declared in 'bpy.types.Material' means every material gets it's own 'ma_mat'
     # Each 'ma_mat' points to it's own instance of the class 'MAMaterialProperty'
     #bpy.types.Material.ma_mat = bpy.props.PointerProperty(type = MAMaterialProperty)
+    
+    setupgdkeys()
     
 
 # When this add-on is disabled in Edit>Preferences>Add-ons, this function is called

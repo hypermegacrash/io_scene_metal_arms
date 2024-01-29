@@ -166,6 +166,17 @@ class MAUpdateFangMaterial(bpy.types.Operator):
                     flayer1.node_tree = bpy.data.node_groups[bpy.data.node_groups.find("FANG Material")]
 
         return {'FINISHED'}
+        
+class MA_OpenGDKeys(bpy.types.Operator):
+    """Open the GDKeys.txt file"""
+    bl_label  = "Open gdkeys.txt"
+    bl_idname = "object.ma_open_gdkeys"
+    
+    def execute(self, context):
+        path = os.path.dirname(os.path.realpath(__file__))
+        path = path + "\gdkeys.txt"
+        os.startfile(path)
+        return {'FINISHED'}
 
 class MASidePanel(bpy.types.Panel):
     """Helper Side Panel for MA Toolkit containing QOL features for development"""
@@ -181,3 +192,4 @@ class MASidePanel(bpy.types.Panel):
         row = layout.column()
         row.operator("object.ma_update_material", text = "Add / Update FANG Material")
         row.operator("object.ma_bsdf_to_fang",    text = "Convert BSDF to FANG")
+        row.operator("object.ma_open_gdkeys",     text = "Open gdkeys")

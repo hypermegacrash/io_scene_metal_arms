@@ -177,6 +177,7 @@ def ProcessSegment(obj, outSegment, bExportHierarchy, nLODIdx):
             return False
         if material is None:
             g_class.printWARNING("There are some faces on the mesh " + obj.name + " that are assigned to an empty material slot.")
+            continue
         faceDict[face.material_index].append(face)
     
     # STAR COMMANDS PT 1
@@ -414,6 +415,10 @@ def ExportObjGeo(aLODs, bExportHierarchy):
         if not (ProcessSegment(aLODs, outSegment, bExportHierarchy, 0)):
                 g_class.printWARNING("ERROR PROCESSING GEO " + inObj.name)
                 return
+                
+    if outSegment.nNumVerts == 0:
+        g_class.logError("GEO ERROR: The object " + inObj.name + " was processed with no vertices! Are there empty material slots? Skipping object")
+        return
     
     # Finally, write data to the file, and our header
     g_class.file.write(outSegment.packBytes())

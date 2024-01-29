@@ -180,7 +180,14 @@ class ExportAPE(Operator, ExportHelper):
                 # Go back to the start and rewrite the header with correct data
                 g_class.file.seek(0)
                 g_class.file.write(g_class.gApeHeader.packBytes())
-
+                
+                # Do a check for .apes that somehow got this far and didn't export any geometry / segments
+                # PASM will complain about this not being a valid .ape
+                if(g_class.gApeHeader.nNumSegments == 0):
+                    g_class.logError("APE ERROR: The exported file has no geometry.\n" +
+                    "POSSIBLE FIX 1: Ensure geometry you want exported does not have obj_ prefix.\n" +
+                    "POSSIBLE FIX 2: Ensure geometry has FANG Materials or FANG Composite Materials applied, regular materials will NOT be exported.")
+    
             # Did we encounter any errors?
             if(g_class.bShowErrorLog): os.startfile(g_class.fpErrorLog)
             
