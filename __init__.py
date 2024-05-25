@@ -6,7 +6,7 @@ import bpy # Registering / Unregistering classes
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 16, 0),
+        "version": (0, 16, 1),
         "blender": (2, 93, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",
@@ -46,6 +46,7 @@ classes = (
     MAUpdateFangMaterial,
     MABSDF2FM,
     MA_OpenGDKeys,
+    MA_CopyGamedata,
 )
 
 aExportUI = (

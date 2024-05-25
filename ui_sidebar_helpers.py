@@ -177,6 +177,38 @@ class MA_OpenGDKeys(bpy.types.Operator):
         path = path + "\gdkeys.txt"
         os.startfile(path)
         return {'FINISHED'}
+        
+class MA_CopyGamedata(bpy.types.Operator):
+    """Copy the selected object's gamedata to the other highlighted objects"""
+    bl_label  = "Copy GameData to Selected"
+    bl_idname = "object.ma_copy_gamedata"
+    
+    def execute(self, context):
+        # Get what we want to modify
+        selectionObjs = bpy.context.selected_objects
+        active_object = bpy.context.view_layer.objects.active
+        inGameData = None
+        
+        # Error checking for sanity
+        if(len(selectionObjs)  < 2):
+            self.report({'ERROR'}, "Must select at least 2 objects! Aborting")
+            return {'CANCELLED'}
+            
+        try:
+            inGameData = active_object["ma"]
+        except:
+            self.report({'ERROR'}, f"Unable to get gamedata from {active_object.name}! Aborting")
+            return {'CANCELLED'}
+            
+        if inGameData == "":
+            self.report({'ERROR'}, f"Empty gamedata in {active_object.name}? Aborting")
+            return {'CANCELLED'}
+
+        for obj in selectionObjs:
+            obj["ma"] = active_object["ma"]
+        
+        self.report({'INFO'}, f"Copied gamedata from {active_object.name} to {len(selectionObjs) - 1} object(s)!")
+        return {'FINISHED'}
 
 class MASidePanel(bpy.types.Panel):
     """Helper Side Panel for MA Toolkit containing QOL features for development"""
@@ -193,3 +225,12 @@ class MASidePanel(bpy.types.Panel):
         row.operator("object.ma_update_material", text = "Add / Update FANG Material")
         row.operator("object.ma_bsdf_to_fang",    text = "Convert BSDF to FANG")
         row.operator("object.ma_open_gdkeys",     text = "Open gdkeys")
+        row.operator("object.ma_copy_gamedata",   text = "Copy Gamedata to Selected")
+        
+        
+        
+        
+        
+        
+        
+        
