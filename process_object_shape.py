@@ -8,6 +8,7 @@ from .process_gamedata import ProcessGamedata # Import just the Gmaedata Parser
 
 def ExportObjShape(obj):
     bExitEarly = False
+    bIsParticle = False
     
     if obj.name[:4].lower() == "off_": return               # Doesn't matter it's off bail early
     if obj.type             != "EMPTY": bExitEarly = True   # Objects are EMTPY or CURVE objects
@@ -16,6 +17,7 @@ def ExportObjShape(obj):
     if obj.name[:5].lower() == "port_": bExitEarly = True   # portals should be skipped
     if obj.name[:7].lower() == "ambient" and obj.type == "EMPTY": bExitEarly = True  # Ambient cubes are lights, not shapes
     if obj.name[:6].lower() == "start_"  and obj.type == "MESH":  bExitEarly = False # Little hack for Vissova so a mesh can represent a player start
+    if obj.name[:5].lower() == "part_"   and obj.type == "EMPTY": bIsParticle = True # Particles can be represented as a sphere, box or cylinder (Cone in Blender)
         
     if(bExitEarly): return
         
@@ -41,6 +43,10 @@ def ExportObjShape(obj):
         if obj.empty_display_type == "SPHERE":
             outShape.nType = file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE
             outShape.typeData = file_def_ape.PASMShapeSphere()
+        if obj.empty_display_type == "CONE":
+            outShape.nType = file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_CYLINDER
+            outShape.typeData = file_def_ape.PASMShapeCylinder()    
+            #bIsParticle = True
             
     if obj.type == "CURVE":
         if obj.data.splines[0].type != "POLY":
@@ -66,6 +72,10 @@ def ExportObjShape(obj):
     if outShape.nType == file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE:
         outShape.typeData.fRadius = obj.empty_display_size
         
+    if outShape.nType == file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_CYLINDER:
+        outShape.typeData.fRadius = obj.ma_ob_props.fCylinderWidth
+        outShape.typeData.fHeight = obj.ma_ob_props.fCylinderHeight
+        
     if outShape.nType == file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_SPLINE:
         outShape.typeData.nNumPts = len(obj.data.splines[0].points)
         
@@ -86,6 +96,11 @@ def ExportObjShape(obj):
     
     # Rotation Matrix fun
     outShape.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
+    # The cone tip is pointed towards +y but cylinder particles emit towards the +z direction in FANG
+    # As an artist it's intuitive to see the cone tip as the emit direction
+    # We can accomidate by rotating the object -90 degrees on the x-axis before converting to FANG Matrix
+    if (outShape.nType == file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_CYLINDER):
+        outShape.mtxOrientation = pasm_math.BObj2F43MtxCylinder(obj)
     
     ProcessGamedata(obj, outShape)
     

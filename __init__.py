@@ -22,6 +22,7 @@ from .export_cam import *
 from .export_mtx import *
 # Classes that expose more Metal Arms functionality
 from .ui_custom_properties   import *
+from .ui_object_data_properties   import *
 #from .ui_material_properties import *
 from .ui_sidebar_helpers     import *
 from .process_gamedata import setupgdkeys
@@ -36,6 +37,9 @@ classes = (
     
     # Gamedata Editor UI
     MAImgui,
+    
+    # Object Data UI
+    MAObjectDataProperty,
     
     # Material Properties + UI
     #MAMaterialProperty,
@@ -70,6 +74,11 @@ def register():
     # Update UI in Right Click > Object Context Menu
     VIEW3D_MT_object_context_menu.append(MAGUI_MenuFunc)
     
+    bpy.types.Object.ma_ob_props = bpy.props.PointerProperty(type = MAObjectDataProperty)
+    
+    # Update UI in Object > Data
+    DATA_PT_empty.append(DrawMAObjectDataPanel)
+    
     # This code declares a variable called 'ma_mat' which is short for Metal Arms Material
     # Being declared in 'bpy.types.Material' means every material gets it's own 'ma_mat'
     # Each 'ma_mat' points to it's own instance of the class 'MAMaterialProperty'
@@ -88,6 +97,11 @@ def unregister():
     
     # Update UI in Right Click > Object Context Menu
     VIEW3D_MT_object_context_menu.remove(MAGUI_MenuFunc)
+    
+    del bpy.types.Object.ma_ob_props
+    
+    # Update UI in Object > Data
+    DATA_PT_empty.remove(DrawMAObjectDataPanel)
     
     # Update UI in File > Export in reverse order
     for func in reversed(aExportUI):
