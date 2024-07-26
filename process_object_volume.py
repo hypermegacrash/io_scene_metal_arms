@@ -70,7 +70,6 @@ def ProcessCell(obj):
     
     # Prep
     testM.calc_loop_triangles()
-    testM.calc_normals_split()
     
     # Dump the verts
     VisVerts = []

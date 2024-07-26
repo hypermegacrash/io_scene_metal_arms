@@ -140,7 +140,6 @@ def ProcessSegment(obj, outSegment, bExportHierarchy, nLODIdx):
     
     # Prep
     geo.calc_loop_triangles()
-    geo.calc_normals_split()
     
     # Reflect all UVs early to prepare them for the pipeline
     reflectionPoint = 0.500

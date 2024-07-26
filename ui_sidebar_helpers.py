@@ -210,6 +210,64 @@ class MA_CopyGamedata(bpy.types.Operator):
         self.report({'INFO'}, f"Copied gamedata from {active_object.name} to {len(selectionObjs) - 1} object(s)!")
         return {'FINISHED'}
 
+import blf
+from bpy_extras.view3d_utils import location_3d_to_region_2d
+
+class MAGDVIEW_INST(bpy.types.Operator):
+    isEnabled = False
+    handler = None
+
+class MAGDVIEW(bpy.types.Operator):
+    """Replace all Principaled BDSF Surfaces with FANG Material NodeTrees"""
+    bl_label  = "View Gamedata in World Space"
+    bl_idname = "object.ma_gd_view"
+    
+    def draw_callback_magd3dview_px(self, context, extra):
+        """Draw on the viewports"""
+        # BLF drawing routine
+        font_id = 0
+        blf.color(font_id, 1.0, 1.0, 1.0, 1.0)
+        blf.size(font_id, 16)
+        blf.enable(font_id, 4)
+        blf.shadow_offset(font_id, 1, -1)
+        
+        region = bpy.context.region
+        rv3d = bpy.context.space_data.region_3d
+        
+        for obj in bpy.context.scene.objects:
+            if "ma" in bpy.data.objects[obj.name]:
+                vector2d = location_3d_to_region_2d(region, rv3d, obj.location)
+                
+                if vector2d == None:
+                    continue
+                
+                lines = bpy.data.objects[obj.name]["ma"].split("\n")
+            
+                for line in lines:
+                    blf.position(font_id, vector2d[0], vector2d[1], 0)
+                    if line[:4].lower() == "name":
+                        blf.color(font_id, 0.4, 0.4, 1.0, 1.0)
+                    elif line[:1].lower() == "#":
+                        blf.color(font_id, 0.4, 1.0, 1.0, 1.0)
+                    else:
+                        blf.color(font_id, 1.0, 1.0, 1.0, 1.0)
+                    
+                    blf.draw(font_id, line)
+                    vector2d[1] -= 18
+    
+    def execute(self, context):
+        if MAGDVIEW_INST.isEnabled == False:
+            print("Adding draw handler!")
+            MAGDVIEW_INST.handler = bpy.types.SpaceView3D.draw_handler_add(self.draw_callback_magd3dview_px, (None, None), 'WINDOW', 'POST_PIXEL')
+            MAGDVIEW_INST.isEnabled = True
+        elif MAGDVIEW_INST.isEnabled == True:
+            print("Removing draw handler!")
+            bpy.types.SpaceView3D.draw_handler_remove(MAGDVIEW_INST.handler, 'WINDOW')
+            MAGDVIEW_INST.isEnabled = False
+    
+        return {'FINISHED'}
+
+
 class MASidePanel(bpy.types.Panel):
     """Helper Side Panel for MA Toolkit containing QOL features for development"""
     bl_label = "MA Toolkit"
@@ -226,6 +284,7 @@ class MASidePanel(bpy.types.Panel):
         row.operator("object.ma_bsdf_to_fang",    text = "Convert BSDF to FANG")
         row.operator("object.ma_open_gdkeys",     text = "Open gdkeys")
         row.operator("object.ma_copy_gamedata",   text = "Copy Gamedata to Selected")
+        row.operator("object.ma_gd_view",         text = "View Gamedata in World Space")
         
         
         
