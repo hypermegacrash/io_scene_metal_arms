@@ -213,10 +213,16 @@ class MA_CopyGamedata(bpy.types.Operator):
 import blf
 from bpy_extras.view3d_utils import location_3d_to_region_2d
 
-class MAGDVIEW_INST(bpy.types.Operator):
+class MAGDVIEW_INST(bpy.types.PropertyGroup):
     isEnabled = False
     handler = None
+    drawDist = 500
 
+# TODO: Draw Distance should be a property exposed in the UI
+# TODO: Filtering should be able to be done based on type (Draw only doors, bots, etc)
+# TODO: Color code option by type (Bot, Door, Generic, etc)
+# TODO: UI Colors and Size should be exposed in the UI
+# TODO: Only draw gamedata of selected objects
 class MAGDVIEW(bpy.types.Operator):
     """Replace all Principaled BDSF Surfaces with FANG Material NodeTrees"""
     bl_label  = "View Gamedata in World Space"
@@ -236,6 +242,18 @@ class MAGDVIEW(bpy.types.Operator):
         
         for obj in bpy.context.scene.objects:
             if "ma" in bpy.data.objects[obj.name]:
+
+                # Don't draw stuff too far away
+                view_mat_inv = rv3d.view_matrix
+            
+                if rv3d.is_perspective:
+                    dist = (view_mat_inv@obj.location).length
+                else:
+                    dist = -(view_mat_inv@obj.location).z
+                    
+                if dist > MAGDVIEW_INST.drawDist:
+                    continue
+            
                 vector2d = location_3d_to_region_2d(region, rv3d, obj.location)
                 
                 if vector2d == None:
