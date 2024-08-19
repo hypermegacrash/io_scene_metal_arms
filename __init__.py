@@ -23,6 +23,7 @@ from .export_mtx import *
 # Classes that expose more Metal Arms functionality
 from .ui_gamedata               import *
 from .ui_object_data_properties import *
+from .ui_light_data_properties  import *
 from .ui_sidebar_helpers        import *
 from .process_gamedata          import setupgdkeys
 
@@ -37,8 +38,9 @@ classes = (
     # Gamedata Editor UI
     MAGD_Operator,
     
-    # Object Data UI
+    # Data UI
     MAObjectDataProperty,
+    MALightDataProperty,
     
     # Sidebar general help functions
     MASidePanel,
@@ -70,10 +72,15 @@ def register():
     # Update UI in Right Click > Object Context Menu
     bpy.types.VIEW3D_MT_object_context_menu.append(MAGD_MenuFunc)
     
+    # Register extra properties for objects
     bpy.types.Object.ma_ob_props = bpy.props.PointerProperty(type = MAObjectDataProperty)
-    
     # Update UI in Object > Data
     DATA_PT_empty.append(DrawMAObjectDataPanel)
+    
+    # Register extra properties for lights
+    bpy.types.Light.ma_light_props = bpy.props.PointerProperty(type = MALightDataProperty)
+    # Update UI in Object > Data
+    bpy.types.DATA_PT_context_light.append(DrawMALightDataPanel)
     
     setupgdkeys()
     
@@ -86,8 +93,11 @@ def unregister():
     # Update UI in Right Click > Object Context Menu
     bpy.types.VIEW3D_MT_object_context_menu.remove(MAGD_MenuFunc)
     
-    del bpy.types.Object.ma_ob_props
+    del bpy.types.Light.ma_light_props
+    # Update UI in Object > Data
+    bpy.types.DATA_PT_context_light.remove(DrawMALightDataPanel)
     
+    del bpy.types.Object.ma_ob_props
     # Update UI in Object > Data
     DATA_PT_empty.remove(DrawMAObjectDataPanel)
     

@@ -40,12 +40,13 @@ class ExportAPE(Operator, ExportHelper):
         filename_ext = '.ape'
         
         # UI Variables
-        m_bUseSelection:    BoolProperty( name="Selection Only",       description="Export selected objects only",       default=False )
-        m_bExportLights:    BoolProperty( name="Export Light Data",    description="Export all lights from the scene",   default=False ) 
-        m_bExportGeo:       BoolProperty( name="Export Geometry Data", description="Export all geometry from the scene", default=True  )
-        m_bExportHierarchy: BoolProperty( name="Export Hierarchy",     description="Export the armature from the scene", default=True  )
+        m_bUseSelection:          BoolProperty( name="Selection Only",          description="Export selected objects only",                                                                     default=False )
+        m_bExportLights:          BoolProperty( name="Export Light Data",       description="Export all lights from the scene",                                                                 default=False ) 
+        m_bExportGeo:             BoolProperty( name="Export Geometry Data",    description="Export all geometry from the scene",                                                               default=True  )
+        m_bExportHierarchy:       BoolProperty( name="Export Hierarchy",        description="Export the armature from the scene",                                                               default=True  )
+        m_bExportBinarySkinning:  BoolProperty( name="Export Binary Skinning",  description="Enforce binary skinning (Polygons can only be weighted to a single bone) Recommended to leave on", default=True  )
 
-        # Draw the export properties which are then stored in self to be accessed later
+        # Draw the export properties which are then stored in self for access
         def draw(self, context):
             layout = self.layout
             
@@ -59,6 +60,7 @@ class ExportAPE(Operator, ExportHelper):
             boxSettings.prop(self, "m_bExportLights")
             boxSettings.prop(self, "m_bExportGeo")
             boxSettings.prop(self, "m_bExportHierarchy")
+            boxSettings.prop(self, "m_bExportBinarySkinning")
             
             g_class.writeFooterInfo(layout)
                     
@@ -116,46 +118,6 @@ class ExportAPE(Operator, ExportHelper):
                             #print("  REMOVE " + obj.name)
                             try:    objects.remove(obj)
                             except: pass
-                
-                # Test if the scene has LODs
-                rootLODColl = None
-                LODColls = []
-    
-                for c in bpy.data.collections:
-                    if  c.name[:3].lower() == "lod":
-                        LODLevel = c.name.split("_",1)[0]
-                        LODLevel = int(LODLevel[3:])
-                        if LODLevel == 0:
-                            rootLODColl = c
-                        if LODLevel > 8:
-                            print("Collection group " + c.name + " specifies LOD " + str(LODLevel) + " but LODs >8 are not supported")
-                        else:
-                            if LODLevel != 0:
-                                LODColls.append(c)
-                
-                # If we have a LOD0 Collection, prepare the LOD List
-                LODMeshes = []
-                if rootLODColl:
-                    # Create a list of LOD Meshes with LOD0 Meshes
-                    for ob in rootLODColl.all_objects:
-                        LODMeshesInst = [None for x in range(8)]
-                        # Select from the cleaned object list
-                        if ob in objects:
-                            LODMeshesInst[0] = ob
-                            LODMeshes.append(LODMeshesInst)
-                    
-                    # Append LODs > 0 into the list
-                    for ob in rootLODColl.all_objects:
-                        for thisColl in LODColls:
-                            for otherob in thisColl.all_objects:
-                                if ob.name.split(".",1)[0] == otherob.name.split(".",1)[0]:
-                                    #print("FOUND MATCH between " + rootLODColl.name + " and " + thisColl.name + " for " + ob.name)
-                                    for LOD in LODMeshes:
-                                        if LOD[0] == ob:
-                                            #print("Array Match")
-                                            LODLevel = thisColl.name.split("_",1)[0]
-                                            LODLevel = int(LODLevel[3:])
-                                            LOD[LODLevel] = otherob
     
                 # To mimic the original exporter as closely as possible
                 # We itterate over the entire scene for each section of the PASM file
@@ -169,13 +131,10 @@ class ExportAPE(Operator, ExportHelper):
                     for obj in objects:
                         ExportObjLight(obj)
                 
+                # TODO: Add LOD Support
                 if(self.m_bExportGeo):
-                    if not rootLODColl:
-                        for obj in objects:
-                            ExportObjGeo(obj, self.m_bExportHierarchy)
-                    else:
-                        for LOD in LODMeshes:
-                            ExportObjGeo(LOD, self.m_bExportHierarchy)
+                    for obj in objects:
+                        ExportObjGeo(obj, self.m_bExportHierarchy, self.m_bExportBinarySkinning)
                 
                 # Go back to the start and rewrite the header with correct data
                 g_class.file.seek(0)

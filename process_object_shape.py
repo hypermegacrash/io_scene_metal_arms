@@ -95,7 +95,7 @@ def ExportObjShape(obj):
             outShape.userData.append(PosAfterWTM[1])
     
     # Rotation Matrix fun
-    outShape.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
+    outShape.mtxOrientation = pasm_math.BObj2F43MtxSCALE(obj)
     # The cone tip is pointed towards +y but cylinder particles emit towards the +z direction in FANG
     # As an artist it's intuitive to see the cone tip as the emit direction
     # We can accomidate by rotating the object -90 degrees on the x-axis before converting to FANG Matrix

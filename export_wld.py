@@ -170,7 +170,7 @@ class ExportWLD(Operator, ExportHelper):
                 
                 if(self.m_bExportGeo):                
                     for obj in objects:
-                        ExportObjGeo(obj, False)
+                        ExportObjGeo(obj, False, False)
                 
                 # Go back to the start and rewrite the header with correct data
                 g_class.file.seek(0)

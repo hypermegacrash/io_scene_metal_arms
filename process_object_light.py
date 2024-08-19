@@ -8,9 +8,6 @@ from .process_star_command import CLightStringParser # Import just the Light Sta
 APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT       = 0x00000010    # This light will only be used in the lightmap portion of PASM and will not be exported to the engine.
 APE_LIGHT_FLAG_LIGHTMAP_LIGHT            = 0x00000020    # This light is to be used for generating lightmaps (If it is not dynamic, it can be discarded prior to the engine)
 APE_LIGHT_FLAG_UNIQUE_LIGHTMAP           = 0x00000040    # This light will generate its own unique lightmap in the lightmapping phase (it must also have a unique m_nLightID)
-# BLENDER
-import math # Needed for computing sqrt and pi for light
-import colorsys # Light intensity
 
 def ExportObjLight(obj):
     bExitEarly = False
@@ -90,29 +87,7 @@ def ExportObjLight(obj):
     outLight.nLightID = lightStrParser.m_nLightID
   
     if obj.type == "LIGHT":
-         if outLight.nApeLightType == file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_DIR:
-            outLight.Intensity = obj.data.energy
-         else:
-            # Pretty kludgely hack
-            # If the light is small, you need to calculate intensity in a specific way,
-            # This methodology only works for small lights, large lights don't work with this
-            # For the time being compromise, this is better than before but still not ideal
-            if(obj.data.energy < 1000) and\
-            ((outLight.nFlags & APE_LIGHT_FLAG_LIGHTMAP_LIGHT == APE_LIGHT_FLAG_LIGHTMAP_LIGHT) or\
-            (outLight.nFlags & APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT == APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT)):
-                #light_threshold = bpy.context.scene.eevee.light_threshold
-                # I guess we're doing this mathematically as well
-                # https://www.youtube.com/watch?v=b9HgDScFoTo
-                g_class.printDEBUG("FOUND A LIGHTMAP LIGHT!")
-                radius = math.sqrt(((( obj.data.energy / 0.01) *  obj.data.diffuse_factor) / ( 4 * math.pi )))     
-                outLight.Intensity = (( obj.data.energy ) / ( radius * radius ))
-            else:
-                if outLight.nApeLightType == file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
-                    radius = math.sqrt(((( obj.data.energy / 0.02) *  obj.data.diffuse_factor) / ( 4 * math.pi )))     
-                    outLight.Intensity = (( obj.data.energy ) / ( radius * radius ))
-                else:
-                    tempHSV = colorsys.rgb_to_hsv(obj.data.color[0], obj.data.color[1], obj.data.color[2])
-                    outLight.Intensity = tempHSV[2]
+        outLight.Intensity = obj.data.ma_light_props.fIntensity
     elif obj.name[:7].lower() == "ambient" and obj.type == "EMPTY":
         outLight.Intensity = 1.0
     else:
@@ -129,12 +104,7 @@ def ExportObjLight(obj):
         outLight.Direction[2] =  outLight.mtxOrientation[8]
     
     if outLight.nApeLightType == file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_OMNI or outLight.nApeLightType == file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_SPOT:
-        # light_threshold = bpy.context.scene.eevee.light_threshold
-        # Blender doesn't give a radius of light that we want
-        # So we're gonna calculate inverse square law with a distance of 0.02 to try and approximate one
-        # Thx The Science Asylum! https://www.youtube.com/watch?v=2FMx2GDqMo4
-        radius2 = math.sqrt(((( obj.data.energy / 0.02) *  obj.data.diffuse_factor) / ( 4 * math.pi )))    
-        outLight.Sphere[0] = radius2
+        outLight.Sphere[0] = obj.data.ma_light_props.fRadius
         outLight.Sphere[1] = outLight.mtxOrientation[9]
         outLight.Sphere[2] = outLight.mtxOrientation[10]
         outLight.Sphere[3] = outLight.mtxOrientation[11]

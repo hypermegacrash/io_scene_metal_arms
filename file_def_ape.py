@@ -885,7 +885,7 @@ class PASMVert:
     def __init__(self):
         self.Pos         = [0.0 for i in range(3)]
         self.Norm        = [0.0 for i in range(3)]
-        self.Color       = [0.0 for i in range(4)]
+        self.Color       = [0.0, 0.0, 0.0, 1.0]
         self.aUVs        = [[0.0, 0.0] for i in range(4)]
         self.fNumWeights = 0
         self.aWeights    = [PASMWeight() for i in range(4)]
