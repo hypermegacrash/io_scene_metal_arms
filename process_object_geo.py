@@ -253,7 +253,7 @@ class CSegmentConverter:
                     if(self.bExportBinarySkinning): # Skinned mesh where a weight is either 1 or 0
                         for vgroup in self.workObj.data.vertices[vertexIndex].groups:
                             if vgroup.weight > 0.0:
-                                pWeight.fBoneIndex = self.inArmature.pose.bones.find(self.workObj.vertex_groups[vgroup.group].name)
+                                pWeight.fBoneIndex = self.inArmature.pose.bones.find(self.workObj.vertex_groups[vgroup.group].name) + 1
                                 pWeight.fWeight = 1
                                 entryVertex.aWeights[0] = pWeight
                                 entryVertex.fNumWeights = 1
@@ -267,7 +267,7 @@ class CSegmentConverter:
                         for vgroup in self.workObj.data.vertices[vertexIndex].groups:
                             if vgroup.weight > pWeight.fWeight:
                                 pWeight.fWeight = vgroup.weight
-                                pWeight.fBoneIndex = self.inArmature.pose.bones.find(self.workObj.vertex_groups[vgroup.group].name)
+                                pWeight.fBoneIndex = self.inArmature.pose.bones.find(self.workObj.vertex_groups[vgroup.group].name) + 1
                         
                         pWeight.fWeight = 1
                         entryVertex.aWeights[0] = pWeight

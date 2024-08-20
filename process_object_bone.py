@@ -9,9 +9,7 @@ import bpy                  # Force a scene update when we change bone pose to R
 from math import pi
 
 def ExportObjBone(obj): 
-    # NOTE: Shhhhhh, we're gonna export bones with off_ for the moment b/c bone hierarchy hard
-    #if obj.name[:4].lower() == "off_":     return # Doesn't matter it's off bail early
-    if obj.type             != "ARMATURE": return # Validate we're working with an armature
+    if obj.type != "ARMATURE": return # Validate we're working with an armature
         
     print(obj.name, "is an armature / hierarchy object")
     
@@ -24,26 +22,46 @@ def ExportObjBone(obj):
     
     # We store all bones in a list then write out at the end
     aBones = []
+
+    # Write out the Scene Root bone
+    apeBone = file_def_ape.PASMBone()
+    
+    apeBone.szBoneName = "Scene Root"
+    apeBone.mtxOrientation = [1.0, 0.0, 0.0,
+                              0.0, 1.0, 0.0,
+                              0.0, 0.0, 1.0,
+                              0.0, 0.0, 0.0]
+    apeBone.nBoneIndex = 0
+    apeBone.nParentIndex = -1
+       
+    aBones.append(apeBone)
     
     for pBoneInst in obj.pose.bones:
-        print("BONE:", pBoneInst.name)
         apeBone = file_def_ape.PASMBone()
         
         boneInst = pBoneInst.bone
         
         apeBone.szBoneName = pBoneInst.name
         apeBone.mtxOrientation = pasm_math.BObj2F43MtxHIERARCHY(pBoneInst)
-        apeBone.nBoneIndex = obj.pose.bones.find(pBoneInst.name)
+        apeBone.nBoneIndex = obj.pose.bones.find(pBoneInst.name) + 1
         apeBone.nNumChildren = len(boneInst.children)
-        if boneInst.parent == None: apeBone.nParentIndex = -1
-        else:                       apeBone.nParentIndex = obj.pose.bones.find(boneInst.parent.name)
+        if boneInst.parent == None: apeBone.nParentIndex = 0
+        else:                       apeBone.nParentIndex = obj.pose.bones.find(boneInst.parent.name) + 1
         
         index = 0
         for child in boneInst.children:
-            apeBone.auChildIndices[index] = obj.pose.bones.find(child.name)
+            apeBone.auChildIndices[index] = obj.pose.bones.find(child.name) + 1
             index = index + 1
            
         aBones.append(apeBone)
+
+    # Fix up children for Scene Root bone
+    index = 0
+    for bone in aBones[1:]:
+        if bone.nParentIndex == 0:
+            aBones[0].nNumChildren = aBones[0].nNumChildren + 1
+            aBones[0].auChildIndices[index] = bone.nBoneIndex
+            index = index + 1
 
     # Finally, write data to the file, and our header
     for bone in aBones:
