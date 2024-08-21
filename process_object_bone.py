@@ -6,7 +6,6 @@ from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
 # BLENDER
 import bpy                  # Force a scene update when we change bone pose to REST
-from math import pi
 
 def ExportObjBone(obj): 
     if obj.type != "ARMATURE": return # Validate we're working with an armature
@@ -35,22 +34,20 @@ def ExportObjBone(obj):
     apeBone.nParentIndex = -1
        
     aBones.append(apeBone)
-    
-    for pBoneInst in obj.pose.bones:
+
+    for bone in obj.data.bones:
         apeBone = file_def_ape.PASMBone()
         
-        boneInst = pBoneInst.bone
-        
-        apeBone.szBoneName = pBoneInst.name
-        apeBone.mtxOrientation = pasm_math.BObj2F43MtxHIERARCHY(pBoneInst)
-        apeBone.nBoneIndex = obj.pose.bones.find(pBoneInst.name) + 1
-        apeBone.nNumChildren = len(boneInst.children)
-        if boneInst.parent == None: apeBone.nParentIndex = 0
-        else:                       apeBone.nParentIndex = obj.pose.bones.find(boneInst.parent.name) + 1
+        apeBone.szBoneName = bone.name
+        apeBone.mtxOrientation = pasm_math.BObj2F43MtxHIERARCHY(bone)
+        apeBone.nBoneIndex = obj.data.bones.find(bone.name) + 1
+        apeBone.nNumChildren = len(bone.children)
+        if bone.parent == None: apeBone.nParentIndex = 0
+        else:                       apeBone.nParentIndex = obj.data.bones.find(bone.parent.name) + 1
         
         index = 0
-        for child in boneInst.children:
-            apeBone.auChildIndices[index] = obj.pose.bones.find(child.name) + 1
+        for child in bone.children:
+            apeBone.auChildIndices[index] = obj.data.bones.find(child.name) + 1
             index = index + 1
            
         aBones.append(apeBone)

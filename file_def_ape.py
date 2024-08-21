@@ -893,7 +893,21 @@ class PASMVert:
         
     # When comparing if two verts are identical it is quicker to compare hashes rather than a custom __eq__ function
     def __hash__(self):
-        return hash( (tuple(self.Pos), tuple(self.Norm), tuple(self.Color), tuple(self.aUVs[0]), tuple(self.aUVs[1]), self.fNumWeights, tuple(self.aWeights) ) )
+        #print('in hash')
+        return hash( (tuple(self.Pos), 
+                      tuple(self.Norm), 
+                      tuple(self.Color), 
+                      tuple(self.aUVs[0]), 
+                      tuple(self.aUVs[1]), 
+                      self.fNumWeights, 
+                      self.aWeights[0].fBoneIndex, self.aWeights[0].fWeight,
+                      self.aWeights[1].fBoneIndex, self.aWeights[1].fWeight,
+                      ) )
+    
+    # Class comparison doesn't work by default b/c it doesn't know what to compare so we do this
+    # which is followed by the real test which is the hash comparison above
+    def __eq__(self, other): 
+        return self.Pos == other.Pos
         
     def packBytes(self):
         #init our bytearray

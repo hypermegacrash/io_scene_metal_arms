@@ -155,6 +155,18 @@ class CSegmentConverter:
         # Convert the mesh to triangles
         self.workObj.data.calc_loop_triangles()
 
+    def areVertexGroupWeightsBinary(self):
+        for face in self.workObj.data.loop_triangles:
+            for vgroup in self.workObj.data.vertices[face.vertices[0]].groups:
+                if vgroup.weight == 0.0:
+                    continue
+                elif vgroup.weight == 1.0:
+                    continue
+                else:
+                    return False
+                
+        return True
+
     # Sort all the triangle polygons by bone they are rigged to if an armature exists
     # Otherwise all polygons are assumed to be in the same segment
     # Key   = Bone Name
@@ -313,7 +325,7 @@ class CSegmentConverter:
         try:
             layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_DIFFUSE] = fangMatGroup.inputs["Diffuse Color"].links[0].from_node.image.name.split(".",1)[0]
         except:
-            g_class.printWARNING(f"Error extracing Diffuse Color Texture for material", matName, "defaulting to '{DEFAULT_ERROR_TEXTURE}'")
+            g_class.printWARNING(f"Error extracing Diffuse Color Texture for material {matName} defaulting to '{DEFAULT_ERROR_TEXTURE}'")
             layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_DIFFUSE] = DEFAULT_ERROR_TEXTURE
 
         try:    layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_ALPHA_MASK] = fangMatGroup.inputs["Alpha Mask"].links[0].from_node.image.name.split(".",1)[0]
@@ -376,11 +388,11 @@ class CSegmentConverter:
         try:
             fangMatGroup = matOut.inputs["Surface"].links[0].from_node # Get the Node connected to it
         except:
-            g_class.logError("MATERIAL ERROR: The Material Output Node for material " + self.inObj.data.materials[matIndex].name.lower() + " in object " + self.inObj.name + " is not connected to a FANG Material / FANG Composite Node Tree. Please fix and retry exporting.")
+            g_class.logError(f"MATERIAL ERROR: The Material Output Node for material {self.inObj.data.materials[matIndex].name.lower()} in object {self.inObj.name} is not connected to a FANG Material / FANG Composite Node Tree. Please fix and retry exporting.")
             return False
 
         if fangMatGroup.type != "GROUP":
-            g_class.logError("MATERIAL ERROR: The Material Output Node for material " + self.inObj.data.materials[matIndex].name.lower() + " in object " + self.inObj.name + " is not connected to a FANG Material / FANG Composite Node Tree. Please fix and retry exporting.")
+            g_class.logError(f"MATERIAL ERROR: The Material Output Node for material {self.inObj.data.materials[matIndex].name.lower()} in object {self.inObj.name} is not connected to a FANG Material / FANG Composite Node Tree. Please fix and retry exporting.")
             return False
 
         self.matNodeGroup = fangMatGroup
@@ -472,7 +484,7 @@ class CSegmentConverter:
         outSegment.nNumIndices = len(outSegment.aIndicies)
 
         if outSegment.nNumVerts == 0:
-            g_class.logError("GEO ERROR: The object " + self.inObj.name + " was processed with no vertices! Are there empty material slots? Skipping object")
+            g_class.logError(f"[GEO ERROR]: The object {self.inObj.name} was processed with no vertices! Are there empty material slots? Skipping object")
             return False
 
         # If we passed all checks this is valid data, write to the file, and update our header
@@ -494,6 +506,11 @@ class CSegmentConverter:
 
         self.getColorAttributes()
 
+        if self.bExportBinarySkinning:
+            if not self.areVertexGroupWeightsBinary():
+                g_class.printWARNING(f"[GEO ERROR]: Vertex Groups are not binary for {self.inObj.name}!")
+                return False
+
         # After we seperate our polygons out by bones and export flags.
         # Each bowl represents a segment, segments created based on the following...
         # Unskinned mesh                   = 1 segment
@@ -504,7 +521,7 @@ class CSegmentConverter:
         # Finally we create a segment for each bowl of polygon soup
         for name in self.workLimbPolygons.keys():
             if not (self.ProcessSegment(name, self.workLimbPolygons[name])):
-                g_class.printWARNING("ERROR PROCESSING GEO " + name)
+                g_class.printWARNING(f"[GEO ERROR]: Could not process {name}")
 
 
 # Run checks to ensure this input should be processed into a segment
@@ -518,16 +535,16 @@ def validateInput(inObj):
     if inObj.name[:6].lower() == "start_": return False # Ignore start_ meshes (i.e. objects using a Glitch mesh instead of an empty)
     
     if(len(inObj.data.materials) == 0):
-        g_class.printWARNING("[GEO ERROR]: The object " + inObj.name + " has no materials, skipping")
+        g_class.printWARNING(f"[GEO ERROR]: The object {inObj.name} has no materials, skipping")
         return False # Don't work with meshes that have no material
 
     # TODO: Update to check for loops and not explicitly loop triangles  
     if(len(inObj.data.loop_triangles) == 0):
-        g_class.printWARNING("[GEO ERROR]: The object " + inObj.name + " has no triangles, skipping")
+        g_class.printWARNING(f"[GEO ERROR]: The object {inObj.name} has no triangles, skipping")
         return False # Don't work with meshes that have no triangles
         
     if(len(inObj.data.vertices) == 0):
-        g_class.printWARNING("[GEO ERROR]: The object " + inObj.name + " has no vertices, skipping")
+        g_class.printWARNING(f"[GEO ERROR]: The object {inObj.name} has no vertices, skipping")
         return False # Don't work with meshes that have no vertices
         
     return True

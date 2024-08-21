@@ -186,15 +186,13 @@ def BObj2F43MtxBONE(obj):
     outOrientation[11] = rotMtx[2][3]
     
     return outOrientation
-  
+
 # This WORKS, DO NOT TOUCH UNLESS YOU ARE CRAZY!!!!!
-def BObj2F43MtxHIERARCHY(obj):
+def BObj2F43MtxHIERARCHY(inBone):
     # Convert pose bone matrix from object-space of the armature to world-space of the scene
     outOrientation = [0.0 for i in range(12)]
- 
-    hArmature = obj.id_data
 
-    rotMtx = hArmature.matrix_world @ obj.bone.matrix_local
+    rotMtx = inBone.matrix_local
     
     # Construct our left-handed matrix
     left2RightMtx = mathutils.Matrix.Identity(4)
