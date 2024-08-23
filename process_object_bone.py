@@ -7,7 +7,9 @@ from . import pasm_math     # PASM helper defs
 # BLENDER
 import bpy                  # Force a scene update when we change bone pose to REST
 
-def ExportObjBone(obj): 
+from mathutils import Matrix
+
+def ExportObjBone(obj):
     if obj.type != "ARMATURE": return # Validate we're working with an armature
         
     print(obj.name, "is an armature / hierarchy object")
@@ -16,7 +18,16 @@ def ExportObjBone(obj):
     # Rest Pose https://blender.stackexchange.com/questions/26395/python-exporter-set-armature-to-rest-pose-while-exporting-meshes
     # Rest Pose Change https://blenderartists.org/t/cannot-change-pose-when-rest-position-is-enabled/637989
 
-    obj.data.pose_position = "REST"
+    # Reset bones positions    
+    for pb in obj.pose.bones:
+        pb.matrix_basis = Matrix()
+    
+    # Scale the armature according to the bone scale
+    for pb in obj.pose.bones:
+        pb.scale[0] = pb.bone.ma_bone_props.fBoneScale
+        pb.scale[1] = pb.bone.ma_bone_props.fBoneScale
+        pb.scale[2] = pb.bone.ma_bone_props.fBoneScale
+
     bpy.context.view_layer.update()
     
     # We store all bones in a list then write out at the end
@@ -35,19 +46,21 @@ def ExportObjBone(obj):
        
     aBones.append(apeBone)
 
-    for bone in obj.data.bones:
+    for pBoneInst in obj.pose.bones:
         apeBone = file_def_ape.PASMBone()
         
-        apeBone.szBoneName = bone.name
-        apeBone.mtxOrientation = pasm_math.BObj2F43MtxHIERARCHY(bone)
-        apeBone.nBoneIndex = obj.data.bones.find(bone.name) + 1
-        apeBone.nNumChildren = len(bone.children)
-        if bone.parent == None: apeBone.nParentIndex = 0
-        else:                       apeBone.nParentIndex = obj.data.bones.find(bone.parent.name) + 1
+        boneInst = pBoneInst.bone
+        
+        apeBone.szBoneName = pBoneInst.name
+        apeBone.mtxOrientation = pasm_math.BObj2F43MtxHIERARCHY(pBoneInst)
+        apeBone.nBoneIndex = obj.pose.bones.find(pBoneInst.name) + 1
+        apeBone.nNumChildren = len(boneInst.children)
+        if boneInst.parent == None: apeBone.nParentIndex = 0
+        else:                       apeBone.nParentIndex = obj.pose.bones.find(boneInst.parent.name) + 1
         
         index = 0
-        for child in bone.children:
-            apeBone.auChildIndices[index] = obj.data.bones.find(child.name) + 1
+        for child in boneInst.children:
+            apeBone.auChildIndices[index] = obj.pose.bones.find(child.name) + 1
             index = index + 1
            
         aBones.append(apeBone)

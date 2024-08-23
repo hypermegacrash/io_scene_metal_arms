@@ -6,7 +6,7 @@ import bpy # Registering / Unregistering classes
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 18, 0),
+        "version": (0, 19, 0),
         "blender": (4, 2, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",
@@ -22,8 +22,9 @@ from .export_cam import *
 from .export_mtx import *
 # Classes that expose more Metal Arms functionality
 from .ui_gamedata               import *
-from .ui_object_data_properties import *
-from .ui_light_data_properties  import *
+from .ui_data_properties_object import *
+from .ui_data_properties_light  import *
+from .ui_data_properties_bone   import *
 from .ui_sidebar_helpers        import *
 from .process_gamedata          import setupgdkeys
 
@@ -41,6 +42,7 @@ classes = (
     # Data UI
     MAObjectDataProperty,
     MALightDataProperty,
+    MABoneDataProperty,
     
     # Sidebar general help functions
     MASidePanel,
@@ -75,12 +77,17 @@ def register():
     # Register extra properties for objects
     bpy.types.Object.ma_ob_props = bpy.props.PointerProperty(type = MAObjectDataProperty)
     # Update UI in Object > Data
-    DATA_PT_empty.append(DrawMAObjectDataPanel)
+    bpy.types.DATA_PT_empty.append(DrawMAObjectDataPanel)
     
     # Register extra properties for lights
     bpy.types.Light.ma_light_props = bpy.props.PointerProperty(type = MALightDataProperty)
     # Update UI in Object > Data
     bpy.types.DATA_PT_context_light.append(DrawMALightDataPanel)
+
+    ## Register extra properties for bones
+    bpy.types.Bone.ma_bone_props = bpy.props.PointerProperty(type = MABoneDataProperty)
+    ## Update UI
+    bpy.types.BONE_PT_context_bone.append(DrawMABoneDataPanel)
     
     setupgdkeys()
     
@@ -99,7 +106,11 @@ def unregister():
     
     del bpy.types.Object.ma_ob_props
     # Update UI in Object > Data
-    DATA_PT_empty.remove(DrawMAObjectDataPanel)
+    bpy.types.DATA_PT_empty.remove(DrawMAObjectDataPanel)
+
+    del bpy.types.Bone.ma_bone_props
+    ## Update UI in Object > Data
+    bpy.types.BONE_PT_context_bone.remove(DrawMABoneDataPanel)
     
     # Update UI in File > Export in reverse order
     for func in reversed(aExportUI):

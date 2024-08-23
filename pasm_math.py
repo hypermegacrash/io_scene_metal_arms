@@ -192,7 +192,7 @@ def BObj2F43MtxHIERARCHY(inBone):
     # Convert pose bone matrix from object-space of the armature to world-space of the scene
     outOrientation = [0.0 for i in range(12)]
 
-    rotMtx = inBone.matrix_local
+    rotMtx = copy.deepcopy(inBone.matrix)
     
     # Construct our left-handed matrix
     left2RightMtx = mathutils.Matrix.Identity(4)

@@ -17,6 +17,8 @@ fpErrorLog    = os.path.dirname(os.path.realpath(__file__)) + "\\blender_ma_erro
 bShowErrorLog = False # We set this variable when an error occured and we should bring up the .txt file
 gdkeys = [] # Gamedata keys
 
+gApeSegments = [] # Ape segments need a copy writting to file for LOD support
+
 # Function for writting a error with metadata to the error log
 def logError(str):
     global bShowErrorLog # Grab from the global scope of this file

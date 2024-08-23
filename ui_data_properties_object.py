@@ -3,8 +3,6 @@
 # BLENDER
 import bpy
 from bpy.props import * # Property / UI Cheat Sheet https://docs.blender.org/api/current/bpy.props.html
-from bpy.types import DATA_PT_empty # We need access to the object data struct
-from bpy.types import Operator
 
 class MAObjectDataProperty(bpy.types.PropertyGroup):
     """Metal Arms Object Data Properties"""
@@ -19,8 +17,6 @@ class MAObjectDataProperty(bpy.types.PropertyGroup):
 def DrawMAObjectDataPanel(self, context):
     if context.object.empty_display_type == "CONE":
         layout = self.layout
-        #print(dir(context.object))
-        #layout.use_property_split = True
         
         layout.use_property_split = False # Boxes look funky with this set to True
         mapropsbox = layout.box()

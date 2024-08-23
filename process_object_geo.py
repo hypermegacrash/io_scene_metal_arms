@@ -8,7 +8,6 @@ from .process_star_command import CMaterialStringParser # Import just the Materi
 # BLENDER
 import bpy        # For interacting with Blender Data
 import copy       # We need to do a deep copy rather than shallow copy because exported data gets finicky
-import mathutils  # Perform matrix math on meshes
 
 # This texture only appears in GameCube, could set this up differently
 DEFAULT_ERROR_TEXTURE = "grid_64_pur"
@@ -53,6 +52,7 @@ class CSegmentConverter:
         
         self.workObj    = None # Duplicate Object we edit to our heart's content
         self.workLimbPolygons = None 
+        self.workName = None
 
         self.bExportHierarchy = False
         self.bExportBinarySkinning = False
@@ -61,7 +61,15 @@ class CSegmentConverter:
         self.ColorChannel = None
         self.AlphaChannel = None
         self.matNodeGroup = None
-        
+        self.nLodIdx = 0
+
+    # Check for LOD*_ Prefix to determine potential segment name and LOD Index
+    def getWorkNameAndLODIndex(self):
+        self.workName = self.inObj.name
+        if self.workName[:3] == "LOD" and self.workName[4:5] == "_":
+            self.workName = self.workName[5:]
+            self.nLodIdx = int(self.inObj.name[3:4])
+
     # To not destroy the existing scene, we will duplicate the input object
     # we want to modify then delete after we finish exporting segments
     def createWorkObject(self):
@@ -174,7 +182,6 @@ class CSegmentConverter:
     def getTrianglesByBone(self):
 
         self.workLimbPolygons: dict[int, []] = {}
-        #self.workLimbPolygons = {}
 
         if self.bExportHierarchy and self.bExportBinarySkinning:
             for face in self.workObj.data.loop_triangles:
@@ -185,9 +192,10 @@ class CSegmentConverter:
                         self.workLimbPolygons[self.workObj.vertex_groups[vgroup.group].name].append(face)
                         continue
         else:
-            self.workLimbPolygons[self.inObj.name] = []
+            # This is a single segment, therefore it uses the name of the mesh
+            self.workLimbPolygons[self.workName] = []
             for face in self.workObj.data.loop_triangles:
-                self.workLimbPolygons[self.inObj.name].append(face)
+                self.workLimbPolygons[self.workName].append(face)
     
     # Return if a triangle has zero area or not
     def isZeroAreaFace(self, triangle):
@@ -362,7 +370,8 @@ class CSegmentConverter:
     def ParseMaterial(self, matIndex):
         mat = file_def_ape.PASMMaterial()  # Construct our material
         mat.StarCommands.nShaderNum = -1    # Set shader # to -1 to signal we need to set a default
-        #mat.nLODIndex = nLODIdx
+        mat.nLODIndex = self.nLodIdx
+        
 
         # STAR COMMANDS PT 2
         # We then use the object star commands as a base for all the materials
@@ -439,10 +448,14 @@ class CSegmentConverter:
     
         return mat
 
-    # Return True when successfully added geometry data to a new PASMSegment
-    def ProcessSegment(self, inBufferName, inTriBuffer):
+    def createSegment(self, inBufferName):
+        # Test to see if this segment already exists
+        for segment in g_class.gApeSegments:
+            if inBufferName == segment.szMeshName:
+                return segment
+            
+        # Otherwise this is a new segment we are adding
         outSegment = file_def_ape.PASMSegment()
-        vertexMap  = {} # Sorting map / dictonary for faster duplicate lookups
 
         # If this segment is binary skinned the name will be the bone / vertex group
         # otherwise it will default to the name of the mesh
@@ -451,10 +464,18 @@ class CSegmentConverter:
         if self.bExportHierarchy:
             outSegment.bSkinned = True
 
+        return outSegment
+
+    # Return True when successfully added geometry data to a new PASMSegment
+    def ProcessSegment(self, inBufferName, inTriBuffer):
+        outSegment = self.createSegment(inBufferName)
+
         # Itterate through the materials once to cache polygons into per material lists for access
         # rather than full itteration through polygons, everytime for each material
         # https://stackoverflow.com/a/8713681
         faceDict = [[] for _ in self.workObj.material_slots]
+
+        vertexMap  = {} # Sorting map / dictonary for faster duplicate lookups
 
         # Create a new dictionary of polygons seperated by material
         for face in inTriBuffer:
@@ -487,17 +508,13 @@ class CSegmentConverter:
             g_class.logError(f"[GEO ERROR]: The object {self.inObj.name} was processed with no vertices! Are there empty material slots? Skipping object")
             return False
 
-        # If we passed all checks this is valid data, write to the file, and update our header
-        g_class.file.write(outSegment.packBytes())
-        g_class.gApeHeader.fileSize += len(outSegment.packBytes())
-        g_class.gApeHeader.nNumSegments += 1
-
-        return True
+        return outSegment # We will write out this segment later
 
     def Process(self):
         # We start by creating a duplicate of the existing input geometry
         self.createWorkObject()
 
+        self.getWorkNameAndLODIndex()
         self.getArmatureObject()
         self.getObjectStarCommands()
         
@@ -520,9 +537,24 @@ class CSegmentConverter:
 
         # Finally we create a segment for each bowl of polygon soup
         for name in self.workLimbPolygons.keys():
-            if not (self.ProcessSegment(name, self.workLimbPolygons[name])):
-                g_class.printWARNING(f"[GEO ERROR]: Could not process {name}")
+            outSegment = self.ProcessSegment(name, self.workLimbPolygons[name])
 
+            # Check to see if this exported without error
+            if outSegment != False:
+
+                # We need to check if this is a LOD segment first
+                for idx, segment in enumerate(g_class.gApeSegments):
+                    if segment.szMeshName == outSegment.szMeshName:
+                        g_class.gApeSegments[idx] = outSegment
+                        #print(f"Updated segment at idx {idx}")
+                        break
+
+                # Otherwise it's a new segment we are adding
+                else:
+                    g_class.gApeSegments.append(outSegment)
+
+            else:
+                g_class.printWARNING(f"[GEO ERROR]: Could not process {name}")
 
 # Run checks to ensure this input should be processed into a segment
 def validateInput(inObj):
