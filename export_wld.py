@@ -168,7 +168,11 @@ class ExportWLD(Operator, ExportHelper):
                 for obj in objects:
                     ExportObjPortal(obj)
                 
-                if(self.m_bExportGeo):                
+                if(self.m_bExportGeo):        
+
+                    # Ensure we have no left over segments
+                    g_class.gApeSegments.clear()
+
                     for obj in objects:
                         ExportObjGeo(obj, False, False)
 
@@ -176,6 +180,9 @@ class ExportWLD(Operator, ExportHelper):
                         g_class.file.write(segment.packBytes())
                         g_class.gApeHeader.fileSize += len(segment.packBytes())
                         g_class.gApeHeader.nNumSegments += 1
+
+                    # Clean up the data once its done
+                    g_class.gApeSegments.clear()
                 
                 # Go back to the start and rewrite the header with correct data
                 g_class.file.seek(0)
