@@ -8,18 +8,19 @@ import copy      # Want to work on a copy of the data, not a reference
 from mathutils import Matrix, Vector
 from math import *
 
+# Construct our left-handed matrix
+left2RightMtx = mathutils.Matrix.Identity(4)
+left2RightMtx[1][1] = 0.0
+left2RightMtx[1][2] = 1.0
+left2RightMtx[2][1] = 1.0
+left2RightMtx[2][2] = 0.0
+
 # Convert a Blender Object to a Fang Engine 4x3 Matrix
 def BObj2F43Mtx(obj):
     rotMtx = obj.rotation_euler
     rotMtx = rotMtx.to_matrix()
 
     rotMtx.transpose()
-
-    left2RightMtx = mathutils.Matrix.Identity(3)
-    left2RightMtx[1][1] = 0.0
-    left2RightMtx[1][2] = 1.0
-    left2RightMtx[2][1] = 1.0
-    left2RightMtx[2][2] = 0.0
 
     rotMtx = left2RightMtx @ rotMtx @ left2RightMtx
     
@@ -50,12 +51,6 @@ def BObj2F43MtxSCALE(obj):
     rotMtx = rotMtx.to_matrix()
 
     rotMtx.transpose()
-
-    left2RightMtx = mathutils.Matrix.Identity(3)
-    left2RightMtx[1][1] = 0.0
-    left2RightMtx[1][2] = 1.0
-    left2RightMtx[2][1] = 1.0
-    left2RightMtx[2][2] = 0.0
     
     # We only apply scale if it is uniform
     if(obj.scale[0] == obj.scale[1] == obj.scale[2]):
@@ -157,13 +152,6 @@ def BObj2F43MtxBONE(obj):
     if obj.parent: rotMtx = obj.parent.matrix.inverted() @ obj.matrix
     else:          rotMtx = hArmature.matrix_world @ obj.matrix
     
-    # Construct our left-handed matrix
-    left2RightMtx = mathutils.Matrix.Identity(4)
-    left2RightMtx[1][1] = 0.0
-    left2RightMtx[1][2] = 1.0
-    left2RightMtx[2][1] = 1.0
-    left2RightMtx[2][2] = 0.0
-    
     # Convert matrix from Blender's right-handed to PASM's left-handed
     rotMtx = left2RightMtx @ rotMtx @ left2RightMtx
     
@@ -193,13 +181,6 @@ def BObj2F43MtxHIERARCHY(inBone):
     outOrientation = [0.0 for i in range(12)]
 
     rotMtx = copy.deepcopy(inBone.matrix)
-    
-    # Construct our left-handed matrix
-    left2RightMtx = mathutils.Matrix.Identity(4)
-    left2RightMtx[1][1] = 0.0
-    left2RightMtx[1][2] = 1.0
-    left2RightMtx[2][1] = 1.0
-    left2RightMtx[2][2] = 0.0
     
     # Convert matrix from Blender's right-handed to PASM's left-handed
     rotMtx = left2RightMtx @ rotMtx @ left2RightMtx
@@ -237,12 +218,6 @@ def BObj2F43MtxCylinder(obj):
     rotMtx = rotMtx.to_3x3()
 
     rotMtx.transpose()
-
-    left2RightMtx = mathutils.Matrix.Identity(3)
-    left2RightMtx[1][1] = 0.0
-    left2RightMtx[1][2] = 1.0
-    left2RightMtx[2][1] = 1.0
-    left2RightMtx[2][2] = 0.0
 
     rotMtx = left2RightMtx @ rotMtx @ left2RightMtx
     
