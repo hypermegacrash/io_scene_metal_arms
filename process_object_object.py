@@ -29,7 +29,7 @@ def ExportObjObject(obj):
     outObject.TintRGB[1] = objStrParser.m_TintRGB[1]
     outObject.TintRGB[2] = objStrParser.m_TintRGB[2]
     
-    outObject.mtxOrientation = pasm_math.BObj2F43MtxSCALE(obj)
+    outObject.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
     
     ProcessGamedata(obj, outObject)
                         

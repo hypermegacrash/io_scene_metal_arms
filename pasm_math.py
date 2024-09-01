@@ -14,81 +14,29 @@ left2RightMtx[1][1] = 0.0
 left2RightMtx[1][2] = 1.0
 left2RightMtx[2][1] = 1.0
 left2RightMtx[2][2] = 0.0
-
-# Convert a Blender Object to a Fang Engine 4x3 Matrix
-def BObj2F43Mtx(obj):
-    rotMtx = obj.rotation_euler
-    rotMtx = rotMtx.to_matrix()
-
-    rotMtx.transpose()
-
-    rotMtx = left2RightMtx @ rotMtx @ left2RightMtx
-    
-    # This is so stupid, should be a matrix not an array of floats
-    outOrientation = [0.0 for i in range(12)]
-    
-    outOrientation[0] =  rotMtx[0][0]
-    outOrientation[1] =  rotMtx[0][1]
-    outOrientation[2] =  rotMtx[0][2]
-    
-    outOrientation[3] =  rotMtx[1][0]
-    outOrientation[4] =  rotMtx[1][1]
-    outOrientation[5] =  rotMtx[1][2]
-    
-    outOrientation[6] =  rotMtx[2][0]
-    outOrientation[7] =  rotMtx[2][1]
-    outOrientation[8] =  rotMtx[2][2]
-    
-    outOrientation[9] =   obj.matrix_world.translation[0]
-    outOrientation[10] =  obj.matrix_world.translation[2]
-    outOrientation[11] =  obj.matrix_world.translation[1]
-    
-    return outOrientation
     
 # Convert a Blender Object to a Fang Engine 4x3 Matrix with SCALING
-def BObj2F43MtxSCALE(obj):
-    rotMtx = obj.rotation_euler
-    rotMtx = rotMtx.to_matrix()
-
-    rotMtx.transpose()
-    
-    # We only apply scale if it is uniform
-    if(obj.scale[0] == obj.scale[1] == obj.scale[2]):
-        pass
-        #print("SCALE UNIFORM")
-        rotMtx[0][0] = obj.scale[0] * rotMtx[0][0]
-        rotMtx[0][1] = obj.scale[0] * rotMtx[0][1]
-        rotMtx[0][2] = obj.scale[0] * rotMtx[0][2]
-        
-        rotMtx[1][0] = obj.scale[0] * rotMtx[1][0]
-        rotMtx[1][1] = obj.scale[0] * rotMtx[1][1]
-        rotMtx[1][2] = obj.scale[0] * rotMtx[1][2]
-        
-        rotMtx[2][0] = obj.scale[0] * rotMtx[2][0]
-        rotMtx[2][1] = obj.scale[0] * rotMtx[2][1]
-        rotMtx[2][2] = obj.scale[0] * rotMtx[2][2]
-    else:
-        pass
-        #print("SCALE NOT UNIFORM")
+def BObj2F43Mtx(obj):
+    rotMtx = copy.deepcopy(obj.matrix_world)
 
     rotMtx = left2RightMtx @ rotMtx @ left2RightMtx
     
     # This is so stupid, should be a matrix not an array of floats
     outOrientation = [0.0 for i in range(12)]
+
+    outOrientation[0]  = rotMtx[0][0]
+    outOrientation[1]  = rotMtx[1][0]
+    outOrientation[2]  = rotMtx[2][0]
+     
+    outOrientation[3]  = rotMtx[0][1]
+    outOrientation[4]  = rotMtx[1][1]
+    outOrientation[5]  = rotMtx[2][1]
+     
+    outOrientation[6]  = rotMtx[0][2]
+    outOrientation[7]  = rotMtx[1][2]
+    outOrientation[8]  = rotMtx[2][2]
     
-    outOrientation[0] =  rotMtx[0][0]
-    outOrientation[1] =  rotMtx[0][1]
-    outOrientation[2] =  rotMtx[0][2]
-    
-    outOrientation[3] =  rotMtx[1][0]
-    outOrientation[4] =  rotMtx[1][1]
-    outOrientation[5] =  rotMtx[1][2]
-    
-    outOrientation[6] =  rotMtx[2][0]
-    outOrientation[7] =  rotMtx[2][1]
-    outOrientation[8] =  rotMtx[2][2]
-    
-    outOrientation[9] =   obj.matrix_world.translation[0]
+    outOrientation[9]  =  obj.matrix_world.translation[0]
     outOrientation[10] =  obj.matrix_world.translation[2]
     outOrientation[11] =  obj.matrix_world.translation[1]
     

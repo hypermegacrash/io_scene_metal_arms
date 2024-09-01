@@ -41,7 +41,7 @@ def apply_objects_modifiers_and_transformations(inObj):
         attemptModifierApply(modifier)
 
     # apply transformations now that world space changes are applied
-    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True, properties=False)
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True, properties=False)
 
 # Class for handling the conversion of a Blender Mesh to a PASM Segment
 # Acts like a container for all the input with functions for processing
@@ -523,7 +523,7 @@ class CSegmentConverter:
 
         self.getColorAttributes()
 
-        if self.bExportBinarySkinning:
+        if self.bExportHierarchy and self.bExportBinarySkinning:
             if not self.areVertexGroupWeightsBinary():
                 g_class.printWARNING(f"[GEO ERROR]: Vertex Groups are not binary for {self.inObj.name}!")
                 return False
