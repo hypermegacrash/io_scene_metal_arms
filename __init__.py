@@ -6,7 +6,7 @@ import bpy # Registering / Unregistering classes
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 19, 3),
+        "version": (0, 19, 4),
         "blender": (4, 2, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",
@@ -22,6 +22,7 @@ from .export_cam import *
 from .export_mtx import *
 # Classes that expose more Metal Arms functionality
 from .ui_gamedata               import *
+from .ui_gamedata_external      import *
 from .ui_data_properties_object import *
 from .ui_data_properties_light  import *
 from .ui_data_properties_bone   import *
@@ -38,6 +39,7 @@ classes = (
     
     # Gamedata Editor UI
     MAGD_Operator,
+    MAGD_External_Operator,
     
     # Data UI
     MAObjectDataProperty,
@@ -73,6 +75,8 @@ def register():
     
     # Update UI in Right Click > Object Context Menu
     bpy.types.VIEW3D_MT_object_context_menu.append(MAGD_MenuFunc)
+    if os.name == "nt":
+        bpy.types.VIEW3D_MT_object_context_menu.append(MAGD_External_MenuFunc)
     
     # Register extra properties for objects
     bpy.types.Object.ma_ob_props = bpy.props.PointerProperty(type = MAObjectDataProperty)
@@ -98,6 +102,8 @@ def unregister():
     # We unregister in reverse order because systems initialized latter may rely on systems initalized earlier
     
     # Update UI in Right Click > Object Context Menu
+    if os.name == "nt":
+        bpy.types.VIEW3D_MT_object_context_menu.remove(MAGD_External_MenuFunc)
     bpy.types.VIEW3D_MT_object_context_menu.remove(MAGD_MenuFunc)
     
     del bpy.types.Light.ma_light_props
