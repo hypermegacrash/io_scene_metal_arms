@@ -22,6 +22,11 @@ def ExportObjShape(obj):
     if(bExitEarly): return
         
     print(obj.name, "is a shape object")
+
+    if obj.scale[0] != obj.scale[1] != obj.scale[2]:
+        if obj.empty_display_type != "CUBE":
+            g_class.logError("SHAPE ERROR: The shape object " + obj.name + " does not have a uniform scale! Skipping")
+            return
     
     outShape = file_def_ape.PASMShape()
     
@@ -95,12 +100,16 @@ def ExportObjShape(obj):
             outShape.userData.append(PosAfterWTM[1])
     
     # Rotation Matrix fun
-    outShape.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
+    
     # The cone tip is pointed towards +y but cylinder particles emit towards the +z direction in FANG
     # As an artist it's intuitive to see the cone tip as the emit direction
     # We can accomidate by rotating the object -90 degrees on the x-axis before converting to FANG Matrix
     if (outShape.nType == file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_CYLINDER):
         outShape.mtxOrientation = pasm_math.BObj2F43MtxCylinder(obj)
+    elif (outShape.nType == file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_BOX):
+        outShape.mtxOrientation = pasm_math.BObj2F43MtxCube(obj)
+    else:
+        outShape.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
     
     ProcessGamedata(obj, outShape)
     

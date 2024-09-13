@@ -12,6 +12,11 @@ def ExportObjObject(obj):
     if obj.name[:4].lower() != "obj_": return # No prefix no object
         
     print(obj.name, "is a object object")
+
+    if obj.scale[0] != obj.scale[1] != obj.scale[2]:
+        if obj.empty_display_type != "CUBE":
+            g_class.logError("OBJECT ERROR: The object object " + obj.name + " does not have a uniform scale! Skipping")
+            return
     
     outObject = file_def_ape.PASMObject()
     

@@ -59,3 +59,17 @@ def writeFooterInfo(layout):
     strToolRevision = strToolRevision.replace(" ", "")
     strToolRevision = "MA Toolkit Version # " + strToolRevision
     toolRevision.label(text = strToolRevision)
+
+def PrepareCollections():
+    vl_colls = bpy.context.view_layer.layer_collection.children
+
+    restoreState = {}
+
+    for coll in vl_colls:
+        restoreState[coll.name] = coll.exclude
+        coll.exclude = False
+
+    bpy.context.evaluated_depsgraph_get().update()
+    
+    for x in restoreState.keys():
+        vl_colls[x].exclude = restoreState[x]

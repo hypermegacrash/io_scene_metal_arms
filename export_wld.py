@@ -70,6 +70,10 @@ class ExportWLD(Operator, ExportHelper):
         # The Blender Python API's equivalent of C/C++ main()
         def execute(self, context):
               
+            # Opening a Blender 4.2+ scene won't initialize the world matrix for excluded 
+            # collections in the view layer, This tells Blender to wake up and update
+            g_class.PrepareCollections()
+
             # Init and dress a fresh header
             g_class.gApeHeader = file_def_ape.PASMHeader() 
             

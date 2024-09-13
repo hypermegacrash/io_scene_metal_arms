@@ -41,6 +41,39 @@ def BObj2F43Mtx(obj):
     outOrientation[11] =  obj.matrix_world.translation[1]
     
     return outOrientation
+
+# Convert a Blender Object to a Fang Engine 4x3 Matrix with SCALING
+def BObj2F43MtxCube(obj):
+    loc = obj.matrix_local.to_translation()
+    mat_loc = mathutils.Matrix.Translation(loc)
+
+    rot = obj.matrix_local.to_quaternion()
+    mat_rot = rot.to_matrix().to_4x4()
+
+    rotMtx =  mat_loc @ mat_rot
+
+    rotMtx = left2RightMtx @ rotMtx @ left2RightMtx
+    
+    # This is so stupid, should be a matrix not an array of floats
+    outOrientation = [0.0 for i in range(12)]
+
+    outOrientation[0]  = rotMtx[0][0]
+    outOrientation[1]  = rotMtx[1][0]
+    outOrientation[2]  = rotMtx[2][0]
+     
+    outOrientation[3]  = rotMtx[0][1]
+    outOrientation[4]  = rotMtx[1][1]
+    outOrientation[5]  = rotMtx[2][1]
+     
+    outOrientation[6]  = rotMtx[0][2]
+    outOrientation[7]  = rotMtx[1][2]
+    outOrientation[8]  = rotMtx[2][2]
+    
+    outOrientation[9]  =  obj.matrix_world.translation[0]
+    outOrientation[10] =  obj.matrix_world.translation[2]
+    outOrientation[11] =  obj.matrix_world.translation[1]
+    
+    return outOrientation
     
 # PASM Lights are special and calculate their 4x3 matrix in a different way
 def BObj2F43MtxLIGHT(obj):
@@ -158,14 +191,9 @@ def BObj2F43MtxHIERARCHY(inBone):
     
 # Variation function for exporting cylinder so it faces +z instead of +y
 def BObj2F43MtxCylinder(obj):
-    #rotMtx = obj.rotation_euler
-    #rotMtx = rotMtx.to_matrix()
-    
-    mat_rot_x = mathutils.Matrix.Rotation(radians(-90.0), 4, 'X')
-    rotMtx = obj.matrix_world @ mat_rot_x
-    rotMtx = rotMtx.to_3x3()
 
-    rotMtx.transpose()
+    mat_rot_x = mathutils.Matrix.Rotation(radians(90.0), 4, 'X')
+    rotMtx = obj.matrix_world @ mat_rot_x
 
     rotMtx = left2RightMtx @ rotMtx @ left2RightMtx
     

@@ -4,7 +4,8 @@
 from . import file_def_ape  # Get our PASM file classes
 from . import g_class        # Get our global variables for the header data
 # BLENDER
-from mathutils import Vector # Need Vector for computing bounding box
+import bmesh # Need this to triangulate the mesh
+import mathutils
 import copy # We need to do a deep copy rather than shallow copy because exported data gets finicky
     
 def ProcessCell(obj):
@@ -23,7 +24,6 @@ def ProcessCell(obj):
     testM = obj.to_mesh()
     
     # Test for convexity
-    import bmesh # Need this to triangulate the mesh
     bm = bmesh.new()
     bm.from_mesh(testM)
     
@@ -64,9 +64,7 @@ def ProcessCell(obj):
         testM.flip_normals()
     
     # Transform the verts from local space to world space
-    from mathutils import Matrix
-    # Objects are in local space when part of hierarchy, they are driven by bone location
-    testM.transform(Matrix() @ obj.matrix_world)
+    testM.transform(obj.matrix_world)
     
     # Prep
     testM.calc_loop_triangles()
@@ -157,7 +155,7 @@ def ProcessCell(obj):
     # Thx StackExchange! https://blender.stackexchange.com/questions/62040/get-center-of-geometry-of-an-object
     # There was a syntax change from <2.79 -> 2.8+, fix here
     # https://blender.stackexchange.com/questions/129473/typeerror-element-wise-multiplication-not-supported-between-matrix-and-vect/129474
-    local_bbox_center = 0.125 * sum((Vector(b) for b in obj.bound_box), Vector())
+    local_bbox_center = 0.125 * sum((mathutils.Vector(b) for b in obj.bound_box), mathutils.Vector())
     global_bbox_center = local_bbox_center
     #print("local_bbox_center:", local_bbox_center)
     #print("global_bbox_center:", global_bbox_center)
@@ -197,20 +195,20 @@ def ExportObjVolume(aVolumes):
                     outVolume.Sphere[3] = (outVolume.Sphere[3] + outCell.aSphere[3]) / 2
     
                     # This is our new center point we need to reference when calculating radius
-                    vec = Vector((outVolume.Sphere[1], outVolume.Sphere[2], outVolume.Sphere[3]))
+                    vec = mathutils.Vector((outVolume.Sphere[1], outVolume.Sphere[2], outVolume.Sphere[3]))
                     
                     radius = 0
                     
                     # Next, Itterate through all the points in the cells already exported to find the furthest point from the center
                     for cellb in outVolume.aCells:
                         for x in range(cellb.nNumVerts):
-                            vertPoint = Vector((cellb.aVisVerts[x].Pos[0], cellb.aVisVerts[x].Pos[1], cellb.aVisVerts[x].Pos[2]))
+                            vertPoint = mathutils.Vector((cellb.aVisVerts[x].Pos[0], cellb.aVisVerts[x].Pos[1], cellb.aVisVerts[x].Pos[2]))
                             if (vertPoint - vec).length > radius:
                                 radius = (vertPoint - vec).length
                     
                     # Then, itterate through all the points in the newly exported cell to potentially find a new furthest point from the center                
                     for x in range(outCell.nNumVerts):
-                            vertPoint = Vector((outCell.aVisVerts[x].Pos[0], outCell.aVisVerts[x].Pos[1], outCell.aVisVerts[x].Pos[2]))
+                            vertPoint = mathutils.Vector((outCell.aVisVerts[x].Pos[0], outCell.aVisVerts[x].Pos[1], outCell.aVisVerts[x].Pos[2]))
                             if (vertPoint - vec).length > radius:
                                 radius = (vertPoint - vec).length
                         
