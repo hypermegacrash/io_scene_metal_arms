@@ -217,15 +217,22 @@ class CSegmentConverter:
         UV0 = None
         UV1 = None
         if (self.matNodeGroup.node_tree.name.split(".",1)[0] == "FANG Material"):   
-            try:    UV0 = self.workObj.data.uv_layers[ self.matNodeGroup.inputs["Diffuse Color"].links[0].from_node.inputs["Vector"].links[0].from_node.uv_map ]
-            except: UV0 = self.workObj.data.uv_layers[0]
+            try:    
+                UV0 = self.workObj.data.uv_layers[ self.matNodeGroup.inputs["Diffuse Color"].links[0].from_node.inputs["Vector"].links[0].from_node.uv_map ]
+            except: 
+                if len(self.workObj.data.uv_layers) != 0:
+                    UV0 = self.workObj.data.uv_layers[0]
 
         elif (self.matNodeGroup.node_tree.name.split(".",1)[0] == "FANG Composite"):
             try:    UV0 = self.workObj.data.uv_layers[ self.matNodeGroup.inputs["Base"].links[0].from_node.inputs["Diffuse Color"].links[0].from_node.inputs["Vector"].links[0].from_node.uv_map ]
-            except: UV0 = self.workObj.data.uv_layers[0]
+            except:
+                if len(self.workObj.data.uv_layers) != 0:
+                    UV0 = self.workObj.data.uv_layers[0]
 
             try:    UV1 = self.workObj.data.uv_layers[ self.matNodeGroup.inputs["Layer 1"].links[0].from_node.inputs["Diffuse Color"].links[0].from_node.inputs["Vector"].links[0].from_node.uv_map ]
-            except: UV1 = self.workObj.data.uv_layers[0]
+            except:
+                if len(self.workObj.data.uv_layers) != 0:
+                    UV1 = self.workObj.data.uv_layers[0]
 
         for triangle in inTriangleList:
             # We need to check if there is a zero area triangle face

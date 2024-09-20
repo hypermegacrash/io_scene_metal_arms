@@ -241,7 +241,7 @@ class MAGDVIEW(bpy.types.Operator):
         rv3d = bpy.context.space_data.region_3d
         
         for obj in bpy.context.scene.objects:
-            if "ma" in bpy.data.objects[obj.name]:
+            if "ma" in bpy.data.objects[obj.name] and bpy.data.objects[obj.name].hide_get() == False:
 
                 # Don't draw stuff too far away
                 view_mat_inv = rv3d.view_matrix

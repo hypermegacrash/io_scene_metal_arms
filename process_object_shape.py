@@ -23,9 +23,9 @@ def ExportObjShape(obj):
         
     print(obj.name, "is a shape object")
 
-    if obj.scale[0] != obj.scale[1] != obj.scale[2]:
+    if round(obj.scale.x, 5) != round(obj.scale.y, 5) != round(obj.scale.z, 5):
         if obj.empty_display_type != "CUBE":
-            g_class.logError("SHAPE ERROR: The shape object " + obj.name + " does not have a uniform scale! Skipping")
+            g_class.logError("SHAPE ERROR: The shape object " + obj.name + " does not have a uniform scale! Found " + obj.scale + " Skipping")
             return
     
     outShape = file_def_ape.PASMShape()

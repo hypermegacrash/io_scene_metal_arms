@@ -1,12 +1,9 @@
 # Various helpful math functions to help with converting from Blender formatting to PASM formatting
 # This module is outdated, update and/or merge functions based on BObj2F43MtxBONE
 
-import mathutils # Need to work with matrix math
-import copy      # Want to work on a copy of the data, not a reference
-
-# New Matrix Math
-from mathutils import Matrix, Vector
-from math import *
+import mathutils    # Need to work with matrix math
+import copy         # Want to work on a copy of the data, not a reference
+from math import *  #
 
 # Construct our left-handed matrix
 left2RightMtx = mathutils.Matrix.Identity(4)
