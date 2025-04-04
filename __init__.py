@@ -6,7 +6,7 @@ import bpy # Registering / Unregistering classes
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 19, 6),
+        "version": (0, 19, 7),
         "blender": (4, 2, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",

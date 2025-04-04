@@ -127,7 +127,9 @@ def ExportObjLight(obj):
             outLight.fSpotOuterAngle = obj.data.spot_size
         
     # Check to see if this light is attached to an armature
-    if (obj.parent_bone): outLight.szParentBoneName = obj.parent_bone
+    if (obj.parent_bone):
+        hArmature = obj.parent.data
+        outLight.szParentBoneName = hArmature.bones[obj.parent_bone].parent.name
     
     # Finally, write data to the file, and our header
     g_class.file.write(outLight.packBytes())
