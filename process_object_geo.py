@@ -50,17 +50,18 @@ class CSegmentConverter:
         self.inObj      = None # Starting mesh we are operating for reference
         self.inArmature = None # If our input is rigged this is the armature we are dealing with
         
-        self.workObj    = None # Duplicate Object we edit to our heart's content
+        self.workObj          = None # Duplicate Object we edit to our heart's content
         self.workLimbPolygons = None 
-        self.workName = None
+        self.workName         = None
 
-        self.bExportHierarchy = False
+        self.bExportHierarchy      = False
         self.bExportBinarySkinning = False
 
-        self.objStrParser = None
-        self.ColorChannel = None
-        self.AlphaChannel = None
-        self.matNodeGroup = None
+        self.objStrParser   = None
+        self.ColorAttribute = None
+        self.AlphaAttribute = None
+        self.matNodeGroup   = None
+        
         self.nLodIdx = 0
 
     # Check for LOD*_ Prefix to determine potential segment name and LOD Index
@@ -102,19 +103,46 @@ class CSegmentConverter:
                 self.inArmature = modifier.object
                 return
 
-    # Get our color layers    
+    # Get our color attributes   
     def getColorAttributes(self):
         for attribute in self.workObj.data.color_attributes:
             outName = attribute.name.lower()[:]
             outName = outName.split(".",1)[0]
-            if(outName == "alpha"):   self.AlphaChannel = attribute
-            elif(outName == "color"): self.ColorChannel = attribute
+            if(outName == "alpha"): self.AlphaAttribute = attribute
+            if(outName == "color"): self.ColorAttribute = attribute
+
+    # Ensure the color attributes are in the correct format for us to process
+    def validateColorAttributes(self):
+        isValid = True
+        if self.ColorAttribute:
+            if self.ColorAttribute.domain != 'POINT' or self.ColorAttribute.data_type != 'FLOAT_COLOR':
+                g_class.logError(f"COLOR ATTRIBUTE ERROR: The Color Attribute {self.ColorAttribute.name} for object {self.inObj.name} is not set to Domain Vertex and Data Type Color. Please fix and retry exporting.")
+                isValid = False
+            
+        if self.AlphaAttribute:
+            if self.AlphaAttribute.domain != 'POINT' or self.AlphaAttribute.data_type != 'FLOAT_COLOR':
+                g_class.logError(f"COLOR ATTRIBUTE ERROR: The Color Attribute {self.AlphaAttribute.name} for object {self.inObj.name} is not set to Domain Vertex and Data Type Color. Please fix and retry exporting.")
+                isValid = False
+
+        return isValid
 
     # Get our input object star commands flags
     def getObjectStarCommands(self):
         self.objStrParser = CMaterialStringParser()
         self.objStrParser.ResetToDefaults()
         self.objStrParser.Parse( self.inObj.name.lower() )
+
+    def areVertexGroupWeightsBinary(self):
+        for face in self.workObj.data.loop_triangles:
+            for vgroup in self.workObj.data.vertices[face.vertices[0]].groups:
+                if vgroup.weight == 0.0:
+                    continue
+                elif vgroup.weight == 1.0:
+                    continue
+                else:
+                    return False
+                
+        return True
 
     # If this is a binary skinned rig we need to update the geometry to follow
     # how the armature is set up
@@ -128,20 +156,8 @@ class CSegmentConverter:
         bpy.context.view_layer.objects.active = self.inArmature
         bpy.ops.object.transform_apply(location=False, rotation=False, scale=True, properties=False)
 
-    # OBSOLETE: THIS DOESN"T APPLY PASM HANDLES THIS FOR US! =)
-    # If we export a binary skinned mesh we need to transform the vertices to our new 
-    # origin by applying the inverse model matrix of the bone they are skinned to
-    def prepareWorkBinaryRiggedGeo(self):
-        for vertex in self.workObj.data.vertices:
-            for vgroup in vertex.groups:
-                if vgroup.weight > 0.0:
-                    tempMtxInv2 = self.inArmature.data.bones[self.workObj.vertex_groups[vgroup.group].name].matrix_local.inverted()
-                    vertex.co = tempMtxInv2 @ vertex.co
-
     # Ingest a Blender Object and preform conversions needed to get the mesh data ready for export
     def prepareWorkObject(self):
-        #bpy.ops.object.make_single_user(self.workObj)
-    
         apply_objects_modifiers_and_transformations(self.workObj)
 
         # Rigged geometry must be placed at the origin of the skeleton
@@ -163,17 +179,12 @@ class CSegmentConverter:
         # Convert the mesh to triangles
         self.workObj.data.calc_loop_triangles()
 
-    def areVertexGroupWeightsBinary(self):
-        for face in self.workObj.data.loop_triangles:
-            for vgroup in self.workObj.data.vertices[face.vertices[0]].groups:
-                if vgroup.weight == 0.0:
-                    continue
-                elif vgroup.weight == 1.0:
-                    continue
-                else:
-                    return False
-                
-        return True
+        # Validate our new geometry
+        if self.bExportHierarchy and self.bExportBinarySkinning:
+            if not self.areVertexGroupWeightsBinary():
+                g_class.printWARNING(f"[GEO ERROR]: Vertex Groups are not binary for {self.inObj.name}!")
+                # TODO: Better Debugging for binary skinning, select the polygons that arent binary skinned.
+                return False
 
     # Sort all the triangle polygons by bone they are rigged to if an armature exists
     # Otherwise all polygons are assumed to be in the same segment
@@ -186,11 +197,15 @@ class CSegmentConverter:
         if self.bExportHierarchy and self.bExportBinarySkinning:
             for face in self.workObj.data.loop_triangles:
                 for vgroup in self.workObj.data.vertices[face.vertices[0]].groups:
+                    if self.workObj.vertex_groups[vgroup.group].name[:4].lower() == "off_": continue # Skip vertex groups with off_ in them
                     if vgroup.weight > 0.0:
                         if self.workObj.vertex_groups[vgroup.group].name not in self.workLimbPolygons:
                             self.workLimbPolygons[self.workObj.vertex_groups[vgroup.group].name] = []
                         self.workLimbPolygons[self.workObj.vertex_groups[vgroup.group].name].append(face)
                         continue
+            # TODO: We need to refactor this so the order of triangles in the dictionary aligns with the order of the bones
+            # from root to child
+            # TODO: Warn when a vertex group has polygons assigned where the skeleton does not have a bone for it
         else:
             # This is a single segment, therefore it uses the name of the mesh
             self.workLimbPolygons[self.workName] = []
@@ -207,6 +222,7 @@ class CSegmentConverter:
         if(samePos > 1):
             # Skip this face and move onto the next
             g_class.printWARNING("ATTENTION ARTIST: YOU HAVE AN INFINITELY THIN FACE!!!")
+            # TODO: We should either flag this more specifically or make more verbose output.
             return True
         else:
             return False
@@ -237,7 +253,7 @@ class CSegmentConverter:
         for triangle in inTriangleList:
             # We need to check if there is a zero area triangle face
             # ( A Face where two vertices share the same point in 3D space )
-            # Zero Aera Fces will cause PASM to crash
+            # Zero Area Faces will cause PASM to crash
             if self.isZeroAreaFace(triangle):
                 continue
             
@@ -245,27 +261,27 @@ class CSegmentConverter:
                 entryVertex = file_def_ape.PASMVert() # Assemble a PASMVert for this vertex
 
                 # Y-Up for PASM where Blender is Z-Up
-                entryVertex.Pos[0] = copy.copy ( self.workObj.data.vertices[vertexIndex].co[0] )
-                entryVertex.Pos[1] = copy.copy ( self.workObj.data.vertices[vertexIndex].co[2] )
-                entryVertex.Pos[2] = copy.copy ( self.workObj.data.vertices[vertexIndex].co[1] )
+                entryVertex.Pos[0] = copy.deepcopy( self.workObj.data.vertices[vertexIndex].co[0] )
+                entryVertex.Pos[1] = copy.deepcopy( self.workObj.data.vertices[vertexIndex].co[2] )
+                entryVertex.Pos[2] = copy.deepcopy( self.workObj.data.vertices[vertexIndex].co[1] )
 
-                entryVertex.Norm[0] =  copy.copy ( self.workObj.data.loops[loopIndex].normal[0] )
-                entryVertex.Norm[1] =  copy.copy ( self.workObj.data.loops[loopIndex].normal[2] )
-                entryVertex.Norm[2] =  copy.copy ( self.workObj.data.loops[loopIndex].normal[1] )
+                entryVertex.Norm[0] =  copy.deepcopy( self.workObj.data.loops[loopIndex].normal[0] )
+                entryVertex.Norm[1] =  copy.deepcopy( self.workObj.data.loops[loopIndex].normal[2] )
+                entryVertex.Norm[2] =  copy.deepcopy( self.workObj.data.loops[loopIndex].normal[1] )
 
                 # Assign UV data if we were able to grab it
-                if UV0 != None: entryVertex.aUVs[0] = copy.copy ( UV0.data[loopIndex].uv )
-                if UV1 != None: entryVertex.aUVs[1] = copy.copy ( UV1.data[loopIndex].uv )
+                if UV0 != None: entryVertex.aUVs[0] = copy.deepcopy( UV0.data[loopIndex].uv )
+                if UV1 != None: entryVertex.aUVs[1] = copy.deepcopy( UV1.data[loopIndex].uv )
 
                 # Vertex Color
-                if self.ColorChannel:
-                    entryVertex.Color[0] = copy.copy ( pasm_math.color_scene_linear_to_srgb(float(self.ColorChannel.data[vertexIndex].color[0]) ) )
-                    entryVertex.Color[1] = copy.copy ( pasm_math.color_scene_linear_to_srgb(float(self.ColorChannel.data[vertexIndex].color[1]) ) )
-                    entryVertex.Color[2] = copy.copy ( pasm_math.color_scene_linear_to_srgb(float(self.ColorChannel.data[vertexIndex].color[2]) ) )
+                if self.ColorAttribute:
+                    entryVertex.Color[0] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.ColorAttribute.data[vertexIndex].color[0]) ) )
+                    entryVertex.Color[1] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.ColorAttribute.data[vertexIndex].color[1]) ) )
+                    entryVertex.Color[2] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.ColorAttribute.data[vertexIndex].color[2]) ) )
 
                 # Vertex Alpha
-                if self.AlphaChannel:
-                    entryVertex.Color[3] = copy.copy ( pasm_math.color_scene_linear_to_srgb(float(self.AlphaChannel.data[vertexIndex].color[0]) ) )
+                if self.AlphaAttribute:
+                    entryVertex.Color[3] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.AlphaAttribute.data[vertexIndex].color[0]) ) )
 
                 # Vertex Weights
                 # In FANG, the 3 vertices that form a triangle can only have a max of 4 vertex weights total
@@ -327,14 +343,14 @@ class CSegmentConverter:
             layer.fShininess = 0.0
         else:
             layer.fShinStr   =  fangMatGroup.inputs["Shine Strength"].default_value / 100.0
-            layer.fShininess = (fangMatGroup.inputs["Shininesss"].default_value / 100) * 127.0
+            layer.fShininess = (fangMatGroup.inputs["Shininesss"    ].default_value / 100.0) * 127.0
 
         # Parse layer / child material name for star commands
         layerStrParser = CMaterialStringParser()
         layerStrParser.ResetToDefaults()
         # Use Star Commands from the Parent Material as a starting base for the layer material
-        layerStrParser.m_ApeCommands = copy.copy ( self.objStrParser.m_ApeCommands )
-        layerStrParser.Parse(matName.lower())
+        layerStrParser.m_ApeCommands = copy.deepcopy( self.objStrParser.m_ApeCommands )
+        layerStrParser.Parse( matName.lower() )
         layer.StarCommands = layerStrParser.m_ApeCommands
 
         try:
@@ -384,13 +400,13 @@ class CSegmentConverter:
         # We then use the object star commands as a base for all the materials
         matStrParser = CMaterialStringParser()
         matStrParser.ResetToDefaults()
-        matStrParser.m_ApeCommands = copy.deepcopy ( self.objStrParser.m_ApeCommands )
+        matStrParser.m_ApeCommands = copy.deepcopy( self.objStrParser.m_ApeCommands )
         matStrParser.Parse( self.inObj.data.materials[matIndex].name.lower() ) # Then we parse the material name for star commands & material flags
 
         mat.StarCommands = matStrParser.m_ApeCommands
         mat.nFlags       = matStrParser.m_nMatFlags
         mat.nAffectAngle = matStrParser.m_nAffectAngle
-        mat.StarCommands.TintRGB = copy.deepcopy ( matStrParser.m_TintRGB ) # Tint applied at the material level, NOT the layer level
+        mat.StarCommands.TintRGB = copy.deepcopy( matStrParser.m_TintRGB ) # Tint applied at the material level, NOT the layer level
 
         layer  = file_def_ape.PASMLayer()
         layer1 = file_def_ape.PASMLayer()
@@ -437,9 +453,14 @@ class CSegmentConverter:
         
         # Tint color is based on the first layer and applied at the material level
         if(mat.aMatLayers[0].StarCommands.nFlags & 0x02 == 0x02):
-            mat.StarCommands.TintRGB[0] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[0])
-            mat.StarCommands.TintRGB[1] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[1])
-            mat.StarCommands.TintRGB[2] = pasm_math.color_scene_linear_to_srgb(fangMatGroup.inputs["Tint Color"].default_value[2])
+            if fangMatGroup.node_tree.name.split(".",1)[0] == "FANG Composite":
+                color = fangMatGroup.inputs["Base"].links[0].from_node
+                color = color.inputs["Tint Color"].default_value
+            else:
+                color = fangMatGroup.inputs["Tint Color"].default_value
+            mat.StarCommands.TintRGB[0] = pasm_math.color_scene_linear_to_srgb(color[0])
+            mat.StarCommands.TintRGB[1] = pasm_math.color_scene_linear_to_srgb(color[1])
+            mat.StarCommands.TintRGB[2] = pasm_math.color_scene_linear_to_srgb(color[2])
 
         # Setup a default shader if not supplied
         if mat.StarCommands.nShaderNum < 0:
@@ -455,7 +476,8 @@ class CSegmentConverter:
     
         return mat
 
-    def createSegment(self, inBufferName):
+    # Returns a segment to work on, either one that has already been started or a brand new one
+    def getSegment(self, inBufferName):
         # Test to see if this segment already exists
         for segment in g_class.gApeSegments:
             if inBufferName == segment.szMeshName:
@@ -475,7 +497,7 @@ class CSegmentConverter:
 
     # Return True when successfully added geometry data to a new PASMSegment
     def ProcessSegment(self, inBufferName, inTriBuffer):
-        outSegment = self.createSegment(inBufferName)
+        outSegment = self.getSegment(inBufferName)
 
         # Itterate through the materials once to cache polygons into per material lists for access
         # rather than full itteration through polygons, everytime for each material
@@ -518,24 +540,20 @@ class CSegmentConverter:
         return outSegment # We will write out this segment later
 
     def Process(self):
-        # We start by creating a duplicate of the existing input geometry
-        self.createWorkObject()
-
+        # Get our input parameters that are based on our input geometry
         self.getWorkNameAndLODIndex()
         self.getArmatureObject()
         self.getObjectStarCommands()
-        
-        # Then we transform the data based on our set flags
+
+        # Create a copy of the existing input geometry that we modify to our hearts content
+        self.createWorkObject()
         self.prepareWorkObject()
 
+        # Get our transformed data properties
         self.getColorAttributes()
+        if not self.validateColorAttributes(): return
+        
 
-        if self.bExportHierarchy and self.bExportBinarySkinning:
-            if not self.areVertexGroupWeightsBinary():
-                g_class.printWARNING(f"[GEO ERROR]: Vertex Groups are not binary for {self.inObj.name}!")
-                return False
-
-        # After we seperate our polygons out by bones and export flags.
         # Each bowl represents a segment, segments created based on the following...
         # Unskinned mesh                   = 1 segment
         # Skinned mesh w/o Binary Skinning = 1 segment

@@ -191,6 +191,8 @@ class ExportWLD(Operator, ExportHelper):
                 # Go back to the start and rewrite the header with correct data
                 g_class.file.seek(0)
                 g_class.file.write(g_class.gApeHeader.packBytes())
+
+            g_class.RestoreCollections()
               
             # Did we encounter any errors?
             if(g_class.bShowErrorLog): os.startfile(g_class.fpErrorLog)

@@ -60,16 +60,36 @@ def writeFooterInfo(layout):
     strToolRevision = "MA Toolkit Version # " + strToolRevision
     toolRevision.label(text = strToolRevision)
 
-def PrepareCollections():
-    vl_colls = bpy.context.view_layer.layer_collection.children
+def getLayerCollection(collection, view_layer=None):
+    '''Returns the view layer LayerCollection for a specificied Collection'''
+    def scan_children(lc, result=None):
+        for c in lc.children:
+            if c.collection == collection:
+                return c
+            result = scan_children(c, result)
+        return result
 
-    restoreState = {}
+    if view_layer is None:
+        view_layer = bpy.context.view_layer
+    return scan_children(view_layer.layer_collection)
+
+restoreState = []
+vl_colls     = []
+
+def PrepareCollections():
+    restoreState.clear()
+    vl_colls.clear()
+    for coll in bpy.data.collections:
+        vl_colls.append(getLayerCollection(coll))
 
     for coll in vl_colls:
-        restoreState[coll.name] = coll.exclude
+        restoreState.append([coll.exclude, coll.hide_viewport])
         coll.exclude = False
+        coll.hide_viewport = False
 
     bpy.context.evaluated_depsgraph_get().update()
-    
-    for x in restoreState.keys():
-        vl_colls[x].exclude = restoreState[x]
+
+def RestoreCollections():
+    for idx, x in enumerate(restoreState):
+        vl_colls[idx].exclude = x[0]
+        vl_colls[idx].hide_viewport = x[1]

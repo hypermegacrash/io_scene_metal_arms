@@ -135,7 +135,6 @@ class ExportAPE(Operator, ExportHelper):
                     for obj in objects:
                         ExportObjLight(obj)
                 
-                # TODO: Add LOD Support
                 if(self.m_bExportGeo):
 
                     # Ensure we have no left over segments
@@ -160,9 +159,12 @@ class ExportAPE(Operator, ExportHelper):
                 # PASM will complain about this not being a valid .ape
                 if(g_class.gApeHeader.nNumSegments == 0):
                     g_class.logError("APE ERROR: The exported file has no geometry.\n" +
-                    "POSSIBLE FIX 1: Ensure geometry you want exported does not have obj_ prefix.\n" +
-                    "POSSIBLE FIX 2: Ensure geometry has FANG Materials or FANG Composite Materials applied, regular materials will NOT be exported.")
+                    "POSSIBLE FIX 1: Ensure geometry you want exported does not have obj_ or off_ prefix.\n" +
+                    "POSSIBLE FIX 2: Ensure geometry has FANG Materials or FANG Composite Materials applied, regular materials will NOT be exported.\n" +
+                    "POSSIBLE FIX 3: If you are exporting an .ape with no skeleton / armature, ensure Export Hierarchy is unchecked.")
     
+            g_class.RestoreCollections()
+            
             # Did we encounter any errors?
             if(g_class.bShowErrorLog): os.startfile(g_class.fpErrorLog)
             
