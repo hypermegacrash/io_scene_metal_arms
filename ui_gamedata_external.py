@@ -21,7 +21,7 @@ Expose an external editor to be used for editing multi line gamedata text"""
 
         self.currentObj = bpy.context.active_object
 
-        tempFile = os.path.dirname(os.path.realpath(__file__)) + "\\" + self.currentObj.name + "_GD.txt"  # Path to the export file
+        tempFile = os.path.dirname(os.path.realpath(__file__)) + "\\GD.txt"  # Path to the export file
             
         if "ma" not in bpy.data.objects[self.currentObj.name]:    
             bpy.data.objects[self.currentObj.name]["ma"] = ""

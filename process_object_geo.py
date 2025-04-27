@@ -334,9 +334,10 @@ class CSegmentConverter:
         layer.bTextured = 1
         layer.fUnitAlphaMultiplier = 1.0
 
-        layer.SpecularRGB[0] = fangMatGroup.inputs["Specular Color"].default_value[0]
-        layer.SpecularRGB[1] = fangMatGroup.inputs["Specular Color"].default_value[1]
-        layer.SpecularRGB[2] = fangMatGroup.inputs["Specular Color"].default_value[2]
+        # Specular not used in retail
+        #layer.SpecularRGB[0] = fangMatGroup.inputs["Specular Color"].default_value[0]
+        #layer.SpecularRGB[1] = fangMatGroup.inputs["Specular Color"].default_value[1]
+        #layer.SpecularRGB[2] = fangMatGroup.inputs["Specular Color"].default_value[2]
 
         if(fangMatGroup.inputs["Shine Strength"].default_value < 0.05):
             layer.fShinStr   = 0.0
@@ -362,8 +363,9 @@ class CSegmentConverter:
         try:    layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_ALPHA_MASK] = fangMatGroup.inputs["Alpha Mask"].links[0].from_node.image.name.split(".",1)[0]
         except: pass
 
-        try:    layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_SPECULAR_MASK] = fangMatGroup.inputs["Specular Mask"].links[0].from_node.image.name.split(".",1)[0]
-        except: pass
+        # Specular not used in retail
+        #try:    layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_SPECULAR_MASK] = fangMatGroup.inputs["Specular Mask"].links[0].from_node.image.name.split(".",1)[0]
+        #except: pass
 
         try:    layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_EMISSIVE_MASK] = fangMatGroup.inputs["Emissive Mask"].links[0].from_node.image.name.split(".",1)[0]
         except: pass
@@ -377,15 +379,14 @@ class CSegmentConverter:
         try:    layer.szTexName[file_def_ape.PASMLayerIndex_e.APE_LAYER_TEXTURE_DETAIL] = fangMatGroup.inputs["Detail Map"].links[0].from_node.image.name.split(".",1)[0]
         except: pass
 
-        if(fangMatGroup.inputs["Illumination"].default_value != 0):
+        # Called Illumination in 3ds max
+        if(fangMatGroup.inputs["Emissive"].default_value != 0):
             layer.StarCommands.bUseEmissiveColor = 1
-            layer.IllumRGB[0] = fangMatGroup.inputs["Illumination"].default_value
-            layer.IllumRGB[1] = fangMatGroup.inputs["Illumination"].default_value
-            layer.IllumRGB[2] = fangMatGroup.inputs["Illumination"].default_value
+            layer.IllumRGB[0] = fangMatGroup.inputs["Emissive"].default_value
+            layer.IllumRGB[1] = fangMatGroup.inputs["Emissive"].default_value
+            layer.IllumRGB[2] = fangMatGroup.inputs["Emissive"].default_value
 
-        layer.bTwoSided = int(fangMatGroup.inputs["Two Sided"].default_value)
-        if layer.bTwoSided > 1: layer.bTwoSided = 1
-        if layer.bTwoSided < 0: layer.bTwoSided = 0
+        layer.bTwoSided = int(fangMatGroup.inputs["Two-Sided"].default_value)
 
         return layer
 
@@ -453,11 +454,14 @@ class CSegmentConverter:
         
         # Tint color is based on the first layer and applied at the material level
         if(mat.aMatLayers[0].StarCommands.nFlags & 0x02 == 0x02):
-            if fangMatGroup.node_tree.name.split(".",1)[0] == "FANG Composite":
+            if (fangMatGroup.node_tree.name.split(".",1)[0] == "FANG Material"):
+                color = fangMatGroup.inputs["Tint Color"].default_value
+            elif fangMatGroup.node_tree.name.split(".",1)[0] == "FANG Composite":
                 color = fangMatGroup.inputs["Base"].links[0].from_node
                 color = color.inputs["Tint Color"].default_value
             else:
-                color = fangMatGroup.inputs["Tint Color"].default_value
+                raise ValueError(f"MATERIAL ERROR: Unable to parse Tint Color for material {self.inObj.data.materials[matIndex].name.lower()} in object {self.inObj.name}")
+            
             mat.StarCommands.TintRGB[0] = pasm_math.color_scene_linear_to_srgb(color[0])
             mat.StarCommands.TintRGB[1] = pasm_math.color_scene_linear_to_srgb(color[1])
             mat.StarCommands.TintRGB[2] = pasm_math.color_scene_linear_to_srgb(color[2])

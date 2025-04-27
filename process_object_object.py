@@ -15,7 +15,7 @@ def ExportObjObject(obj):
 
     if round(obj.scale.x, 5) != round(obj.scale.y, 5) != round(obj.scale.z, 5):
         if obj.empty_display_type != "CUBE":
-            g_class.logError("OBJECT ERROR: The object object " + obj.name + " does not have a uniform scale! Found " + obj.scale + " Skipping")
+            g_class.logError(f"OBJECT ERROR: The object object {obj.name} does not have a uniform scale! Found {obj.scale[0]:.3f}, {obj.scale[1]:.3f}, {obj.scale[2]:.3f}... Skipping")
             return
     
     outObject = file_def_ape.PASMObject()

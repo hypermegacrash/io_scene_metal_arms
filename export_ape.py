@@ -122,26 +122,34 @@ class ExportAPE(Operator, ExportHelper):
                             #print("  REMOVE " + obj.name)
                             try:    objects.remove(obj)
                             except: pass
+
+                # Start up a small progress bar that the user can look at to know things are happening.
+                # UI still locks up during export if the user clicks on the window which we just have to deal with.
+                wm = context.window_manager
+                wm.progress_begin(0, len(objects))
     
                 # To mimic the original exporter as closely as possible
                 # We itterate over the entire scene for each section of the PASM file
                 # One loop for lights, one for geo, one for cells, and so on
             
                 if(self.m_bExportHierarchy):
-                    for obj in objects:
+                    for idx, obj in enumerate(objects):
                         ExportObjBone(obj)
+                        wm.progress_update(idx)
                         
                 if(self.m_bExportLights):
-                    for obj in objects:
+                    for idx, obj in enumerate(objects):
                         ExportObjLight(obj)
+                        wm.progress_update(idx)
                 
                 if(self.m_bExportGeo):
 
                     # Ensure we have no left over segments
                     g_class.gApeSegments.clear()
 
-                    for obj in objects:
+                    for idx, obj in enumerate(objects):
                         ExportObjGeo(obj, self.m_bExportHierarchy, self.m_bExportBinarySkinning)
+                        wm.progress_update(idx)
 
                     for segment in g_class.gApeSegments:
                         g_class.file.write(segment.packBytes())
@@ -164,6 +172,9 @@ class ExportAPE(Operator, ExportHelper):
                     "POSSIBLE FIX 3: If you are exporting an .ape with no skeleton / armature, ensure Export Hierarchy is unchecked.")
     
             g_class.RestoreCollections()
+
+            # Done exporting, kill the progress cursor
+            wm.progress_end()
             
             # Did we encounter any errors?
             if(g_class.bShowErrorLog): os.startfile(g_class.fpErrorLog)

@@ -145,40 +145,48 @@ class ExportWLD(Operator, ExportHelper):
                             except: pass
                         VolumeColls.append(thisVolume)
 
+                # Start up a small progress bar that the user can look at to know things are happening.
+                # UI still locks up during export if the user clicks on the window which we just have to deal with.
+                wm = context.window_manager
+                wm.progress_begin(0, len(objects))
+
                 # To mimic the original exporter as closely as possible
                 # We itterate over the entire scene for each section of the PASM file
                 # One loop for lights, one for geo, one for cells, and so on
 	       
                 if(self.m_bExportLights):
-                    for obj in objects:
+                    for idx, obj in enumerate(objects):
                         ExportObjLight(obj)
+                        wm.progress_update(idx)
                 
                 if(self.m_bExportObjects):
-                    for obj in objects:
+                    for idx, obj in enumerate(objects):
                         ExportObjObject(obj)
+                        wm.progress_update(idx)
 	
-                # Fog got deprecated and moved to level .csv
-                #for obj in objects:
-                #    ExportObjFog(obj)
-	
-                for obj in objects:
+                for idx, obj in enumerate(objects):
                     ExportObjShape(obj)
+                    wm.progress_update(idx)
 
-                for obj in objects:
+                for idx, obj in enumerate(objects):
                     ExportObjVolume(obj)
-                for Volume in VolumeColls:
+                    wm.progress_update(idx)
+                for idx, Volume in enumerate(VolumeColls):
                     ExportObjVolume(Volume)
+                    wm.progress_update(idx)
                     
-                for obj in objects:
+                for idx, obj in enumerate(objects):
                     ExportObjPortal(obj)
+                    wm.progress_update(idx)
                 
                 if(self.m_bExportGeo):        
 
                     # Ensure we have no left over segments
                     g_class.gApeSegments.clear()
 
-                    for obj in objects:
+                    for idx, obj in enumerate(objects):
                         ExportObjGeo(obj, False, False)
+                        wm.progress_update(idx)
 
                     for segment in g_class.gApeSegments:
                         g_class.file.write(segment.packBytes())
@@ -193,6 +201,9 @@ class ExportWLD(Operator, ExportHelper):
                 g_class.file.write(g_class.gApeHeader.packBytes())
 
             g_class.RestoreCollections()
+
+            # Done exporting, kill the progress cursor
+            wm.progress_end()
               
             # Did we encounter any errors?
             if(g_class.bShowErrorLog): os.startfile(g_class.fpErrorLog)
