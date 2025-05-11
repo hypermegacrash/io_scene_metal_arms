@@ -371,10 +371,11 @@ SocketName
 SocketCount
 InsertedChipCount
 ChipScale
-Dispense
+Dispenser
 UseOnce
 
 # Debris Commands
+DebrisGroupSmall
 DebrisGroupMedium
 DebrisGroupLarge
 DebrisCountPerShake

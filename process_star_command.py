@@ -8,6 +8,7 @@ from . import g_class                   # Error handler
 import bpy # Needed for popping up an error screen
 # GLOBALS
 _AUTO_ID = -128 # Dont do this, shouldn't this be -1???
+g_LastStarCmdError = None
     
 def StarCmdCheckNumParams( pszMatStr, nExpectedArgCount, nParams, starCmdName ):
     if nExpectedArgCount != len(nParams):
@@ -33,24 +34,25 @@ def StarCmdCheckNumParams( pszMatStr, nExpectedArgCount, nParams, starCmdName ):
     return True
 
 def _GetParameterString(pszCmd):
+    global g_LastStarCmdError
     psz1stParenthesis = pszCmd.find("(")
     if(psz1stParenthesis == -1):
-        print("Missing (")
+        g_LastStarCmdError = "Missing ("
         return False
     
     psz2ndParenthesis = pszCmd.find(")")
     if(psz2ndParenthesis == -1):
-        print("Missing )")
+        g_LastStarCmdError = "Missing )"
         return False
     
     if(psz1stParenthesis > psz2ndParenthesis):
-        print("Statement not enclosed in parenthesis")
+        g_LastStarCmdError = "Statement not enclosed in parenthesis"
         return False
 
     pszNextCmd = pszCmd.find("*")
     if(pszNextCmd != -1):
         if (psz2ndParenthesis > pszNextCmd):
-            print("Found additional * command before )")
+            g_LastStarCmdError = "Found additional * command before )"
             return False
 
     nParams = pszCmd[psz1stParenthesis + 1:psz2ndParenthesis].split(",")
@@ -114,6 +116,8 @@ class CMaterialStringParser:
                 
                 if StarCmdCheckNumParams( inStr, nArgCount, self.nParams, Cmd ):
                     return True
+            else:
+                g_class.logError(f"STAR COMMAND MATERIAL ERROR: Trouble parsing {inStr}: Encountered following error: {g_LastStarCmdError}")
         return False
     
     # This is run before EVERY Material is parsed, it's essentially the default PASMLight.PASMCommands
@@ -309,6 +313,8 @@ class CObjectStringParser:
                 
                 if StarCmdCheckNumParams( inStr, nArgCount, self.nParams, Cmd ):
                     return True
+            else:
+                g_class.logError(f"STAR COMMAND OBJECT ERROR: Trouble parsing {inStr}: Encountered following error: {g_LastStarCmdError}")
         return False
         
     def Parse(self, pszObjectStr):
@@ -326,7 +332,7 @@ class CObjectStringParser:
             self.m_TintRGB[0] = ( max(0.0, min(float(self.nParams[0]), 255.0)) ) / 255.0
             self.m_TintRGB[1] = ( max(0.0, min(float(self.nParams[1]), 255.0)) ) / 255.0
             self.m_TintRGB[2] = ( max(0.0, min(float(self.nParams[2]), 255.0)) ) / 255.0
-            
+            self.m_ApeObjectFlag |= APE_OB_FLAG_TINT  
             
         #if( pszObjectStr.find("*sort")         != -1 ): print("*sort not implimented") # LEGACY
         if( pszObjectStr.find("*nodraw")       != -1 ): self.m_ApeObjectFlag |= APE_OB_FLAG_NO_DRAW
@@ -384,6 +390,8 @@ class CLightStringParser:
                 
                 if StarCmdCheckNumParams( inStr, nArgCount, self.nParams, Cmd ):
                     return True
+            else:
+                g_class.logError(f"STAR COMMAND LIGHT ERROR: Trouble parsing {inStr}: Encountered following error: {g_LastStarCmdError}")
         return False
         
     def Parse(self, pszLightStr):
@@ -401,9 +409,14 @@ class CLightStringParser:
             self.m_ApeLightFlag |= APE_LIGHT_FLAG_CORONA
             self.m_szCoronaTexture = self.nParams[0]
             
-        if(self._GetParamterString2(pszLightStr, "*perpixel", 1)): 
-            self.m_ApeLightFlag |= APE_LIGHT_FLAG_PER_PIXEL
-            self.m_szPerPixelTexture = self.nParams[0]
+        # *perpixel star command can have either 0 or 1 arguments
+        if( pszLightStr.find("*perpixel") != -1 ):         
+            if( pszLightStr.find("*perpixel(") != -1 ):
+                if(self._GetParamterString2(pszLightStr, "*perpixel", 1)): 
+                    self.m_ApeLightFlag |= APE_LIGHT_FLAG_PER_PIXEL
+                    self.m_szPerPixelTexture = self.nParams[0]
+            else:
+                self.m_ApeLightFlag |= APE_LIGHT_FLAG_PER_PIXEL
         
         if( pszLightStr.find("*onlyppmesh")  != -1 ): self.m_ApeLightFlag |= APE_LIGHT_FLAG_MESH_MUST_BE_PER_PIXEL
         if( pszLightStr.find("*onlydynamic") != -1 ): self.m_ApeLightFlag |= APE_LIGHT_FLAG_DYNAMIC_ONLY
@@ -452,6 +465,8 @@ class CPortalStringParser:
                 
                 if StarCmdCheckNumParams( inStr, nArgCount, self.nParams, Cmd ):
                     return True
+            else:
+                g_class.logError(f"STAR COMMAND PORTAL ERROR: Trouble parsing {inStr}: Encountered following error: {g_LastStarCmdError}")
         return False
     
     def ResetToDefaults(self):
