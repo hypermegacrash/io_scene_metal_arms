@@ -115,14 +115,12 @@ class CSegmentConverter:
     def validateColorAttributes(self):
         isValid = True
         if self.ColorAttribute:
-            if self.ColorAttribute.domain != 'POINT' or self.ColorAttribute.data_type != 'FLOAT_COLOR':
-                g_class.logError(f"COLOR ATTRIBUTE ERROR: The Color Attribute {self.ColorAttribute.name} for object {self.inObj.name} is not set to Domain Vertex and Data Type Color. Please fix and retry exporting.")
-                isValid = False
+            if self.ColorAttribute.data_type != 'FLOAT_COLOR':
+                g_class.logError(f"COLOR ATTRIBUTE ERROR: The Color Attribute {self.ColorAttribute.name} for object {self.inObj.name} is not set to Data Type Color. Please fix and retry exporting.")
             
         if self.AlphaAttribute:
-            if self.AlphaAttribute.domain != 'POINT' or self.AlphaAttribute.data_type != 'FLOAT_COLOR':
-                g_class.logError(f"COLOR ATTRIBUTE ERROR: The Color Attribute {self.AlphaAttribute.name} for object {self.inObj.name} is not set to Domain Vertex and Data Type Color. Please fix and retry exporting.")
-                isValid = False
+            if self.ColorAttribute.data_type != 'FLOAT_COLOR':
+                g_class.logError(f"COLOR ATTRIBUTE ERROR: The Color Attribute {self.ColorAttribute.name} for object {self.inObj.name} is not set to Data Type Color. Please fix and retry exporting.")
 
         return isValid
 
@@ -275,13 +273,22 @@ class CSegmentConverter:
 
                 # Vertex Color
                 if self.ColorAttribute:
-                    entryVertex.Color[0] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.ColorAttribute.data[vertexIndex].color[0]) ) )
-                    entryVertex.Color[1] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.ColorAttribute.data[vertexIndex].color[1]) ) )
-                    entryVertex.Color[2] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.ColorAttribute.data[vertexIndex].color[2]) ) )
+                    if self.ColorAttribute.domain == 'POINT': # Unique color per vertex
+                        entryVertex.Color[0] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.ColorAttribute.data[vertexIndex].color[0]) ) )
+                        entryVertex.Color[1] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.ColorAttribute.data[vertexIndex].color[1]) ) )
+                        entryVertex.Color[2] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.ColorAttribute.data[vertexIndex].color[2]) ) )
+                    if self.ColorAttribute.domain == "CORNER": # Unique color per triange loop
+                        entryVertex.Color[0] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.ColorAttribute.data[loopIndex].color[0]) ) )
+                        entryVertex.Color[1] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.ColorAttribute.data[loopIndex].color[1]) ) )
+                        entryVertex.Color[2] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.ColorAttribute.data[loopIndex].color[2]) ) )
 
                 # Vertex Alpha
                 if self.AlphaAttribute:
-                    entryVertex.Color[3] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.AlphaAttribute.data[vertexIndex].color[0]) ) )
+                    if self.ColorAttribute.domain == 'POINT': # Unique color per vertex
+                        entryVertex.Color[3] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.AlphaAttribute.data[vertexIndex].color[0]) ) )
+                    if self.ColorAttribute.domain == "CORNER": # Unique color per triange loop
+                        entryVertex.Color[3] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.AlphaAttribute.data[loopIndex].color[0]) ) )
+                    
 
                 # Vertex Weights
                 # In FANG, the 3 vertices that form a triangle can only have a max of 4 vertex weights total

@@ -437,7 +437,7 @@ class CLightStringParser:
             
         if(self._GetParamterString2(pszLightStr, "*motif", 1)): 
             self.m_nMotifID = int(self.nParams[0])
-            if(int(self.nParams[1]) != 0):
+            if(int(self.nParams[0]) != 0):
                 self.m_ApeLightFlag |= APE_LIGHT_FLAG_DONT_USE_RGB
        
 #  ___  ___  ___ _____ _   _    

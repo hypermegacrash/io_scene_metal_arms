@@ -240,38 +240,39 @@ class MAGDVIEW(bpy.types.Operator):
         region = bpy.context.region
         rv3d = bpy.context.space_data.region_3d
         
-        for obj in bpy.context.scene.objects:
-            if "ma" in bpy.data.objects[obj.name] and bpy.data.objects[obj.name].hide_get() == False:
+        for obj in bpy.context.view_layer.objects:
+            if not obj.visible_get(): continue # Is this object currently rendering in the scene?
+            if "ma" not in obj:       continue # Does this object have any gamedata to preview?
 
-                # Don't draw stuff too far away
-                view_mat_inv = rv3d.view_matrix
+            # Don't draw stuff too far away
+            view_mat_inv = rv3d.view_matrix
             
-                if rv3d.is_perspective:
-                    dist = (view_mat_inv@obj.location).length
+            if rv3d.is_perspective:
+                dist = (view_mat_inv@obj.location).length
+            else:
+                dist = -(view_mat_inv@obj.location).z
+                
+            if dist > MAGDVIEW_INST.drawDist:
+                continue
+            
+            vector2d = location_3d_to_region_2d(region, rv3d, obj.location)
+            
+            if vector2d == None:
+                continue
+            
+            lines = bpy.data.objects[obj.name]["ma"].split("\n")
+            
+            for line in lines:
+                blf.position(font_id, vector2d[0], vector2d[1], 0)
+                if line[:4].lower() == "name":
+                    blf.color(font_id, 0.4, 0.4, 1.0, 1.0)
+                elif line[:1].lower() == "#":
+                    blf.color(font_id, 0.4, 1.0, 1.0, 1.0)
                 else:
-                    dist = -(view_mat_inv@obj.location).z
-                    
-                if dist > MAGDVIEW_INST.drawDist:
-                    continue
-            
-                vector2d = location_3d_to_region_2d(region, rv3d, obj.location)
+                    blf.color(font_id, 1.0, 1.0, 1.0, 1.0)
                 
-                if vector2d == None:
-                    continue
-                
-                lines = bpy.data.objects[obj.name]["ma"].split("\n")
-            
-                for line in lines:
-                    blf.position(font_id, vector2d[0], vector2d[1], 0)
-                    if line[:4].lower() == "name":
-                        blf.color(font_id, 0.4, 0.4, 1.0, 1.0)
-                    elif line[:1].lower() == "#":
-                        blf.color(font_id, 0.4, 1.0, 1.0, 1.0)
-                    else:
-                        blf.color(font_id, 1.0, 1.0, 1.0, 1.0)
-                    
-                    blf.draw(font_id, line)
-                    vector2d[1] -= 18
+                blf.draw(font_id, line)
+                vector2d[1] -= 18
     
     def execute(self, context):
         if MAGDVIEW_INST.isEnabled == False:

@@ -5,6 +5,7 @@ from . import file_def_ape  # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
 from .process_gamedata import ProcessGamedata # Import just the Gmaedata Parser
+import bpy
 
 def ExportObjShape(obj):
     bExitEarly = False
@@ -91,13 +92,34 @@ def ExportObjShape(obj):
             
         # Metal Arms only supports one chain of splines
         outShape.typeData.nNumSegments = 1
+
+
+        # To not destroy the existing scene, we will duplicate the input object
+        # we want to modify then delete after we finish exporting segments
+        bpy.ops.object.select_all(action="DESELECT")
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.duplicate()
+
+        # Assign a handle to our new work object
+        workObj = bpy.context.view_layer.objects.active
+
+        # Apply transformation, rotation, scale, etc
+        bpy.ops.object.select_all(action="DESELECT")
+        workObj.select_set(True)
+        bpy.context.view_layer.objects.active = workObj
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True, properties=False)
         
-        for point in obj.data.splines[0].points:
+        for point in workObj.data.splines[0].points:
             # Multiply our world position matrix by the vertex position X Y Z to get world space position of verts
-            PosAfterWTM = obj.matrix_world @ point.co
+            PosAfterWTM = workObj.matrix_world @ point.co
             outShape.userData.append(PosAfterWTM[0])
             outShape.userData.append(PosAfterWTM[2])
             outShape.userData.append(PosAfterWTM[1])
+
+        bpy.ops.object.select_all(action="DESELECT")
+        workObj.select_set(True)
+        bpy.ops.object.delete()
     
     # Rotation Matrix fun
     
