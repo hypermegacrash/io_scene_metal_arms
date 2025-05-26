@@ -232,6 +232,7 @@ NPCWeapon0
 KeepLimb
 NPCWeapon1
 SpotLightOn
+DisableVelocityImpulses
 CanBeRecruited
 Babble
 
@@ -280,16 +281,6 @@ spawntime
 ammo
 gametype
 batterynum
-
-# Destructable Entity Commands
-sound_destruct_bank
-sound_destruct_wave
-sound_destruct_volume
-sound_destruct_radius
-disappear
-dieexplode
-diedebris
-diedebrisvel
 
 # Door Commands
 type

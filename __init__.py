@@ -6,7 +6,7 @@ import bpy # Registering / Unregistering classes
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 19, 11),
+        "version": (0, 19, 12),
         "blender": (4, 2, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",
@@ -21,7 +21,8 @@ from .export_ape import *
 from .export_cam import *
 from .export_mtx import *
 # Classes that expose more Metal Arms functionality
-from .ui_gamedata               import *
+if not bpy.app.background:
+    from .ui_gamedata               import *
 from .ui_gamedata_external      import *
 from .ui_data_properties_object import *
 from .ui_data_properties_light  import *
@@ -30,16 +31,12 @@ from .ui_sidebar_helpers        import *
 from .process_gamedata          import setupgdkeys
 
 # The list of classes we are registering within Blender
-classes = (
+classes = [
     # File Export Logic
     ExportWLD,
     ExportAPE,
     ExportCAM,
     ExportMTX,
-    
-    # Gamedata Editor UI
-    MAGD_Operator,
-    MAGD_External_Operator,
     
     # Data UI
     MAObjectDataProperty,
@@ -52,15 +49,22 @@ classes = (
     MABSDF2FM,
     MA_OpenGDKeys,
     MA_CopyGamedata,
-    MAGDVIEW,
-)
+]
 
-aExportUI = (
+if not bpy.app.background:
+    # Gamedata Editor UI
+    classes.append(MAGD_Operator)
+    classes.append(MAGD_External_Operator)
+
+    # Sidebar general help functions
+    classes.append(MAGDVIEW)
+
+aExportUI = [
     exportAPE_MenuFunc,
     exportWLD_MenuFunc,
     exportCAM_MenuFunc,
     exportMTX_MenuFunc,
-)
+]
 
 # When this add-on is enabled in Edit>Preferences>Add-ons, this function is called
 def register():    
@@ -73,9 +77,9 @@ def register():
     for func in aExportUI:
         bpy.types.TOPBAR_MT_file_export.append(func)
     
-    # Update UI in Right Click > Object Context Menu
-    bpy.types.VIEW3D_MT_object_context_menu.append(MAGD_MenuFunc)
-    if os.name == "nt":
+    if not bpy.app.background:
+        # Update UI in Right Click > Object Context Menu
+        bpy.types.VIEW3D_MT_object_context_menu.append(MAGD_MenuFunc)
         bpy.types.VIEW3D_MT_object_context_menu.append(MAGD_External_MenuFunc)
     
     # Register extra properties for objects
@@ -101,10 +105,10 @@ def unregister():
     #print("Metal Arms Toolbox Add-On disabled!")
     # We unregister in reverse order because systems initialized latter may rely on systems initalized earlier
     
-    # Update UI in Right Click > Object Context Menu
-    if os.name == "nt":
+    if not bpy.app.background:
+        # Update UI in Right Click > Object Context Menu
         bpy.types.VIEW3D_MT_object_context_menu.remove(MAGD_External_MenuFunc)
-    bpy.types.VIEW3D_MT_object_context_menu.remove(MAGD_MenuFunc)
+        bpy.types.VIEW3D_MT_object_context_menu.remove(MAGD_MenuFunc)
     
     del bpy.types.Light.ma_light_props
     # Update UI in Object > Data

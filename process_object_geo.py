@@ -105,11 +105,31 @@ class CSegmentConverter:
 
     # Get our color attributes   
     def getColorAttributes(self):
+        # Check to see if any color attributes exist that dont follow our naming convention
         for attribute in self.workObj.data.color_attributes:
             outName = attribute.name.lower()[:]
             outName = outName.split(".",1)[0]
-            if(outName == "alpha"): self.AlphaAttribute = attribute
-            if(outName == "color"): self.ColorAttribute = attribute
+
+            if(outName == "color"): continue
+            if(outName == "alpha"): continue
+
+            g_class.logError(f"COLOR ATTRIBUTE ERROR: Color attributes must be prefixed with (color.) or (alpha.) Found {attribute.name} for object {self.inObj.name}.")
+
+        for attribute in self.workObj.data.color_attributes:
+            outName = attribute.name.lower()[:]
+            outName = outName.split(".",1)[0]
+
+            if self.ColorAttribute == None:
+                if(outName == "color"): 
+                    self.ColorAttribute = attribute
+            else:
+                g_class.logError(f"COLOR ATTRIBUTE ERROR: Only 1 Color Attribute can be exported. Found {self.ColorAttribute.name} and {attribute.name} for object {self.inObj.name}.")
+
+            if self.AlphaAttribute == None:
+                if(outName == "alpha"): 
+                    self.AlphaAttribute = attribute
+            else:
+                g_class.logError(f"COLOR ATTRIBUTE ERROR: Only 1 Alpha Attribute can be exported. Found {self.AlphaAttribute.name} and {attribute.name} for object {self.inObj.name}.")
 
     # Ensure the color attributes are in the correct format for us to process
     def validateColorAttributes(self):
@@ -119,8 +139,8 @@ class CSegmentConverter:
                 g_class.logError(f"COLOR ATTRIBUTE ERROR: The Color Attribute {self.ColorAttribute.name} for object {self.inObj.name} is not set to Data Type Color. Please fix and retry exporting.")
             
         if self.AlphaAttribute:
-            if self.ColorAttribute.data_type != 'FLOAT_COLOR':
-                g_class.logError(f"COLOR ATTRIBUTE ERROR: The Color Attribute {self.ColorAttribute.name} for object {self.inObj.name} is not set to Data Type Color. Please fix and retry exporting.")
+            if self.AlphaAttribute.data_type != 'FLOAT_COLOR':
+                g_class.logError(f"COLOR ATTRIBUTE ERROR: The Color Attribute {self.AlphaAttribute.name} for object {self.inObj.name} is not set to Data Type Color. Please fix and retry exporting.")
 
         return isValid
 
@@ -284,9 +304,9 @@ class CSegmentConverter:
 
                 # Vertex Alpha
                 if self.AlphaAttribute:
-                    if self.ColorAttribute.domain == 'POINT': # Unique color per vertex
+                    if self.AlphaAttribute.domain == 'POINT': # Unique color per vertex
                         entryVertex.Color[3] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.AlphaAttribute.data[vertexIndex].color[0]) ) )
-                    if self.ColorAttribute.domain == "CORNER": # Unique color per triange loop
+                    if self.AlphaAttribute.domain == "CORNER": # Unique color per triange loop
                         entryVertex.Color[3] = copy.deepcopy( pasm_math.color_scene_linear_to_srgb(float(self.AlphaAttribute.data[loopIndex].color[0]) ) )
                     
 
@@ -346,12 +366,13 @@ class CSegmentConverter:
         #layer.SpecularRGB[1] = fangMatGroup.inputs["Specular Color"].default_value[1]
         #layer.SpecularRGB[2] = fangMatGroup.inputs["Specular Color"].default_value[2]
 
-        if(fangMatGroup.inputs["Shine Strength"].default_value < 0.05):
-            layer.fShinStr   = 0.0
-            layer.fShininess = 0.0
-        else:
-            layer.fShinStr   =  fangMatGroup.inputs["Shine Strength"].default_value / 100.0
-            layer.fShininess = (fangMatGroup.inputs["Shininesss"    ].default_value / 100.0) * 127.0
+        # Specular not used in retail
+        #if(fangMatGroup.inputs["Shine Strength"].default_value < 0.05):
+        #    layer.fShinStr   = 0.0
+        #    layer.fShininess = 0.0
+        #else:
+        #    layer.fShinStr   =  fangMatGroup.inputs["Shine Strength"].default_value / 100.0
+        #    layer.fShininess = (fangMatGroup.inputs["Shininesss"    ].default_value / 100.0) * 127.0
 
         # Parse layer / child material name for star commands
         layerStrParser = CMaterialStringParser()

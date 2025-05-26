@@ -162,13 +162,13 @@ class CMaterialStringParser:
             
             self.m_ApeCommands.nShaderNum = max(0, self.nParams[0])
         
-        if(self._GetParamterString2(pszMatStr, "*motif", 6)):
-            self.m_ApeCommands.nEmissiveMotifID  = int(self.nParams[0])
-            self.m_ApeCommands.nDiffuseMotifID   = int(self.nParams[2])
-            self.m_ApeCommands.nSpecularMotifID  = int(self.nParams[4])
-            self.m_ApeCommands.bUseEmissiveColor = int(self.nParams[1])
-            self.m_ApeCommands.bUseDiffuseColor  = int(self.nParams[3])
-            self.m_ApeCommands.bUseSpecularColor = int(self.nParams[5])
+        # 6 in the original but only the emissive motif ID is ever actually used.
+        if(self._GetParamterString2(pszMatStr, "*motif", 1)):
+            nEmissiveMotifID = int(self.nParams[0])
+            if( nEmissiveMotifID >= 0 and nEmissiveMotifID < 65 ):
+                self.m_ApeCommands.nEmissiveMotifID  = nEmissiveMotifID
+            else:
+                g_class.logError(f"STAR COMMAND OBJECT ERROR: Trouble parsing {pszMatStr} Motif must be between 0 - 65.")
         
         if(self._GetParamterString2(pszMatStr, "*anim", 2)):
             self.m_ApeCommands.nNumTexFrames = int(self.nParams[0])
