@@ -6,7 +6,7 @@ import bpy # Registering / Unregistering classes
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 19, 12),
+        "version": (0, 19, 13),
         "blender": (4, 2, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",
@@ -92,9 +92,9 @@ def register():
     # Update UI in Object > Data
     bpy.types.DATA_PT_context_light.append(DrawMALightDataPanel)
 
-    ## Register extra properties for bones
+    # Register extra properties for bones
     bpy.types.Bone.ma_bone_props = bpy.props.PointerProperty(type = MABoneDataProperty)
-    ## Update UI
+    # Update UI
     bpy.types.BONE_PT_context_bone.append(DrawMABoneDataPanel)
     
     setupgdkeys()

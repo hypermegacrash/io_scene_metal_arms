@@ -1,0 +1,666 @@
+<!--Metal Arms Gamedata Database-->
+<header>
+    <!--What is the current format revision of this file ?-->
+    <create version="0.1" date="2025-07-27 17:01:16"/>
+    <!--What was the last tool to have touched this file ?-->
+    <generator name="Metal Arms Gamedata Database Editor" version="0.1"/>
+</header>
+
+<body>
+    <!--Artist friendly folder structure for organizing gamedata together.-->
+    <tree>
+        <folder name="Root">
+            <folder name="Shared">
+                <group name="Entity"/>
+                <group name="Bot"/>
+                <group name="Physics"/>
+                <group name="AI"/>
+                <group name="Spawn System"/>
+                <group name="Alarm System"/>
+                <group name="Vehicle"/>
+            </folder>
+            <folder name="Bots">
+                <entity name="SiteWeapon"/>
+                <entity name="BotAAGun"/>
+                <entity name="BotCorrosive"/>
+                <entity name="BotEliteGuard"/>
+                <entity name="BotGrunt"/>
+                <entity name="BotGlitch"/>
+                <entity name="BotJumper"/>
+                <entity name="BotMiner"/>
+                <entity name="BotMortar"/>
+                <entity name="BotMozer"/>
+                <entity name="BotKrunk"/>
+                <entity name="BotPred"/>
+                <entity name="BotProbe"/>
+                <entity name="BotScientist"/>
+                <entity name="BotScout"/>
+                <entity name="BotSlosh"/>
+                <entity name="BotSnarq"/>
+                <entity name="BotSwarmer"/>
+                <entity name="BotTitan"/>
+                <entity name="BotZombie"/>
+                <entity name="BotZombieBoss"/>
+            </folder>
+            <folder name="Vehicles">
+                <entity name="VehicleLoader"/>
+                <entity name="VehicleRat"/>
+                <entity name="VehicleTank"/>
+            </folder>
+            <entity name="Collectable"/>
+            <entity name="Destruct"/>
+            <entity name="Door"/>
+            <entity name="Box"/>
+            <entity name="Console"/>
+            <entity name="Debris"/>
+            <entity name="Detpack"/>
+            <entity name="Jumppad"/>
+            <entity name="LiquidMesh"/>
+            <entity name="LiquidVolume"/>
+            <entity name="Particle"/>
+            <entity name="Switch"/>
+            <entity name="GoodieProps"/>
+            <entity name="MeshEntity"/>
+            <entity name="Tripwire"/>
+            <entity name="Zipline"/>
+        </folder>
+    </tree>
+    <!--Elements containing the gamedata.-->
+    <gamedata>
+        <group name="Entity" description="Parameters inherited by all entities.">
+            <param name="Include" description="Append the gamedata parameters from the specified CSV file to this entity." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Name" description="Unique identifier for this entity to be referenced by other entities, scripting, etc." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AttachBone" description="Parents entity with the name of another entity&apos;s bone" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="InWorld" description="Makes an entity invisible and intangible. Useful if you want to spawn entity with a script" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="HealthContainer" description="Max number of life batteries for this entity. ( e.g., 2 = two batteries )." type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Health" description="The number of fully filled life batteries for this entity, with fractions giving partial batteries ( e.g., 1.5 = one and a half batteries )" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DamageProfile" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ArmorModifier" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ArmorProfile" description="Uses an entry in armor.csv as armor. Use nohitpoint if entity recieves no damage" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Attach" description="Parents entity with another entity so they move together" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="GoodieBag" description="Predecessor to the &quot;Goodie&quot; parameter" type="0" required="0" deprecated="1" unimplemented="0"/>
+            <param name="Goodie" description="Item in bag, first two digits are amount of item and must be the same" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Collectable" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Tripper" description="TRUE if this entity can activate tripwire triggers." type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TripwireArm" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Targetable" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Sound_Ambient_Tag" description="Sound Wav name or sfb tag to play" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Sound_Ambient_Volume" description="Sound volume" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Sound_Ambient_Radius" description="The distance from this entity the sound will linearly falloff from in audibility," type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Sound_Ambient_Off" description="Whether the sound should start off" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ProjReact" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Actionable" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+        </group>
+        <group name="Bot" description="Parameters inherited by all bots">
+            <param name="TalkData" description="Name of the BTA ( Bot Talk Action ) .csv to load and play for this bot instance." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TalkInst_HighPri" description="TRUE if this bot instance is allowed to interrupt an in progress BTA ( Bot Talk Action ) with it&apos;s own." type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TalkInst_GiveChip" description="TRUE if this bot instance will give the player a chip when finished with it&apos;s BTA. ( Bot Talk Action )" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TalkInst_TriggerEventStart" description="TRUE if this bot instance will trigger a script event when starting it&apos;s BTA. ( Bot Talk Action )" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TalkInst_TriggerEventEnd" description="TRUE if this bot instance will trigger a script event when finished it&apos;s BTA. ( Bot Talk Action )" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DataPort" description="Set the state of the dataport used by the control tether for this bot instance. ( None, Close, Closed, Open, Opened )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PossessDist" description="Set the distance this bot instance is allowed to walk from it&apos;s posession point before being forcefully ejected. ( 100.0 ( Min Distance ) - 100000.0 (Max Distance ) )" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DisguiseTIme" description="Set the time it takes for this bot instance to be discovered as posessed and be attacked. ( 0.0 ( Immediate ) - 100000.0 ( Never ) )" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="MeshVersion" description="Set the index for a replacement .ape mesh to use for this bot instance. Replacement meshes are hardcoded by bot. ( Corrosive, Glitch and Grunt Only )" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="MeshReplace" description="Set the name of the replacement .ape model to load for this bot instance. Bones must match. ( Glitch, Grunt, Krunk, Miner, Mortar, Mozer, Slosh, zombiebot king Only )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Sleeping" description="TRUE if this bot instance should not notice the player until alerted by noise or attacked." type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PowerDownUntilPosessed" description="TRUE if this bot instance should be turned off until posessed or recruited." type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="RunMultiplier" description="The maximum running speed for this bot instance ( 1.0 ( Walking ) - 100.0 ( Full Sprint ) )" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="NPCWeapon0" description="Set the primary weapon this bot should use ( HAND,  LASER, SPEW, FLAMER, BLASTER, ROCKET, RIVET ) ( Miner and Grunt Only )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="KeepLimb" description="Set the following limbs to never dislodge or break ( Head | Torso | Arms | Legs | | Wings | RL | Light | Misc | All ) ( TODO: Bot Limb Table )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="NPCWeapon1" description="Set the secondary weapon this bot should use ( HAND, GRENADE ) ( Grunt only )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SpotLightOn" description="TRUE if this bot instance should enable it&apos;s light to illuminate the environment." type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="CanBeRecruited" description="TRUE if this bot instance can be converted to the player&apos;s team by the recruiter grenade. A recruiter grenade symbol will appear above this bot&apos;s head for indication." type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Babble" description="TRUE if this bot instance should pitch shift and distort it&apos;s voice when speaking." type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="CanBeRecruitedWithoutDataport" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+        </group>
+        <group name="Physics" description="Parameters related to the Verlet Integration Physics Implementation. Sourced from the 2001 paper Advanced Character Physics by Thomas Jakobsen.">
+            <param name="Physics" description="TRUE if this entity should enable all the bones tagged for verlet integration physics simulation for it&apos;s corresponding .ape mesh" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysFreeze" description="TRUE if this entity starts with no active physics. Can be unfrozen to enable physics via scripting" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysFreezeWhenStill" description="TRUE if this entity should freeze itself once it becomes motionless and stops moving" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysDieWhenCollide" description="TRUE if this entity should Auto-die when the Verlet object passes through a surface" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysMass" description="Resistance of change for this entity. The higher this value, the harder and more force required to move this object." type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysDampening" description="( 0.0 - 1.0 ) Set the intensity for this entity to gradually come to rest when under physics to move, the higher the value the more relaxed the motion." type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysPrimeSecs" description="Number of seconds ( 0 - 60 ) specifying delay  this entity enables physics after they have been enabled." type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysGravity" description="Gravity of the object, negative values" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysDim" description="Physics diminishment. Higher number reduces physics on x, y, or z" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysAnchorEnable" description="PhysAnchorEnable tackname, on/off - TRUE if setting the corresponding tack for this entity to simulate physics." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysAnchorNone" description="PhysAnchorNone tackname - Set the name of the coresponding tack for this entity to not be anchored." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysAnchorToInitialPos" description="PhysAnchorToInitialPos tackname - Set the anchor point to the tack position making this tack static ( ??? VERIFY THIS )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysAnchorToAnotherTack" description="PhysAnchorToAnotherTack tackname, anchorentityname, anchortackname - ..." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysAnchorToStaticEntity" description="PhysAnchorToStaticEntity tackname, anchorentityname - ..." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysAnchorToDynamicEntity" description="PhysAnchorToDynamicEntity tackname, anchorentityname - ..." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysAnchorRange" description="PhysAnchorRange tackname, mindist, maxdist - Distance between tack and anchor point in meters" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysAnchorDraw" description="PhysAnchorDraw tackname, wire_style_code - Draw a wire connecting tack to the anchor point. Style value sets the color of the wire. 1=Grey, 2=Black, 3=Red, 4=Violet, 5=Green, 6=Brown, 7=Orange, 8=Tan" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysAnchorSlice" description="PhysAnchorSlice tackname, on/off - Allow this anchor point to be severed from the tack." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysAnchorHealth" description="PhysAnchorHealth tackname, health - Amount of damage ( 0 - 100000 ) this anchor can sustain before breaking connection with it&apos;s tack." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysAnchorArmorProfile" description="The name of a corresponding entry from armor.csv controlling the intensity of damage taken from an attacking type. ( Projectiles, Explosives, Fire, etc. )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysAnchorExplosionProfile" description="The name of a corresponding entry from explsn_grps.csv controlling ( when this anchor is destroyed ??? VERIFY THIS )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysCollSurf" description="List of Verlet Collision Surfaces this entity can collide with, not setting this will cause the entity to collide with nothing, falling through the ground." type="0" required="0" deprecated="0" unimplemented="0"/>
+        </group>
+        <group name="AI" description="Parameters related to controlling bot behavior.">
+            <param name="AI_JOB" description="Set the initial action this AI entity will follow ( WAIT, WANDER, PATROL )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_AGGRESSION" description="Higher values cause this bot to fire more shots and search longer when losing line of sight with target." type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_COURAGE" description="Setting to higher numbers will cause this bot entity to behave more agressively and more likely to kamikazee vs fleeing when at low health." type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_INTELLIGENCE" description="If set to 100, Titans will aim their rockets at the feet of targets instead of the chest. setting to 100 along with courage and agression for zombiebots will make them deform at spawn point if lost track of target." type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_BASESPEED" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_TORSOALIGNMENTSPEEDCONSTRAINT" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_TORSOALIGNMENTVELCONSTRAINT" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_TORSOALIGNMENTCONSTRAINTIGNORABLE" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_GREETINGLEVEL" description="Greeting code was removed." type="1" required="0" deprecated="1" unimplemented="0"/>
+            <param name="AI_FOLLOWLEADER" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_LOD_OVERRIDE_ALWAYS" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_LOD_OVERRIDE_WHEN_CONVENIENT" description="Game code never sets when it would be convenient to override making this useless." type="3" required="0" deprecated="0" unimplemented="1"/>
+            <param name="AI_BRAINTYPE" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_MOVERTYPE" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_RACE" description="Set the faction this ai entity belongs to determing who it will fight against, ally with and be neutral towards. ( MIL, DROID, ZOMBIE, AMBIENT )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_JUMPDIST" description="Override this bot&apos;s maximum vert 2 vert jump distance" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_HEARINGSCALE" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_EYE_SCAN_DIST" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_BONUS_EYE_SCAN_DIST_FOR_PLAYERS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_EYECOSHALFFOV" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_HEARINGSCALE_ALERT" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_EYE_SCAN_DIST_ALERT" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_BONUS_EYE_SCAN_DIST_FOR_PLAYERS_ALERT" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_EYECOSHALFFOV_ALERT" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_IGNOREPLAYERODDS_AT_SCANDIST" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_INNER_RADIUS_FOR_IGNOREPLAYERODDS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_ODDSOF_IGNORING_NEARBY_GRENADES" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_ODDSOF_IGNORING_BOTFOOD_SOUNDS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_ATTACK_NOTIFY_RADIUS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WAITLOOKAT" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WAITLOOKAROUNDODDS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WANDERRADIUS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WANDERSTAYINROOM" description="Does not work because game code always returns room ID 0." type="3" required="0" deprecated="1" unimplemented="0"/>
+            <param name="AI_WANDERSPEEDMIN" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WANDERSPEEDMAX" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WANDERSOCIABLE" description="Parameter exists but does nothing." type="1" required="0" deprecated="0" unimplemented="1"/>
+            <param name="AI_WANDERCURIOSITY" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WANDERPOINTS" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_PATROLPATH" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_PATROLDIR" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_PATROLSPEED" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON1TIMEDBURSTS" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON1BURSTDELAY_MIN" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON1BURSTDELAY_BONUS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON1BURSTCOUNT_MIN" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON1BURSTCOUNT_BONUS" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON1FIREDELAY_MIN" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON1FIREDELAY_BONUS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON1BURST_MIN" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON1BURST_BONUS" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON1ACCURACY" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON2TIMEDBURSTS" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON2BURSTDELAY_MIN" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON2BURSTDELAY_BONUS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON2BURSTCOUNT_MIN" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON2BURSTCOUNT_BONUS" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON2FIREDELAY_MIN" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON2FIREDELAY_BONUS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON2BURST_MIN" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON2BURST_BONUS" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WEAPON2ACCURACY" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_NUMGRENADESATSTART" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_GRENADE_USE" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_GRENADE_USE_ODDS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_PREFERSTOPANDSHOOT" description="TRUE for while in combat this entity will come to a complete stop before firing at it&apos;s target." type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_ATTACKRULESET" description="The combat strategy to use when fighting against another combatant. ( GENERIC0, GENERIC1, NPC, TITAN0, PRED0, PROBE0, RAT0, ELITEGUARD0, ZOMBIE0, CORROSIVE0, ZOMBIEBOSS0, JUMPER0, JUMPER1, SCIENTIST0, NONE )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_ALTATTACKRULESET" description="Not implemented." type="0" required="0" deprecated="0" unimplemented="1"/>
+            <param name="AI_ALTATTACKRULESETODDS" description="Not implemented." type="1" required="0" deprecated="0" unimplemented="1"/>
+            <param name="AI_ATTACKSPEEDMIN" description="Minimum Percentage speed ( 0 - 100 ) This entity is allowed to run at while in combat." type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_ATTACKSPEEDMAX" description="Maximum Percentage speed ( 0 - 100 ) This entity is allowed to run at while in combat." type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_ATTACKMELEERAD" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_STAYPUTDIST" description="While in combat, AI will stay in position as long as this set distance is greater than it&apos;s current distance  to it&apos;s target." type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_ATTACKMAXDISTFROMORIGIN" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_STARTLEMIN" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_STARTLEMAX" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_ATTACKWHO" description="Specify the targets this bot entity will fight against. ( ENEMY | NEUTRAL | FRIENDLY ) ( PLAYERS | NPC ) ( TODO: How does this work? )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_USEVEHICLERADIUS" description="When the bot decides to query for a vehicle the radius it should search for an unoperated vehicle starting from it&apos;s position." type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_USEVEHICLEWHEN" description="Specify when this AI will attempt to use vehicles ( NONE, AUTO, INIT )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_USEVEHICLETYPE" description="Specify the types of vehicles this bot entity is allowed to use ( &quot;NONE | PILL | LOADER | SENTINEL | RAT | RATGUN )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_NEVERUNARMED" description="Set the bot flag BRAINFLAG_NEVER_UNARMED. ( TODO: How does this affect bot behavior? )" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_WAKEUP_MIN_RAD" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_COMM_GROUP" description="TEST ME! - Set a group this entity is apart of that will notify the each other when one enters combat." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_BUDDY_CTRL" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+        </group>
+        <group name="Spawn System" description="Parameters related to how bots spawn">
+            <param name="SS_NET_NAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_ONTIME_MIN" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_ONTIME_MAX" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_BOTTYPE" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_NUMTOSPAWN_LIFE" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_CTRL" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_NUMLIVING_LIMIT_0" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_BURSTDELAY_0" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNDELAY_0" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNSPERBURST_0" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_NUMLIVING_LIMIT_BONUS_0" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_BURSTDELAY_BONUS_0" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNDELAY_BONUS_0" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNSPERBURST_BONUS_0" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_NUMLIVING_LIMIT_1" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_BURSTDELAY_1" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNDELAY_1" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNSPERBURST_1" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_NUMLIVING_LIMIT_BONUS_1" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_BURSTDELAY_BONUS_1" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNDELAY_BONUS_1" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNSPERBURST_BONUS_1" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_NUMLIVING_LIMIT_2" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_BURSTDELAY_2" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNDELAY_2" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNSPERBURST_2" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_NUMLIVING_LIMIT_BONUS_2" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_BURSTDELAY_BONUS_2" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNDELAY_BONUS_2" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNSPERBURST_BONUS_2" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_NUMLIVING_LIMIT_3" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_BURSTDELAY_3" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNDELAY_3" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNSPERBURST_3" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_NUMLIVING_LIMIT_BONUS_3" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_BURSTDELAY_BONUS_3" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNDELAY_BONUS_3" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SPAWNSPERBURST_BONUS_3" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_BOT_WANDER_DIST" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_BOT_ATTACK_DIST" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_BOT_SPEED" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_HIDDEN_PT_SPLINE" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_VISIBLE_PT_SPLINE" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_DOORWAY_PT_SPLINE" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_PREPLACED_PT_SPLINE" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_DEFCONTRIPWIRE" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SWARMEROBSTACLE" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SWARMEROBSTACLE_CTRL" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_SWARMEROBSTACLE_RADIUS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_NET_ENTIYSPAWNER" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_ENTITYSPAWNER_CTRL" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_ENTITYSPAWNER_NUM" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_DEFCONTRIPWIRE_CTRL" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SS_DEFCONTRIPWIRE_DEFCON" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+        </group>
+        <group name="Alarm System" description="Parameters related to the alarm and dispenser system.">
+            <param name="XA_ISALARM" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ALARM_NOTIFY_RAD" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ALARMNETNAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ISALARMSWITCH" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ISALARMDOOR" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ALARMNET_CTRL" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ALARMDOOR_CTRL" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ALARMNET_ONTIME_MIN" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ALARMNET_ONTIME_MAX" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ALARMNET_TOTALBOTSTOAUTOSPAWN" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_SWITCH_PRESSTIME" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ISAUTOBOT_SPAWN_PTS" description="Replaced with XA_ISHIDDEN_SPAWN_PTS." type="0" required="0" deprecated="1" unimplemented="0"/>
+            <param name="XA_ISHIDDEN_SPAWN_PTS" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ISVISIBLE_SPAWN_PTS" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ISDOORWAY_SPAWN_PTS" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ALARMNET_MAX_LIVING_AUTOBOTS" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ALARMNET_BOT_GROUP" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_ISDISPENSER" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_BOT1NAME" description="Entity name of a bot this dispenser will spawn." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_BOT2NAME" description="Entity name of a bot this dispenser will spawn." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_BOT3NAME" description="Entity name of a bot this dispenser will spawn." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_BOT4NAME" description="Entity name of a bot this dispenser will spawn." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_WAIT_FOR_BOT_DEATH" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_RANDOMIZE_BOTS" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_BOTS_PER_SESSION" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_SECS_BETWEEN_SPAWNS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_SECS_BETWEEN_SESSIONS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_FX_MESH_NAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_MIN_FX_SCALE" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_MAX_FX_SCALE" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_SECS_TO_MAX_SCALE" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_SECS_BACK_TO_MIN_SCALE" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_DROP_PARTS_BONENAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_BOT_POSITION_BONENAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_SECS_TO_DROP_PARTS" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_UNIT_PART_OVERLAP" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_ARM_ANIMATION_FILENAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_SPARK_NAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_SMOKE_NAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_LEFT_ARM_BONENAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_RIGHT_ARM_BONENAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_SECS_BEFORE_FIRST_HAND_CONTACT" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_SECS_OF_ARM_STOW" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_BEAM_BONENAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_SPARKLE_FX_NAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_SPARKLE_FX_INTENSITY" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_SOUND_BANK" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_ARMS_SOUND_GROUP_NAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_BEAMS_SOUND_GROUP_NAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_PARTS_SOUND_GROUP_NAME" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_BELL_DING" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="XA_DISPENSER_ONLY_SPECIFIED_BOTS" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+        </group>
+        <group name="Vehicle" description="Parameters inherited by all vehicles">
+            <param name="No_Player_Drive" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="No_Entity_Drive" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DetPackOnly" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DriverExit" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="GunnerExit" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+        </group>
+        <class name="SiteWeapon" description="Sentry Turret that fires from a fixed location. Some variations can act autonomously and/or be mounted by bots.">
+            <param name="weapontype" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SpotLight" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SpotLightRange" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="MaximumPitch" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="MinimumPitch" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="MaximumYaw" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="MinimumYaw" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PatrolPitch" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PatrolMinYaw" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PatrolMaxYaw" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="VisionCosHalfFOV" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="VisionDistance" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="RadarDistance" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TargetingYawSin" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SpewFireYawSin" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="RocketFireYawSin" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AttackDelayTime" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="StrafingTime" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SearchingTime" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DefendingTime" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="BotAAGun" description="Giant mounted turret that provides outputs massive firepower.">
+            <param name="AAGun_Full360" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AAGun_MaxHeading" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AAGun_MaxPitch" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AAGun_Morter" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AAGun_PitchPerSec" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AAGun_HeadingPerSec" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="BotCorrosive" description="Leader of the Mil Army. A giant robot that attacks with his fists and mounted missles.">
+            <param name="BotTossSpawnPtName" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="BotTossAlarmName" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="BotEliteGuard" description="Melee Mil combatant, armed with a lethal staff, excellent in close quarter combat."/>
+        <class name="BotGrunt" description="Common Mil Combatant, jack of all trades master of none. Varis from fierce combatants to spineless cowards.">
+            <param name="GruntWeapon" description="Predecessor to the &quot;NPCWeapon0&quot; gamedata." type="0" required="0" deprecated="1" unimplemented="0"/>
+            <param name="ANIM_REP" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="dropweapon" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Vlax" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="BotGlitch" description="Amnesiac Hero of the Droid Army. A walking arsenal of weapons and tide turner in any battlefield."/>
+        <class name="BotJumper" description="Agile Mil Combatant, Able to traverse any terrain with ease with the ability to attack from afar or close the distance with sharp blades."/>
+        <class name="BotMiner" description="Standard Droid Combatant, weak individually but strong in numbers.">
+            <param name="Weapon" description="Predecessor to the &quot;NPCWeapon0&quot; gamedata." type="0" required="0" deprecated="1" unimplemented="0"/>
+            <param name="StoredWeapon" description="Assign an additional weapon to this miner&apos;s backpack. AI will never use this weapon without code edits. (HAND, LASER, SPEW, FLAMER, BLASTER, RIVET, ROCKET )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ANIM_REP" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="BotMortar" description="Artiliary Mil Combatant, stays in place and fires powerful arcing shots.">
+            <param name="entityrange" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="BotMozer" description="Colossus Droid Combatant, can attack from afar with a rivet gun or get up close and personal with a lethal girder."/>
+        <class name="BotKrunk" description="Mechanic Droid Combatant, armed with a control tether and EMP greandes to take out mils from the inside."/>
+        <class name="BotPred" description="Heavy Flying Mil Combatant, equiped with a quad laser to reign annihilation from above">
+            <param name="MaxAltitude" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PredSpeed" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="BotProbe" description="Aerial Mil Combatant that attacks with razor sharp tendrils"/>
+        <class name="BotScientist" description="Mil Researcher, only cares about science, neutral until provoked">
+            <param name="SCI_FRIENDS_IN_NEED_SCAN_DIST" description="( Default: 50 ) Setting to 0 will make this scientist not heal buddies, setting to higher than 1 will. Despite the name this does not influence scan distance, only whether this bot heals or not." type="1" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="BotScout" description="Surveillance Mil Combatant, patrols an area until it finds a target upon which it will locate the nearest alarm then kamakaze."/>
+        <class name="BotSlosh" description="Flame Droid Combatant, equiped with a powerful flame thrower and magma bombs for incendiary based damage."/>
+        <class name="BotSnarq" description="Mini Aerial Mil Combatant, small variant of the Predator equiped with twin lasers"/>
+        <class name="BotSwarmer" description="Small spider like entity, latches onto bots and deals contact damage"/>
+        <class name="BotTitan" description="Heavy Mil Combatant. One of the most dangerous bots equiped with dual chainguns and a rocket launcher for mass destruction.">
+            <param name="SpotLight" description="Set this titan instance to create and attach the spotlight mesh." type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Shield" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="BotZombie" description="Reanimated remains of a former bot, attacks with vicious melee attacks and is capable of surviving a fatal strike for a second life.">
+            <param name="ZombieStartFormed" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="BotZombieBoss" description="The Zombiebot King, attacks with a giant flail to crush bots."/>
+        <class name="VehicleLoader" description="A hover vehicle that flies very fast and can pick up small entities.">
+            <param name="Gun" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="VehicleRat" description="A fast driving vehicle equiped with a turret.">
+            <param name="DroidRatMesh" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="RatDeathFlip" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AIStayBehind" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AIStayBeside" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ZobbyDriving" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="VehicleTank" description="A fast driving vehicle equiped with a turret."/>
+        <class name="Collectable" description="Entity that can be picked up by the player.">
+            <param name="goodietype" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="goodieduration" description="Leftover from an older system." type="2" required="0" deprecated="1" unimplemented="0"/>
+            <param name="mesh" description="Leftover from an older system." type="0" required="0" deprecated="1" unimplemented="0"/>
+            <param name="scale" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="spawntime" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ammo" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="gametype" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="batterynum" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="Destruct" description="Referred to internally as Boomer">
+            <param name="Explosion" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Damage" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DamageOnly" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SoundBoom" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SoundAlive" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SoundDead" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Particle1" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Particle2" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Particle3" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Particle4" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DetPackOnly" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="VehicleCOllide" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="VehicleSlowdown" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ZombieBossBallOnly" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DeadMeshTexFlipID" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="Door" description="Entity that can function as a door or a lift.">
+            <param name="type" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="door1move" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="door2move" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="movetime1" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="movetime2" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="anim" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="meshg" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="useaccel" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="aiaccess" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="playeraccess" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="pathtype1" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="pathdata1" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="pathtype2" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="pathdata2" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="eventopen" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="eventclose" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="behavtype" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="behavetype" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="displace" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="rotatey" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="rotatez" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="activeradius" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="activeradius2" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="startlocked" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="aiswitch" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="aiswitch1" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="aiswitch2" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="autoclose" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="autoclosedelay" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="autoopenfront" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="autoopenback" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="disablecall0" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="disablecall1" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="startopen" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="isportal" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="open_start" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="lift_start" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="open_stop" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="lift_stop" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="open_close" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="open_loop" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="lift_loop" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="close_start" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="close_stop" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="close_loop" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="Box" description="Not a selectable type.">
+            <param name="PhysSurf" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysSurfFriction" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysSurfPlaneDist" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysSurfDynamic" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PhysSurfPreserveVelocity" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="Console" description="Entity that allows a bot to control another.">
+            <param name="StickMesh" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ConsoleMesh" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="EnemyName" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SocketName" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="SocketCount" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="InsertedChipCount" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ChipScale" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Dispenser" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="UseOnce" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="Debris" description="Variation of particle effects that are physics simulated against the world geometry.">
+            <param name="DebrisGroupSmall" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisGroupMedium" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisGroupLarge" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisCountPerShake" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisDuration" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisShakesPerSec" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisFadeSecs" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisSpeed" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisDirSpread" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisScaleMult" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisGravityMult" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisRotSpeedMult" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisAutoShakeSecs" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisRumbleShake" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisSound" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisSoundVolume" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisSoundRadius" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisSoundPitch" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisSoundAtten" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisPlayImpactSound" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DebrisPlayFlamingSound" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="Detpack" description="FIXME!!! Needs more testing to see if any of these work.">
+            <param name="activate_sound" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="master" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="explosion" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="countdown_time" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="alpha_freq" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="alpha_min" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="alpha_max" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="faster_beep" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="Jumppad" description="An .ape mesh instance that when touched will launch a bot towards a target entity.">
+            <param name="target" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="sound" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="hangtime" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="slowdown" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="effect" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="LiquidMesh" description="Procedurally generated waterfall mesh.">
+            <param name="LiqType" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ColorRed" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ColorGreen" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ColorBlue" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Opacity" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Tile" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Curvature" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Texture1" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Texture2" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="LiquidVolume" description="A box volume of water with a liquid surface on the top face.">
+            <param name="LiqType" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ColorRed" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ColorGree" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ColorBlue" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Fog" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DropFreq" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="CullDist" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Opacity" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Tile" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="BumpTile" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="GlowScale" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="CurrentX" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="CurrentY" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Texture1" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Texture2" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DamageIntensity" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="EnableSplashes" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="EnableRender" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="Particle" description="A .fpr particle instance for adding additional animated flares to levels.">
+            <param name="PartDef" description="Name of the .fpr file to use for this particle entity." type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Intensity" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DelaySpawn" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="BurstSound" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="CanChangeVolumes" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="CanEliminateOnLesserSystems" description="Likely to be used for PS2 but never implemented." type="3" required="0" deprecated="0" unimplemented="1"/>
+        </class>
+        <class name="Switch" description="An Actionable entity that can trigger an event in the world.">
+            <param name="doorname" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="dooraction" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="triggerevent" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="reqchip" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
+            <param name="useby" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="GoodieProps" description="Effectively deprecated but leaving here to remember to test if we can trigger a response from any of these properties.">
+            <param name="gp_dispersion" description="" type="2" required="0" deprecated="1" unimplemented="0"/>
+            <param name="gp_speed1" description="" type="2" required="0" deprecated="1" unimplemented="0"/>
+            <param name="gp_speed2" description="" type="2" required="0" deprecated="1" unimplemented="0"/>
+        </class>
+        <class name="MeshEntity" description="An .ape model instance placed inside a level.">
+            <param name="Mesh" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="MeshSeq" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Anim" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AnimSeq" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="StartMesh" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="MeshFlip" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="MeshFlipDir" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AnimFlip" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AnimSpeed" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Animate" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="CullDist" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="NoAnimLOD" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PosterX" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PosterY" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="PosterZ" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Coll" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Light" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="mesh_always_work" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="VehicleCollOnly" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AIAvoid" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TranslatorBone" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="UpdateBoundingSphere" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="LoaderPickup" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="Tripwire" description="A Box Volume that triggers an event when an entity steps inside.">
+            <param name="TripwireEvent" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TripwireFilterEntityName" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TripwireWho" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TripwireBuild" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TripwireIsAIZone" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="aizone_behavior" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="aizone_param1min" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="aizone_param1max" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="aizone_param2" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="aizone_paramname" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="aizone_paramtime" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="DoorToOpen" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TriggerMode" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TripwireDamageBuild" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TripwireDamageEnable" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TripwireDamageNormIntensity" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TripwireKillMode" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TripwireSpawnDeathEffects" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+        <class name="Zipline" description="A wire that certain bots and hang onto to slide from one end to the other.">
+            <param name="Give" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Friction" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Accel" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Visible" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Opaque" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Texture" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TextureRepeat" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ColorBias" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Particle" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+        </class>
+    </gamedata>
+</body>

@@ -16,6 +16,7 @@ errorLogFile  = None  # The error log file that we write errors to from differen
 fpErrorLog    = os.path.dirname(os.path.realpath(__file__)) + "\\blender_ma_error_log.txt"  # Path to the export file
 bShowErrorLog = False # We set this variable when an error occured and we should bring up the .txt file
 gdkeys = [] # Gamedata keys
+gdkeys_Obsolete = [] # Old Gamedata keys
 
 gApeSegments = [] # Ape segments need a copy writting to file for LOD support
 
