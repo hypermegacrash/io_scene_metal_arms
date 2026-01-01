@@ -1,7 +1,7 @@
 <!--Metal Arms Gamedata Database-->
 <header>
     <!--What is the current format revision of this file ?-->
-    <create version="0.1" date="2025-07-27 17:01:16"/>
+    <create version="0.1" date="2025-11-14 10:59:07"/>
     <!--What was the last tool to have touched this file ?-->
     <generator name="Metal Arms Gamedata Database Editor" version="0.1"/>
 </header>
@@ -75,21 +75,25 @@
             <param name="HealthContainer" description="Max number of life batteries for this entity. ( e.g., 2 = two batteries )." type="1" required="0" deprecated="0" unimplemented="0"/>
             <param name="Health" description="The number of fully filled life batteries for this entity, with fractions giving partial batteries ( e.g., 1.5 = one and a half batteries )" type="2" required="0" deprecated="0" unimplemented="0"/>
             <param name="DamageProfile" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
-            <param name="ArmorModifier" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ArmorModifier" description="" type="1" required="0" deprecated="0" unimplemented="0"/>
             <param name="ArmorProfile" description="Uses an entry in armor.csv as armor. Use nohitpoint if entity recieves no damage" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ArmorBullet" description="Replaced with ArmorProfile" type="1" required="0" deprecated="1" unimplemented="0"/>
+            <param name="ArmorFlame" description="Replaced with ArmorProfile" type="1" required="0" deprecated="1" unimplemented="0"/>
+            <param name="ArmorExplosion" description="Replaced with ArmorProfile" type="1" required="0" deprecated="1" unimplemented="0"/>
             <param name="Attach" description="Parents entity with another entity so they move together" type="0" required="0" deprecated="0" unimplemented="0"/>
-            <param name="GoodieBag" description="Predecessor to the &quot;Goodie&quot; parameter" type="0" required="0" deprecated="1" unimplemented="0"/>
             <param name="Goodie" description="Item in bag, first two digits are amount of item and must be the same" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="GoodieBag" description="Replaced with Goodie" type="0" required="0" deprecated="1" unimplemented="0"/>
             <param name="Collectable" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
             <param name="Tripper" description="TRUE if this entity can activate tripwire triggers." type="3" required="0" deprecated="0" unimplemented="0"/>
-            <param name="TripwireArm" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
-            <param name="Targetable" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="TripwireArm" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Targetable" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="IsTargetable" description="Replaced with Targetable" type="3" required="0" deprecated="1" unimplemented="0"/>
             <param name="Sound_Ambient_Tag" description="Sound Wav name or sfb tag to play" type="0" required="0" deprecated="0" unimplemented="0"/>
             <param name="Sound_Ambient_Volume" description="Sound volume" type="2" required="0" deprecated="0" unimplemented="0"/>
             <param name="Sound_Ambient_Radius" description="The distance from this entity the sound will linearly falloff from in audibility," type="1" required="0" deprecated="0" unimplemented="0"/>
             <param name="Sound_Ambient_Off" description="Whether the sound should start off" type="3" required="0" deprecated="0" unimplemented="0"/>
-            <param name="ProjReact" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
-            <param name="Actionable" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="ProjReact" description="Default | Ricochet | DeathToAll | Sticky | HurtMe | Shield" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Actionable" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
         </group>
         <group name="Bot" description="Parameters inherited by all bots">
             <param name="TalkData" description="Name of the BTA ( Bot Talk Action ) .csv to load and play for this bot instance." type="0" required="0" deprecated="0" unimplemented="0"/>
@@ -106,12 +110,13 @@
             <param name="PowerDownUntilPosessed" description="TRUE if this bot instance should be turned off until posessed or recruited." type="3" required="0" deprecated="0" unimplemented="0"/>
             <param name="RunMultiplier" description="The maximum running speed for this bot instance ( 1.0 ( Walking ) - 100.0 ( Full Sprint ) )" type="2" required="0" deprecated="0" unimplemented="0"/>
             <param name="NPCWeapon0" description="Set the primary weapon this bot should use ( HAND,  LASER, SPEW, FLAMER, BLASTER, ROCKET, RIVET ) ( Miner and Grunt Only )" type="0" required="0" deprecated="0" unimplemented="0"/>
-            <param name="KeepLimb" description="Set the following limbs to never dislodge or break ( Head | Torso | Arms | Legs | | Wings | RL | Light | Misc | All ) ( TODO: Bot Limb Table )" type="0" required="0" deprecated="0" unimplemented="0"/>
             <param name="NPCWeapon1" description="Set the secondary weapon this bot should use ( HAND, GRENADE ) ( Grunt only )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="KeepLimb" description="Set the following limbs to never dislodge or break ( Head | Torso | Arms | Legs | | Wings | RL | Light | Misc | All ) ( TODO: Bot Limb Table )" type="0" required="0" deprecated="0" unimplemented="0"/>
             <param name="SpotLightOn" description="TRUE if this bot instance should enable it&apos;s light to illuminate the environment." type="3" required="0" deprecated="0" unimplemented="0"/>
             <param name="CanBeRecruited" description="TRUE if this bot instance can be converted to the player&apos;s team by the recruiter grenade. A recruiter grenade symbol will appear above this bot&apos;s head for indication." type="3" required="0" deprecated="0" unimplemented="0"/>
             <param name="Babble" description="TRUE if this bot instance should pitch shift and distort it&apos;s voice when speaking." type="3" required="0" deprecated="0" unimplemented="0"/>
-            <param name="CanBeRecruitedWithoutDataport" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="CanBeRecruitedWithoutDataport" description="TRUE if this bot instance can be recruited by a recruiter grenade without needing a dataport opened." type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="NoEmp" description="TRUE if this bot instance should not be affected by emp grenades" type="3" required="0" deprecated="0" unimplemented="0"/>
         </group>
         <group name="Physics" description="Parameters related to the Verlet Integration Physics Implementation. Sourced from the 2001 paper Advanced Character Physics by Thomas Jakobsen.">
             <param name="Physics" description="TRUE if this entity should enable all the bones tagged for verlet integration physics simulation for it&apos;s corresponding .ape mesh" type="3" required="0" deprecated="0" unimplemented="0"/>
@@ -152,7 +157,7 @@
             <param name="AI_LOD_OVERRIDE_WHEN_CONVENIENT" description="Game code never sets when it would be convenient to override making this useless." type="3" required="0" deprecated="0" unimplemented="1"/>
             <param name="AI_BRAINTYPE" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
             <param name="AI_MOVERTYPE" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
-            <param name="AI_RACE" description="Set the faction this ai entity belongs to determing who it will fight against, ally with and be neutral towards. ( MIL, DROID, ZOMBIE, AMBIENT )" type="0" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AI_RACE" description="Set the faction this ai entity belongs to determing who it will fight against, ally with and be neutral towards. ( MIL, DROID, ZOMBIE, AMBIENT ) ( Obsolete Good, Evil )" type="0" required="0" deprecated="0" unimplemented="0"/>
             <param name="AI_JUMPDIST" description="Override this bot&apos;s maximum vert 2 vert jump distance" type="2" required="0" deprecated="0" unimplemented="0"/>
             <param name="AI_HEARINGSCALE" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
             <param name="AI_EYE_SCAN_DIST" description="" type="2" required="0" deprecated="0" unimplemented="0"/>
@@ -377,8 +382,8 @@
         <class name="BotGrunt" description="Common Mil Combatant, jack of all trades master of none. Varis from fierce combatants to spineless cowards.">
             <param name="GruntWeapon" description="Predecessor to the &quot;NPCWeapon0&quot; gamedata." type="0" required="0" deprecated="1" unimplemented="0"/>
             <param name="ANIM_REP" description="" type="0" required="0" deprecated="0" unimplemented="0"/>
-            <param name="dropweapon" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
-            <param name="Vlax" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="dropweapon" description="TRUE if this grunt should spawn its current primary weapon as a pickup when killed." type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="Vlax" description="TRUE if the color for this bot instance should be set to purple." type="3" required="0" deprecated="0" unimplemented="0"/>
         </class>
         <class name="BotGlitch" description="Amnesiac Hero of the Droid Army. A walking arsenal of weapons and tide turner in any battlefield."/>
         <class name="BotJumper" description="Agile Mil Combatant, Able to traverse any terrain with ease with the ability to attack from afar or close the distance with sharp blades."/>
@@ -419,7 +424,7 @@
             <param name="DroidRatMesh" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
             <param name="RatDeathFlip" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
             <param name="AIStayBehind" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
-            <param name="AIStayBeside" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
+            <param name="AIStayBeside" description="" type="3" required="1" deprecated="0" unimplemented="0"/>
             <param name="ZobbyDriving" description="" type="3" required="0" deprecated="0" unimplemented="0"/>
         </class>
         <class name="VehicleTank" description="A fast driving vehicle equiped with a turret."/>

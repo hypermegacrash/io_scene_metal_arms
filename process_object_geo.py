@@ -8,12 +8,12 @@ from .process_star_command import CMaterialStringParser # Import just the Materi
 # BLENDER
 import bpy        # For interacting with Blender Data
 import copy       # We need to do a deep copy rather than shallow copy because exported data gets finicky
+import re
 
-# This texture only appears in GameCube, could set this up differently
-DEFAULT_ERROR_TEXTURE = "grid_64_pur"
-
-# Temporary flag, GameCube has a rendering bug
-GC_DEBUG = 0
+FANG_MAT_VERSION  = 1
+FANG_COMP_VERSION = 1
+DEFAULT_ERROR_TEXTURE = "grid_64_pur" # This texture only appears in GameCube, could set this up differently
+GC_DEBUG = 0 # Temporary flag, GameCube has a rendering bug
 
 # This is important because the origin influences how the matrix_local works
 def setOrigin(target, inObj):
@@ -449,24 +449,47 @@ class CSegmentConverter:
         try:
             fangMatGroup = matOut.inputs["Surface"].links[0].from_node # Get the Node connected to it
         except:
-            g_class.logError(f"MATERIAL ERROR: The Material Output Node for material {self.inObj.data.materials[matIndex].name.lower()} in object {self.inObj.name} is not connected to a FANG Material / FANG Composite Node Tree. Please fix and retry exporting.")
+            g_class.logError(f"MATERIAL ERROR: The Material Output Node for material {self.inObj.data.materials[matIndex].name.lower()} in object {self.inObj.name} " +
+                             "is not connected to a FANG Material / FANG Composite Node Tree. Please fix and retry exporting.")
             return False
 
         if fangMatGroup.type != "GROUP":
-            g_class.logError(f"MATERIAL ERROR: The Material Output Node for material {self.inObj.data.materials[matIndex].name.lower()} in object {self.inObj.name} is not connected to a FANG Material / FANG Composite Node Tree. Please fix and retry exporting.")
+            g_class.logError(f"MATERIAL ERROR: The Material Output Node for material {self.inObj.data.materials[matIndex].name.lower()} in object {self.inObj.name} " +
+                             "is not connected to a FANG Material / FANG Composite Node Tree. \n" +
+                             "Found Name: {fangMatGroup.name} Type: {fangMatGroup.type} Please fix and retry exporting.")
             return False
+        
+        fangMatVersion = 0
+        for node in fangMatGroup.node_tree.nodes:
+            if node.type == 'FRAME':
+                if node.label:
+                    match = re.search(r"Version\s*(\d+)", node.label)
+                    if match:
+                        fangMatVersion = int(match.group(1))
 
         self.matNodeGroup = fangMatGroup
 
         if (fangMatGroup.node_tree.name.split(".",1)[0] == "FANG Material"):
-            #print("We got a FANG Material!")
+            # Check if this is the current revision of FANG Material
+            
+            if fangMatVersion != FANG_MAT_VERSION:
+                g_class.logError(f"MATERIAL ERROR: Fang Material {self.inObj.data.materials[matIndex].name.lower()} in object {self.inObj.name} " +
+                                 f"is out of date. Found version {fangMatVersion} when current version is {FANG_MAT_VERSION}.\n" +
+                                 "Update Materials under MA Toolkit > Add / Update FANG Material.")
+                return False
 
             layer = self.ParseLayer(self.inObj.data.materials[matIndex].name.lower(), fangMatGroup)
             mat.aMatLayers[0] = copy.deepcopy( layer ) # Link base layer with our material
             mat.nLayerCount += 1
 
         elif (fangMatGroup.node_tree.name.split(".",1)[0] == "FANG Composite"):
-            #print("We got a FANG Composite!")
+            # Check if this is the current revision of FANG Composite
+            
+            if fangMatVersion != FANG_COMP_VERSION:
+                g_class.logError(f"MATERIAL ERROR: Fang Composite {self.inObj.data.materials[matIndex].name.lower()} in object {self.inObj.name} " +
+                                 f"is out of date. Found version {fangMatVersion} when current version is {FANG_COMP_VERSION}.\n" +
+                                 "Update Materials under MA Toolkit > Add / Update FANG Material.")
+                return False
 
             layer = self.ParseLayer(fangMatGroup.inputs["Base"].links[0].from_node.name.lower(), fangMatGroup.inputs["Base"].links[0].from_node)
             mat.aMatLayers[0] = copy.deepcopy( layer ) # Link base layer with our material

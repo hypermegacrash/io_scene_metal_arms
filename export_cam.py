@@ -51,7 +51,7 @@ class ExportCAM(Operator, ExportHelper):
         def execute(self, context):
             # Init our out file and error log in the global g_class for other modules to access
             with open(self.filepath, 'wb')     as g_class.file, \
-                 open(g_class.fpErrorLog, 'a') as g_class.errorLogFile:
+                 open(g_class.fpErrorLog, 'w') as g_class.errorLogFile:
                              
                 g_class.bShowErrorLog = False
         
