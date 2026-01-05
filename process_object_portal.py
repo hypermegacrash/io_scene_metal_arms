@@ -14,7 +14,7 @@ def ExportObjPortal(obj):
     if obj.name[:5].lower() != "port_": return
     if obj.type             != "CURVE": return
         
-    print(obj.name, "is a portal object") # Looks good so far
+    # print(obj.name, "is a portal object") # Looks good so far
     
     # Round 2
     if len(obj.data.splines) == 1:
@@ -68,10 +68,10 @@ def ExportObjPortal(obj):
     V3t = obj.matrix_world @ spline.points[3].co
     V3t.resize(3)
      
-    V1 = V2t - V1t;
-    V2 = V0t - V1t;
-    Normal = V1.cross( V2 );
-    Normal *= (1.0 / sqrt( Normal[0] * Normal[0] + Normal[1] * Normal[1] + Normal[2] * Normal[2] ) );
+    V1 = V2t - V1t
+    V2 = V0t - V1t
+    Normal = V1.cross( V2 )
+    Normal *= (1.0 / sqrt( Normal[0] * Normal[0] + Normal[1] * Normal[1] + Normal[2] * Normal[2] ) )
     
     # Only checked this on the x-axis... does this owrk on y and z axis?
     outPortal.Normal[0] = Normal[0] * -1 # This is inverted because otherwise portal normal is inverted???
@@ -81,7 +81,7 @@ def ExportObjPortal(obj):
     # Surprise! Another check
     V1 = V0t - V3t
     V2 = V2t - V3t
-    Cross = V1.cross( V2 );
+    Cross = V1.cross( V2 )
     Cross = Cross.normalized()
     fDot = Cross.dot(Normal)
     if(fDot < 0.99):

@@ -456,7 +456,7 @@ class CSegmentConverter:
         if fangMatGroup.type != "GROUP":
             g_class.logError(f"MATERIAL ERROR: The Material Output Node for material {self.inObj.data.materials[matIndex].name.lower()} in object {self.inObj.name} " +
                              "is not connected to a FANG Material / FANG Composite Node Tree. \n" +
-                             "Found Name: {fangMatGroup.name} Type: {fangMatGroup.type} Please fix and retry exporting.")
+                             f"Found Name: {fangMatGroup.name} Type: {fangMatGroup.type} Please fix and retry exporting.")
             return False
         
         fangMatVersion = 0
@@ -665,7 +665,7 @@ def validateInput(inObj):
 def ExportObjGeo(inObj, bExportHierarchy, bExportBinarySkinning):
     if not validateInput(inObj): return
     
-    print(inObj.name, "is a geo object")
+    # print(inObj.name, "is a geo object")
     
     segConvInst = CSegmentConverter()
 

@@ -16,7 +16,7 @@ def ExportObjCam(obj):
         g_class.logError("CAMERA ERROR: The selected camera " + obj.name + " does not contain the cam_ prefix! Please fix and retry exporting.")
         return 
         
-    print(obj.name, "is a camera object")
+    # print(obj.name, "is a camera object")
 
     TIME_TICKSPERSEC = 4800
     

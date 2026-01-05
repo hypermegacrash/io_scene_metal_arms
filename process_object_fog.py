@@ -10,5 +10,5 @@ def ExportObjFog(obj):
     if obj.type             != "EMPTY": return
     if obj.name[:4].lower() != "fog_":  return # Enforce the user to follow naming scheme
         
-    print(obj.name, "is a fog object")
+    # print(obj.name, "is a fog object")
     return None

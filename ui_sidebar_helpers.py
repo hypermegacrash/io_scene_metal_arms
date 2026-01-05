@@ -167,14 +167,14 @@ class MAUpdateFangMaterial(bpy.types.Operator):
 
         return {'FINISHED'}
         
-class MA_OpenGDKeys(bpy.types.Operator):
-    """Open the GDKeys.txt file"""
-    bl_label  = "Open gdkeys.txt"
-    bl_idname = "object.ma_open_gdkeys"
+class MA_OpenMADB(bpy.types.Operator):
+    """Open the madb.xml file"""
+    bl_label  = "Open madb.xml"
+    bl_idname = "object.ma_open_madb"
     
     def execute(self, context):
         path = os.path.dirname(os.path.realpath(__file__))
-        path = path + "\gdkeys.txt"
+        path = path + "\madb.xml"
         os.startfile(path)
         return {'FINISHED'}
         
@@ -301,7 +301,7 @@ class MASidePanel(bpy.types.Panel):
         row = layout.column()
         row.operator("object.ma_update_material", text = "Add / Update FANG Material")
         row.operator("object.ma_bsdf_to_fang",    text = "Convert BSDF to FANG")
-        row.operator("object.ma_open_gdkeys",     text = "Open gdkeys")
+        row.operator("object.ma_open_madb",       text = "Open madb.xml")
         row.operator("object.ma_copy_gamedata",   text = "Copy Gamedata to Selected")
         row.operator("object.ma_gd_view",         text = "View Gamedata in World Space")
         

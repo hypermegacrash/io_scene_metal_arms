@@ -5,6 +5,7 @@ from . import file_def_ape  # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
 from .process_star_command import CLightStringParser # Import just the Light Star Command Parser
+from .process_gamedata import parse_ma_string
 APE_LIGHT_FLAG_LIGHTMAP_ONLY_LIGHT       = 0x00000010    # This light will only be used in the lightmap portion of PASM and will not be exported to the engine.
 APE_LIGHT_FLAG_LIGHTMAP_LIGHT            = 0x00000020    # This light is to be used for generating lightmaps (If it is not dynamic, it can be discarded prior to the engine)
 APE_LIGHT_FLAG_UNIQUE_LIGHTMAP           = 0x00000040    # This light will generate its own unique lightmap in the lightmapping phase (it must also have a unique m_nLightID)
@@ -18,7 +19,7 @@ def ExportObjLight(obj):
     
     if(bExitEarly): return
         
-    print(obj.name, "is a light object")
+    # print(obj.name, "is a light object")
 
     outLight = file_def_ape.PASMLight()
     
@@ -30,7 +31,7 @@ def ExportObjLight(obj):
     if obj.name[:7].lower() == "ambient" and obj.type == "EMPTY": outLight.nApeLightType = file_def_ape.PASMLightType_e.APE_LIGHT_TYPE_AMBIENT
         
     if outLight.nApeLightType == -1:
-        print("Unable to assign nApeLightType, skipping " + obj.name)
+        g_class.logError(f"LIGHT ERROR: Unable to assign nApeLightType for {obj.name}, skipping.")
         return
         
     outLight.szLightName = obj.name
@@ -40,41 +41,47 @@ def ExportObjLight(obj):
         outLight.Color[1] = pasm_math.color_scene_linear_to_srgb(obj.data.color[1])
         outLight.Color[2] = pasm_math.color_scene_linear_to_srgb(obj.data.color[2])
     elif obj.name[:7].lower() == "ambient" and obj.type == "EMPTY":
+        # Pull the 'red' 'green' 'blue' gamedata fields for the ambient color
+
+        if "ma" not in obj:
+            g_class.logError(f"LIGHT ERROR: No gamedata for ambient entity {obj.name}, skipping.")
+            return
+
         try:
-            # Grab the custom properties (we only need red green and blue but just grab them all)
-            dictProperties = {}
-            cmds = obj["ma"].split('\n')
-            for index in cmds:   
-                if index == "" or index.isspace(): continue # Check if string is empty
-                if index[0] == "#":                continue # Check if comment line
-                a = index.find("=")
-                i = a - 1
-                j = a + 1
-                while index[i] == " ":
-                    i = i - 1
-                while index[j] == " ":
-                    j = j + 1
-                dictProperties[index[:i + 1]] = int(index[j:])
-            nRed   = dictProperties["red"]
-            nGreen = dictProperties["green"]
-            nBlue  = dictProperties["blue"]
-            # Floor it
-            nRed   = max(0, min(nRed,   255))
-            nGreen = max(0, min(nGreen, 255))
-            nBlue  = max(0, min(nBlue,  255))
-            # Convert to float
-            nRed   = nRed   * float((1/255))
-            nGreen = nGreen * float((1/255))
-            nBlue  = nBlue  * float((1/255))
-        except:
-            print("Unable to find integer custom property values for red green blue, skipping " + obj.name)
-            return       
+            parsed = parse_ma_string(obj["ma"])
+            parsed = {k.lower(): v for k, v in parsed.items()}
+        except Exception as e:
+            g_class.logError(f"LIGHT ERROR: Failed to parse gamedata on ambient entity {obj.name}, skipping. {e}")
+            return
+        
+        if "red" not in parsed or "green" not in parsed or "blue" not in parsed:
+            g_class.logError(f"LIGHT ERROR: Unable to find integer gamedata values red green blue for {obj.name}, skipping.")
+            return
+        
+        try:
+            nRed, nGreen, nBlue = (
+                int(parsed["red"]),
+                int(parsed["green"]),
+                int(parsed["blue"]),
+            )
+        except (ValueError, TypeError):
+            g_class.logError(f"LIGHT ERROR: Non-integer RGB gamedata on {obj.name}, skipping.")
+            return
+        
+        # Floor it
+        nRed   = max(0, min(nRed,   255))
+        nGreen = max(0, min(nGreen, 255))
+        nBlue  = max(0, min(nBlue,  255))
+        # Convert to float
+        nRed   = nRed   * float((1/255))
+        nGreen = nGreen * float((1/255))
+        nBlue  = nBlue  * float((1/255))    
         # Assign it
         outLight.Color[0] = nRed
         outLight.Color[1] = nGreen
         outLight.Color[2] = nBlue
     else:
-        print("Unable to assign Light color, skipping " + obj.name)
+        g_class.logError(f"LIGHT ERROR: Unable to assign Light color for {obj.name}, skipping.")
         return
         
     # Parse light name for star commands
@@ -91,7 +98,7 @@ def ExportObjLight(obj):
     elif obj.name[:7].lower() == "ambient" and obj.type == "EMPTY":
         outLight.Intensity = 1.0
     else:
-        print("Unable to assign Light intensity, skipping " + obj.name)
+        g_class.logError(f"LIGHT ERROR: Unable to assign Light intensity for {obj.name}, skipping.")
         return
       
     # Lights calculate their rotation matrix in a different way to everything else

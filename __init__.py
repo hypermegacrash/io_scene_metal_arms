@@ -6,7 +6,7 @@ import bpy # Registering / Unregistering classes
 bl_info = {
         "name": "Metal Arms PASM Toolkit",
         "author": "Crashz",
-        "version": (0, 19, 14),
+        "version": (0, 20, 0),
         "blender": (4, 2, 0),
         "category": "Import-Export",
         "location": "File > Import-Export",
@@ -28,7 +28,7 @@ from .ui_data_properties_object import *
 from .ui_data_properties_light  import *
 from .ui_data_properties_bone   import *
 from .ui_sidebar_helpers        import *
-from .process_gamedata          import setupgdkeys
+from .process_gamedata          import setup_gd_schema
 
 # The list of classes we are registering within Blender
 classes = [
@@ -47,7 +47,7 @@ classes = [
     MASidePanel,
     MAUpdateFangMaterial,
     MABSDF2FM,
-    MA_OpenGDKeys,
+    MA_OpenMADB,
     MA_CopyGamedata,
 ]
 
@@ -97,7 +97,7 @@ def register():
     # Update UI
     bpy.types.BONE_PT_context_bone.append(DrawMABoneDataPanel)
     
-    setupgdkeys()
+    setup_gd_schema()
     
 
 # When this add-on is disabled in Edit>Preferences>Add-ons, this function is called

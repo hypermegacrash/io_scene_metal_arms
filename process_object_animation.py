@@ -27,7 +27,7 @@ def shouldExportBone(inBone):
 def ExportObjAnim(obj):
     if obj.type != "ARMATURE": return # Validate we're working with armature animation data
 
-    print(obj.name, "is an armature object")
+    # print(obj.name, "is an armature object")
 
     TIME_TICKSPERSEC = 4800 # Constant ripped from Max SDK Docs
     

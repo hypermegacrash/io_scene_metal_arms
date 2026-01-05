@@ -13,7 +13,7 @@ def ProcessCell(obj):
     if obj.type             != "MESH":  return False
     if obj.name[:5].lower() != "cell_": return False
         
-    print(obj.name, "is a cell object") 
+    # print(obj.name, "is a cell object") 
     
     outCell = file_def_ape.PASMCell()
     

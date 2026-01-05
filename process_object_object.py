@@ -5,13 +5,13 @@ from . import file_def_ape  # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
 from .process_star_command import CObjectStringParser # Import just the Material Star Command Parser
-from .process_gamedata     import ProcessGamedata     # Import just the Gmaedata Parser
+from .process_gamedata     import ProcessGamedata     # Import just the Gamedata Parser
 
 def ExportObjObject(obj):
     if obj.name[:4].lower() == "off_": return # Doesn't matter it's off bail early
     if obj.name[:4].lower() != "obj_": return # No prefix no object
         
-    print(obj.name, "is a object object")
+    # print(obj.name, "is a object object")
 
     if round(obj.scale.x, 5) != round(obj.scale.y, 5) != round(obj.scale.z, 5):
         if obj.empty_display_type != "CUBE":
@@ -36,7 +36,7 @@ def ExportObjObject(obj):
     
     outObject.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
     
-    ProcessGamedata(obj, outObject)
+    ProcessGamedata(obj, "MeshEntity", outObject)
                         
     # Finally, write data to the file, and our header
     g_class.file.write(outObject.packBytes())

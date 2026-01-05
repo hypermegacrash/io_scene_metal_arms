@@ -1,8 +1,7 @@
 # Module that processes gamedata attached to an object
 
 # PYTHON BUILT IN
-from difflib import SequenceMatcher
-import re
+from difflib import get_close_matches
 import xml.etree.ElementTree as ET
 # FANG TOOLKIT
 from . import g_class       # Get our global variables like header data & I/O file
@@ -10,89 +9,226 @@ import os
 
 _XML_DATABASE_NAME = "madb.xml"
 
-def setupgdkeys():
-    # Setup path to xml database...
-    path = os.path.dirname(os.path.realpath(__file__))
-    path = path + os.sep + _XML_DATABASE_NAME
+def _empty_schema():
+    return {
+        "valid": set(),
+        "deprecated": set(),
+        "unimplemented": set(),
+        "all": set(),
+    }
 
-    # Read in the contents...
-    inXML = None
-    with open(path, 'r', encoding='utf-8') as file:
-        inXML = file.read()
+def _parse_params(parent_elem):
+    schema = _empty_schema()
 
-    # Extract from <body> to </body>...
-    match = re.search(r'<body>.*?</body>', inXML, re.DOTALL)
-    if match:
-        body_content = match.group(0)
-    else:
-        print("No <body> tag found")
+    for param in parent_elem.findall("param"):
+        try:
+            name = param.attrib["name"].strip().lower()
+            deprecated = int(param.attrib.get("deprecated", 0))
+            unimplemented = int(param.attrib.get("unimplemented", 0))
+        except (KeyError, ValueError):
+            continue
+
+        if deprecated:      schema["deprecated"].add(name)
+        elif unimplemented: schema["unimplemented"].add(name)
+        else:               schema["valid"].add(name)
+
+    return schema
+
+def _merge_schema(dst, src):
+    dst["valid"].update(src["valid"])
+    dst["deprecated"].update(src["deprecated"])
+    dst["unimplemented"].update(src["unimplemented"])
+
+def _parse_nodes(root):
+    nodes = {}
+
+    def add_node(elem, kind):
+        name = elem.attrib.get("name", "").lower()
+        if not name:
+            return
+
+        inherits = [
+            i.attrib.get("name", "").lower()
+            for i in elem.findall("inherit")
+            if i.attrib.get("name")
+        ]
+
+        nodes[name] = {
+            "kind": kind,  # group | class
+            "inherits": inherits,
+            "params": _parse_params(elem),
+        }
+
+    for group in root.findall(".//group"):
+        add_node(group, "group")
+
+    for cls in root.findall(".//class"):
+        add_node(cls, "class")
+
+    return nodes
+
+def _resolve_schema(name, nodes, visited):
+    if name in visited:
+        raise ValueError(f"Cyclic inheritance detected: {name}")
+
+    visited.add(name)
+
+    node = nodes.get(name)
+    if not node:
+        return _empty_schema()
+
+    schema = _empty_schema()
+
+    # resolve parents first
+    for parent in node["inherits"]:
+        parent_schema = _resolve_schema(parent, nodes, visited)
+        _merge_schema(schema, parent_schema)
+
+    # then merge own params
+    _merge_schema(schema, node["params"])
+
+    return schema
+
+def setup_gd_schema():
+    path = os.path.join(os.path.dirname(__file__), _XML_DATABASE_NAME)
+
+    try:
+        tree = ET.parse(path)
+        root = tree.getroot()
+    except Exception as e:
+        print(f"Failed to load XML database: {e}")
         return False
-    
-    # Extract param fields...
-    param_fields = []
-    param_fields_obsolete = []
-    root = ET.fromstring(body_content)
-    for param in root.findall('.//param'):
-        bIsDeprecated = int(param.attrib['deprecated'])
-        bIsUnimplemented = int(param.attrib['unimplemented'])
-        
-        if(bIsDeprecated):
-            #print(f"{param.attrib['name']} is deprecated!")
-            param_fields_obsolete.append(param.attrib)
-            continue
-            
-        if(bIsUnimplemented):
-            #print(f"{param.attrib['name']} is unimplemented!")
-            param_fields_obsolete.append(param.attrib)
+
+    nodes = _parse_nodes(root)
+
+    g_class.gd_schema = {}
+
+    for name, node in nodes.items():
+        if node["kind"] != "class":
             continue
 
-        param_fields.append(param.attrib)
+        schema = _resolve_schema(name, nodes, visited=set())
 
-    # Add all the fields to the gdkeys list...
-    for param in param_fields:
-        g_class.gdkeys.append(param["name"].strip())
+        schema["all"] = (
+            schema["valid"]
+            | schema["deprecated"]
+            | schema["unimplemented"]
+        )
 
-     # Add all the fields to the gdkeys_obsolete list...
-    for param in param_fields_obsolete:
-        g_class.gdkeys_Obsolete.append(param["name"].strip())
+        g_class.gd_schema[name] = schema
+
+    return True
+
+def parse_ma_string(ma_string: str) -> dict:
+    data = {}
+    if not ma_string:
+        return data
+
+    for line in ma_string.splitlines():
+        line = line.strip()
+
+        # is a comment line for level designers
+        if not line or line.startswith("#"):
+            continue
+
+        # Can't work with a key that has no value
+        if "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        data[key.strip()] = value.strip()
+
+    return data
 
 # Grab custom properties from the object
-def ProcessGamedata(obj, outObj):
+def ProcessGamedata(obj, entityType, outObj):
+    # Check if we have custom properties
+    if "ma" not in obj:
+        return
+    
+    # Attempt to parse if we do have them
     try:
-        cmds = obj["ma"].split('\n')
-        lc = [x.lower() for x in g_class.gdkeys]
-        lc_obsolete = [x.lower() for x in g_class.gdkeys_Obsolete]
-        x = 0
-        for index in cmds: 
-            if index == "" or index.isspace(): continue # Check if string is empty
-            if index[0] == "#":                continue # Check if comment line
-            x += 1
-            a = index.find("=")
-            i = a - 1
-            j = a + 1
-            while index[i] == " ":
-                i = i - 1
-            while index[j] == " ":
-                j = j + 1
+        parsed = parse_ma_string(obj["ma"])
+    except Exception as e:
+        print(f"Failed to parse gamedata on {obj.name}: {e}")
+        return
+    
+    # Check if this dictionary is empty, if so nothing to do
+    if not parsed:
+        return
+    
+    # Determine object type
+    entity_type = parsed.get("Type") or parsed.get("type")
+    if not entity_type:
+       entity_type = entityType
 
-            if index[:i + 1].lower() in lc_obsolete:
-                g_class.logError(f"GAMEDATA ERROR: The gamedata key {index[:i + 1]} found in {obj.name} is obsolete! Remove it from this entity and export again.")
-                continue
-                
-            if index[:i + 1].lower() not in lc:
-                for idx, y in enumerate(lc):
-                    if SequenceMatcher(None, index[:i + 1].lower(), y).ratio() > 0.7:
-                        g_class.logError("GAMEDATA ERROR: Unknown gamedata key " + index[:i + 1] + " found in " + obj.name + ". Did you mean " + g_class.gdkeys[idx] + " ?")
-                        break
+    entity_type_lc = entity_type.lower()
+
+    # Fetch schema for this class
+    schema = g_class.gd_schema.get(entity_type_lc)
+    if not schema:
+        # Look for close matches across all known classes
+        all_classes = g_class.gd_schema.keys()
+        matches = get_close_matches(entity_type_lc, all_classes, n=1, cutoff=0.7)
+        if matches:
+            suggestion = matches[0]
+            g_class.logError(
+                f"GAMEDATA ERROR: Unknown entity type '{entity_type}' on {obj.name}. "
+                f"Did you mean '{suggestion}'?"
+            )
+        else:
+            g_class.logError(
+                f"GAMEDATA ERROR: Unknown entity type '{entity_type}' on {obj.name}."
+                "No potential matches found."
+            )
+        return
+
+    # Validate keys
+    for i, (key, value) in enumerate(parsed.items()):
+        key_lc = key.lower()
+
+        # Invalid key
+        if key_lc not in schema["all"]:
+            matches = get_close_matches(key_lc, schema["all"], n=1, cutoff=0.7)
+            if matches:
+                # Level Designers added numbers to the end of the goodie field
+                # The game only confirms it starts with Goodie so we'll let this slide
+                if matches[0] == "goodie":
+                    pass
                 else:
-                    g_class.logError("GAMEDATA ERROR: Unknown gamedata key " + index[:i + 1] + " found in " + obj.name + ". No potential matches found.")
-                continue
+                    g_class.logError(
+                        f"GAMEDATA ERROR: Unknown gamedata key '{key}' found in {obj.name} for entity type {entity_type}. "
+                        f"Did you mean '{matches[0]}'?"
+                    )
+            else:
+                g_class.logError(
+                    f"GAMEDATA ERROR: Unknown gamedata key '{key}' found in {obj.name} for entity type {entity_type}. "
+                    "No potential matches found."
+                )
+            continue
 
-            outObj.userData.append(index[:i + 1] + "=" + index[j:])
-            if x < len(cmds):
-                outObj.userData.append(str('\x0D\x0A'))
-    except:
-        print("No Custom Properties") 
+        # Deprecated key
+        if key_lc in schema["deprecated"]:
+            g_class.logError(
+                f"GAMEDATA ERROR: The gamedata key '{key}' found in {obj.name} for entity type {entity_type} "
+                "is deprecated and should be removed."
+            )
+            continue
+
+        # Unimplemented key
+        if key_lc in schema["unimplemented"]:
+            g_class.logError(
+                f"GAMEDATA WARNING: The gamedata key '{key}' found in {obj.name} for entity type {entity_type} "
+                "is not implemented in the game."
+            )
+            continue
+
+        # Valid key
+        outObj.userData.append(f"{key}={value}")
+
+        # only add newline if not the last item
+        if i < len(parsed.items()) - 1:
+            outObj.userData.append("\r\n")
     
     # Go back and patch up userData length
     dataLen = 0

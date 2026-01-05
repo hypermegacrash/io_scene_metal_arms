@@ -68,7 +68,7 @@ class PASMCamInfo:
 class PASMCamFrame:
     def __init__(self):
         self.fSecsFromStart = 0
-        self.fFOV = 0;
+        self.fFOV = 0
         self.mtxOrientation = [0.0 for i in range(12)]
 
     def packBytes(self):

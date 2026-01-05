@@ -4,7 +4,7 @@
 from . import file_def_ape  # Get our PASM file classes
 from . import g_class       # Get our global variables for the header data
 from . import pasm_math     # PASM helper defs
-from .process_gamedata import ProcessGamedata # Import just the Gmaedata Parser
+from .process_gamedata import ProcessGamedata # Import just the Gamedata Parser
 import bpy
 
 def ExportObjShape(obj):
@@ -22,7 +22,7 @@ def ExportObjShape(obj):
         
     if(bExitEarly): return
         
-    print(obj.name, "is a shape object")
+    # print(obj.name, "is a shape object")
 
     if round(obj.scale.x, 5) != round(obj.scale.y, 5) != round(obj.scale.z, 5):
         if obj.empty_display_type != "CUBE" and not bIsParticle:
@@ -133,7 +133,17 @@ def ExportObjShape(obj):
     else:
         outShape.mtxOrientation = pasm_math.BObj2F43Mtx(obj)
     
-    ProcessGamedata(obj, outShape)
+    # Get the current gamedata type to pass along
+    entityType = None
+    match outShape.nType:
+        case file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_SPHERE:      entityType = "Sphere"
+        case file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_CYLINDER:    entityType = "Cylinder"
+        case file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_BOX:         entityType = "Box"
+        case file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_SPAWN_POINT: entityType = "Sphere"
+        case file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_START_POINT: entityType = "Sphere"
+        case file_def_ape.PASMShapeType_e.APE_SHAPE_TYPE_SPLINE:      entityType = "Spline"
+
+    ProcessGamedata(obj, entityType, outShape)
     
     # Finally, write data to the file, and our header
     g_class.file.write(outShape.packBytes())

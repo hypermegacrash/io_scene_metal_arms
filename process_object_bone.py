@@ -12,7 +12,7 @@ from mathutils import Matrix
 def ExportObjBone(obj):
     if obj.type != "ARMATURE": return # Validate we're working with an armature
         
-    print(obj.name, "is an armature / hierarchy object")
+    # print(obj.name, "is an armature / hierarchy object")
     
     # Bone Index https://stackoverflow.com/questions/53440205/different-ordering-of-bones-in-blender-than-in-python
     # Rest Pose https://blender.stackexchange.com/questions/26395/python-exporter-set-armature-to-rest-pose-while-exporting-meshes
