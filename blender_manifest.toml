@@ -1,0 +1,13 @@
+schema_version = "1.0.0"
+
+id = "io_scene_metal_arms"
+version = "1.0.0"
+name = "Metal Arms PASM Toolkit"
+tagline = "File exporter for PASM Compiler"
+maintainer = "Crashz"
+type = "add-on"
+
+blender_version_min = "4.2.0"
+license = ["`"]
+
+platforms = ["windows-x64"]
