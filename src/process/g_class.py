@@ -5,7 +5,7 @@ import datetime
 import pathlib
 # BLENDER
 import bpy
-import toml
+import tomllib
 # FANG TOOLKIT
 from ..defs import file_def_ape
 
@@ -13,7 +13,8 @@ from ..defs import file_def_ape
 g_SrcDir        = pathlib.Path(__file__).resolve().parent.parent.parent
 g_FileLogPath   = g_SrcDir / "blender_ma_error_log.txt"
 g_AddonInfoPath = g_SrcDir / "blender_manifest.toml"
-g_AddonInfo     = toml.load(g_AddonInfoPath)
+with open(g_AddonInfoPath, "rb") as f:
+    g_AddonInfo = tomllib.load(f)
 # LOGGING
 g_FileLog       = None  # The error log file that we write errors to from different process_object* modules
 g_ShowErrorLog  = False # We set this variable when an error occured and we should bring up the .txt file

@@ -2,16 +2,8 @@
 BinaryStruct Export Module
 --------------------------
 
-This module provides a system for defining Python dataclasses that can be
-directly converted into packed binary data with focus on speed.
-
-Key Features:
-- Define binary structures as Python dataclasses with fields.
-- Supports primitive types, fixed-length strings, arrays, and nested structs.
-- Automatically computes struct sizes and validates against EXPECTED_SIZE.
-- Fields use metadata to define packing format and optional encoders.
-- `BinaryStruct.pack()` generates the exact binary representation of an instance.
-- `@binary_dataclass` wraps dataclasses to init and validate structures.
+Module for defining dataclasses that can be
+converted into packed binary data.
 
 Usage:
     @binary_dataclass(slots=True)
@@ -35,36 +27,38 @@ def bin_field(fmt: str, *, encoder=None, default=0):
         "encoder": encoder,
     })
 
-def str_field(size: int, default=""):
-    def _padded_str(size: int, encoding="utf-8"):
-        def encode(val: str) -> bytes:
-            raw = val.encode(encoding)
-            return raw[:size].ljust(size, b"\x00")
+# Encode a string as UTF-8, truncate to size-1 bytes and null pad to exactly `size` bytes.
+def _padded_utf8_encoder(size: int):
+    def encode(val: str) -> bytes:
+        return val.encode("utf-8")[: size - 1].ljust(size, b"\x00")
 
-        return encode
+    return encode
 
-    return bin_field(f"{size}s", encoder=_padded_str(size), default=default)
+def str_field(size: int, default: str = ""):
+    return bin_field(
+        f"{size}s",
+        encoder=_padded_utf8_encoder(size),
+        default=default,
+    )
 
-def fixed_str_array_field(count: int, size: int, encoding="utf-8"):
-    def encoder(vals):
+def fixed_str_array_field(count: int, size: int):
+    encode_one = _padded_utf8_encoder(size)
+
+    def encoder(vals: list[str]) -> bytes:
         if len(vals) != count:
             raise ValueError(f"Expected {count} strings, got {len(vals)}")
 
-        out = bytearray()
-
-        for s in vals:
-            raw = s.encode(encoding)
-            raw = raw[:size].ljust(size, b"\x00")
-            out += raw
-
-        return bytes(out)
+        return b"".join(encode_one(s) for s in vals)
 
     total_size = count * size
 
-    return field(default_factory=lambda: [""] * count, metadata={
-        "fmt": f"{total_size}s",
-        "encoder": encoder,
-    })
+    return field(
+        default_factory=lambda: [""] * count,
+        metadata={
+            "fmt": f"{total_size}s",
+            "encoder": encoder,
+        },
+    )
 
 def vec2_array_field(count: int):
     def encoder(vals):
