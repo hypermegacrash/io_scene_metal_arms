@@ -7,7 +7,7 @@ from ..defs import file_def_ape_light
 from . import g_class
 from . import pasm_math
 from ..star_commands.star_command_light import CLightStringParser
-from .process_gamedata import parse_ma_string
+from .process_gamedata import parse_gamedata_string
 
 def ExportObjLight(obj):
     bExitEarly = False
@@ -44,7 +44,7 @@ def ExportObjLight(obj):
             return
 
         try:
-            parsed = parse_ma_string(obj["ma"])
+            parsed = parse_gamedata_string(obj["ma"])
             parsed = {k.lower(): v for k, v in parsed.items()}
         except Exception as e:
             g_class.logError(f"LIGHT ERROR: Failed to parse gamedata on ambient entity {obj.name}, skipping. {e}")

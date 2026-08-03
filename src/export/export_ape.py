@@ -10,6 +10,7 @@ from ..defs       import file_def_ape
 from ..process    import g_class
 from .help_vis    import CollectionVisibilityManager
 from .help_footer import writeFooterInfo
+from ..process.process_logger       import ErrorLogger
 from ..process.process_object_geo   import ExportObjGeo
 from ..process.process_object_light import ExportObjLight
 from ..process.process_object_bone  import ExportObjBone
@@ -59,7 +60,7 @@ class ExportAPE(bpy.types.Operator, ExportHelper):
         
         # Init our out file and error log in the global g_class for other modules to access
         with open(self.filepath, 'wb')     as g_class.g_FileOut, \
-                open(g_class.g_FileLogPath, 'a') as g_class.g_FileLog, \
+                ErrorLogger() as g_class.g_Logger,  \
                 CollectionVisibilityManager():
                             
             g_class.g_FileOut.write(g_class.g_ApeHeader.pack()) # This will be overwritten at the very end with the correct data
@@ -145,9 +146,6 @@ class ExportAPE(bpy.types.Operator, ExportHelper):
 
         # Done exporting, kill the progress cursor
         wm.progress_end()
-        
-        # Did we encounter any errors?
-        if(g_class.g_ShowErrorLog): os.startfile(g_class.g_FileLogPath)
         
         self.report({'INFO'}, "APE Export Finished!")
     

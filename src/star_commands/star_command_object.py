@@ -5,6 +5,9 @@ from .star_command_parser       import *
 from ..defs.file_def_ape_object import PASMObjectFlag_e
 
 class CObjectStringParser(BaseStarParser):
+
+    ERROR_PREFIX = "OBJECT STAR COMMAND ERROR"
+
     def __init__(self):
         self.m_ApeObjectFlag = PASMObjectFlag_e.APE_OB_FLAG_STATIC
         self.m_fCullDist     = 0

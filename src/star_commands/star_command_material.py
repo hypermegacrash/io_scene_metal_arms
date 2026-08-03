@@ -24,11 +24,22 @@ _COLL_FLAGS = [
 ]
 
 class CMaterialStringParser(BaseStarParser):
+
+    ERROR_PREFIX = "MATERIAL STAR COMMAND ERROR"
+
     def __init__(self):
         self.m_nMatFlags    = PASMMaterialFlag_e.APE_MAT_FLAGS_NONE
         self.m_nAffectAngle = 0
+        self.obj = None
+        self.mat = None
         self.ResetToDefaults()
         super().__init__()
+
+    def _error_context(self):
+        return (
+            f"object='{self.obj}', "
+            f"material='{self.mat}'"
+        )
 
     # This is run before EVERY Material is parsed, it's essentially the default PASMLight.PASMCommands
     def ResetToDefaults(self):

@@ -17,28 +17,61 @@ Usage:
 
 # BUILT IN
 from dataclasses import dataclass, field, fields
+from enum import IntEnum
+from typing import Callable
 import struct
+
+class FieldKind(IntEnum):
+    PRIMITIVE          = 0
+    STRING             = 1
+    ARRAY              = 2
+    VEC2_ARRAY         = 3
+    STRUCT             = 4
+    STRUCT_ARRAY       = 5
+    FIXED_STRING_ARRAY = 6
+
+@dataclass(frozen=True, slots=True)
+class FieldSpec:
+    kind:       FieldKind
+    fmt:        str      | None = None
+    encoder:    Callable | None = None
+    count:      int = 0
+    struct_cls: type  | None = None
 
 # Field Descriptors - factory functions that create dataclass fields with metadata describing how to pack them
 
 def bin_field(fmt: str, *, encoder=None, default=0):
-    return field(default=default, metadata={
-        "fmt": fmt,
-        "encoder": encoder,
-    })
+    spec = FieldSpec(
+        kind    = FieldKind.PRIMITIVE,
+        fmt     = fmt,
+        encoder = encoder,
+    )
+
+    return field(
+        default=default, 
+        metadata={"bin": spec},
+    )
 
 # Encode a string as UTF-8, truncate to size-1 bytes and null pad to exactly `size` bytes.
 def _padded_utf8_encoder(size: int):
     def encode(val: str) -> bytes:
-        return val.encode("utf-8")[: size - 1].ljust(size, b"\x00")
+        encoded = val.encode("utf-8")
+        truncated = encoded[: size - 1]
+
+        return truncated.ljust(size, b"\x00")
 
     return encode
 
 def str_field(size: int, default: str = ""):
-    return bin_field(
-        f"{size}s",
-        encoder=_padded_utf8_encoder(size),
-        default=default,
+    spec = FieldSpec(
+        kind    = FieldKind.STRING,
+        fmt     = f"{size}s",
+        encoder = _padded_utf8_encoder(size),
+    )
+
+    return field(
+        default=default, 
+        metadata={"bin": spec},
     )
 
 def fixed_str_array_field(count: int, size: int):
@@ -52,12 +85,15 @@ def fixed_str_array_field(count: int, size: int):
 
     total_size = count * size
 
+    spec = FieldSpec(
+        kind    = FieldKind.FIXED_STRING_ARRAY,
+        fmt     = f"{total_size}s",
+        encoder = encoder,
+    )
+
     return field(
         default_factory=lambda: [""] * count,
-        metadata={
-            "fmt": f"{total_size}s",
-            "encoder": encoder,
-        },
+        metadata={"bin": spec},
     )
 
 def vec2_array_field(count: int):
@@ -73,10 +109,16 @@ def vec2_array_field(count: int):
 
         return struct.pack(f"<{count * 2}f", *flat)
 
-    return field(default_factory=lambda: [[0.0, 0.0] for _ in range(count)], metadata={
-        "fmt": f"{count * 2 * 4}s",  # 4 bytes per float
-        "encoder": encoder,
-    })
+    spec = FieldSpec(
+        kind    = FieldKind.VEC2_ARRAY,
+        fmt     = f"{count * 2 * 4}s",
+        encoder = encoder,
+    )
+
+    return field(
+        default_factory=lambda: [[0.0, 0.0] for _ in range(count)],
+        metadata={"bin": spec},
+    )
 
 def struct_field(struct_cls):
     def encode(val):
@@ -84,11 +126,16 @@ def struct_field(struct_cls):
             raise TypeError(f"Expected {struct_cls.__name__}, got {type(val).__name__}")
         return val.pack()
 
-    return field(default_factory=struct_cls, metadata={
-        "fmt": None,
-        "encoder": encode,
-        "nested": struct_cls,
-    })
+    spec = FieldSpec(
+        kind       = FieldKind.STRUCT,
+        struct_cls = struct_cls,
+        encoder    = encode,
+    )
+
+    return field(
+        default_factory=struct_cls,
+        metadata={"bin": spec},
+    )
 
 def array_field(fmt: str, count: int, *, default=None):
     full_fmt = f"{count}{fmt}"
@@ -104,11 +151,16 @@ def array_field(fmt: str, count: int, *, default=None):
     if default is None:
         default = lambda: [0] * count
 
-    return field(default_factory=default, metadata={
-        "fmt": full_fmt,
-        "encoder": None,
-        "array_encoder": encoder,
-    })
+    spec = FieldSpec(
+        kind      = FieldKind.ARRAY,
+        fmt       = full_fmt,
+        encoder   = encoder,
+    )
+
+    return field(
+        default_factory=default,
+        metadata={"bin": spec},
+    )
 
 def struct_array_field(struct_cls, count: int, *, zero_bytes: bytes):
     def encoder(vals):
@@ -128,21 +180,25 @@ def struct_array_field(struct_cls, count: int, *, zero_bytes: bytes):
                 out += v.pack()
 
         return bytes(out)
+    
+    spec = FieldSpec(
+        kind       = FieldKind.STRUCT_ARRAY,
+        struct_cls = struct_cls,
+        count      = count,
+        encoder    = encoder,
+    )
 
-    return field(default_factory=lambda: [None] * count, metadata={
-        "fmt":          None,
-        "encoder":      encoder,
-        "struct_array": struct_cls,
-        "count":        count,
-        "zero":         zero_bytes,
-    })
+    return field(
+        default_factory=lambda: [None] * count,
+        metadata={"bin": spec},
+    )
 
-# Base Class - All binary-exporting classes inherit from it.
+# Base Class - All binary exporting classes inherit from it.
 
 class BinaryStruct:
     __slots__     = ()   # Slots so we don't accidentally write non defined struct data
     _STRUCT       = None # Cached struct.Struct object for packing
-    _ENDIAN       = "<"  # Default little-endian
+    _ENDIAN       = "<"  # Default little endian
     EXPECTED_SIZE = None # Set by inherited classes to validate structure size
 
     @classmethod
@@ -151,36 +207,41 @@ class BinaryStruct:
         fmt = [cls._ENDIAN]
 
         for f in fields(cls):
-            field_fmt = f.metadata["fmt"]
+            spec: FieldSpec = f.metadata["bin"]
 
-            # nested struct
-            if field_fmt is None and "nested" in f.metadata:
-                nested = f.metadata["nested"]
+            if spec.kind in (
+                FieldKind.PRIMITIVE,
+                FieldKind.STRING,
+                FieldKind.VEC2_ARRAY,
+                FieldKind.FIXED_STRING_ARRAY,
+            ):
+                field_fmt = spec.fmt
+
+            elif spec.kind is FieldKind.ARRAY:
+                size = struct.calcsize(cls._ENDIAN + spec.fmt)
+
+                field_fmt = f"{size}s" 
+
+            elif spec.kind is FieldKind.STRUCT:
+                nested = spec.struct_cls
 
                 if nested._STRUCT is None:
                     nested._validate_and_cache_struct()
 
                 field_fmt = f"{nested._STRUCT.size}s"
 
-            # struct array
-            elif field_fmt is None and "struct_array" in f.metadata:
-                struct_cls = f.metadata["struct_array"]
-                count = f.metadata["count"]
+            elif spec.kind is FieldKind.STRUCT_ARRAY:
+                nested = spec.struct_cls
 
-                if struct_cls._STRUCT is None:
-                    struct_cls._validate_and_cache_struct()
+                if nested._STRUCT is None:
+                    nested._validate_and_cache_struct()
 
-                size = struct_cls._STRUCT.size * count
+                size = nested._STRUCT.size * spec.count
+
                 field_fmt = f"{size}s"
 
-            # array field
-            elif "array_encoder" in f.metadata:
-                size = struct.calcsize(cls._ENDIAN + field_fmt)
-                field_fmt = f"{size}s"
-
-            # error
-            elif field_fmt is None:
-                raise ValueError(f"{f.name} missing fmt")
+            else:
+                raise ValueError(f"{f.name}: Invalid FieldKind: {spec.kind}")
 
             fmt.append(field_fmt)
 
@@ -209,22 +270,16 @@ class BinaryStruct:
         Converts the instance into a packed byte array.
         Uses encoders for nested structs and arrays.
         """
-        if self._STRUCT is None:
-            raise RuntimeError( f"{type(self).__name__} is not initialized (missing @binary_dataclass?)" )
-
+        
         values = []
 
         for f in fields(self):
+            spec: FieldSpec = f.metadata["bin"]
+
             val = getattr(self, f.name)
 
-            array_encoder = f.metadata.get("array_encoder")
-            if array_encoder:
-                values.append(array_encoder(val))
-                continue
-
-            encoder = f.metadata.get("encoder")
-            if encoder:
-                val = encoder(val)
+            if spec.encoder:
+                val = spec.encoder(val)
 
             values.append(val)
 

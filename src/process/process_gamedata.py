@@ -1,89 +1,71 @@
 """
-Gamedata Parsing and Validation Module
---------------------------------------
+Gamedata Processor Module
+-------------------------
 
-This module provides a system for parsing, validating, and embedding
-custom gamedata attached to Blender objects into the PASM Tool Format.
+Module for 
+1. Parsing 'Gamedata' ( key value entity parameters ) ( Also referred to as UserData )
+2. Validating against an XML-based schema
+3. Exporting to binary data.
 
-Key Features:
-- Parses `ma` strings (custom property data) into
-  the correct format for binary embedding.
-- Loads and resolves an XML-based gamedata schema (madb.xml)
-- Validates object gamedata against the schema with helpful logging for:
-    - Unknown keys
-    - Deprecated keys
-    - Unimplemented keys
-- Suggests close matches for mistyped entity types or keys.
-
-Core Components:
-- `GDNode`: Dataclass representing a schema node (class or group) with
-  inheritance and parameter sets.
-- `parse_ma_string()`: Parses raw gamedata strings into key/value dicts.
-- `setup_gd_schema()`: Loads and processes the XML database into
-  a resolved schema dictionary.
-- `ProcessGamedata()`: Main entry point for parsing and embedding
-  gamedata for a Blender object.
-- `validate_gamedata()`, `write_user_data()`, and logging helpers
-  support structured validation and user feedback.
-
-Usage:
-    # Initialize schema once (typically at Blender startup)
-    setup_gd_schema()
-
-    # Process gamedata attached to an object
-    ProcessGamedata(blender_object, default_entity_type, output_object)
+Usage: 
+    setup_gd_schema()                                # Load Gamedata schema
+    ProcessGamedata(in_obj, in_entity_type, out_obj) # Export object gamedata
 """
 
 # PYTHON BUILT-IN
 from difflib import get_close_matches
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from typing import List, Dict, Set
 import os
-
+import re
 # FANG TOOLKIT
 from . import g_class  # For global variables and logging
 
 _XML_DATABASE_NAME = "madb.xml"
+_COMMENT_PREFIX      = "#"
+_KEY_VALUE_DELIMITER = "="
+_GOODIE_PATTERN = re.compile(r"^goodie\d+$", re.IGNORECASE)
 
-# Data structures
-def _empty_schema() -> Dict[str, Set[str]]:
-    return {
-        "valid":         set(),
-        "deprecated":    set(),
-        "unimplemented": set(),
-        "all":           set(),
-    }
+@dataclass(slots=True)
+class GamedataSchema:
+    valid:         set[str] = field(default_factory=set)
+    deprecated:    set[str] = field(default_factory=set)
+    unimplemented: set[str] = field(default_factory=set)
 
-@dataclass
+    @property
+    def all_keys(self) -> set[str]:
+        return self.valid | self.deprecated | self.unimplemented
+
+    def merge(self, other: "GamedataSchema") -> None:
+        self.valid         |= other.valid
+        self.deprecated    |= other.deprecated
+        self.unimplemented |= other.unimplemented
+
+@dataclass(slots=True)
 class GDNode:
-    kind:     str  # "group" or "class"
-    inherits: List[str]           = field(default_factory=list)
-    params:   Dict[str, Set[str]] = field(default_factory=_empty_schema)
+    kind:     str
+    inherits: list[str]      = field(default_factory=list)
+    params:   GamedataSchema = field(default_factory=GamedataSchema)
 
-# XML Parsing and Schema Setup
-def _parse_params(parent_elem: ET.Element) -> Dict[str, Set[str]]:
-    schema = _empty_schema()
+def _parse_params(parent_elem: ET.Element) -> GamedataSchema:
+    schema = GamedataSchema()
+
     for param in parent_elem.findall("param"):
         try:
             name          = param.attrib["name"].strip().lower()
-            deprecated    = int(param.attrib.get("deprecated", 0))
-            unimplemented = int(param.attrib.get("unimplemented", 0))
-        except (KeyError, ValueError):
+            deprecated    = param.attrib.get("deprecated") == "1"
+            unimplemented = param.attrib.get("unimplemented") == "1"
+        except KeyError:
             continue
 
-        if deprecated:      schema["deprecated"].add(name)
-        elif unimplemented: schema["unimplemented"].add(name)
-        else:               schema["valid"].add(name)
+        if deprecated:      schema.deprecated.add(name)
+        elif unimplemented: schema.unimplemented.add(name)
+        else:               schema.valid.add(name)
 
     return schema
 
-def _merge_schema(dst: Dict[str, Set[str]], src: Dict[str, Set[str]]):
-    for key in ("valid", "deprecated", "unimplemented"):
-        dst[key].update(src[key])
-
-def _parse_nodes(root: ET.Element) -> Dict[str, GDNode]:
-    nodes: Dict[str, GDNode] = {}
+def _parse_nodes(root: ET.Element) -> dict[str, GDNode]:
+    nodes: dict[str, GDNode] = {}
 
     def add_node(elem: ET.Element, kind: str):
         name = elem.attrib.get("name", "").lower()
@@ -100,20 +82,26 @@ def _parse_nodes(root: ET.Element) -> Dict[str, GDNode]:
 
     return nodes
 
-def _resolve_schema(name: str, nodes: Dict[str, GDNode], visited=None) -> Dict[str, Set[str]]:
-    visited = visited or set()
+def _resolve_schema(name: str, nodes: dict[str, GDNode], visited: set[str] | None = None) -> GamedataSchema:
+    if visited is None:
+        visited = set()
+
     if name in visited:
         raise ValueError(f"Cyclic inheritance detected: {name}")
+    
     visited.add(name)
 
     node = nodes.get(name)
     if not node:
-        return _empty_schema()
+        return GamedataSchema()
 
-    schema = _empty_schema()
+    schema = GamedataSchema()
+
     for parent in node.inherits:
-        _merge_schema(schema, _resolve_schema(parent, nodes, visited))
-    _merge_schema(schema, node.params)
+        schema.merge(_resolve_schema(parent, nodes, visited.copy()))
+
+    schema.merge(node.params)
+
     return schema
 
 def setup_gd_schema() -> bool:
@@ -136,27 +124,26 @@ def setup_gd_schema() -> bool:
             continue
 
         schema = _resolve_schema(name, nodes)
-        schema["all"] = schema["valid"] | schema["deprecated"] | schema["unimplemented"]
+
         g_class.g_GDSchema[name] = schema
 
     return True
 
-# MA String Parsing
-def parse_ma_string(ma_string: str) -> Dict[str, str]:
+def parse_gamedata_string(gamedata_string: str) -> dict[str, str]:
     data = {}
-    for line in ma_string.splitlines():
+    for line in gamedata_string.splitlines():
         line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
+        if not line or line.startswith(_COMMENT_PREFIX) or _KEY_VALUE_DELIMITER not in line:
             continue
-        key, value = map(str.strip, line.split("=", 1))
+        key, value = map(str.strip, line.split(_KEY_VALUE_DELIMITER, 1))
         data[key] = value
     return data
 
 # Gamedata Validation Helpers
-def log_gamedata_error(obj_name: str, key: str, entity_type: str, message: str, warning: bool = False):
+def log_gamedata_error(obj_name: str, key: str, entity_type: str, message: str):
     g_class.logError(f"GAMEDATA ERROR: {message} '{key}' found in {obj_name} for entity type {entity_type}.")
 
-def get_entity_type(parsed: Dict[str, str], default: str) -> str:
+def get_entity_type(parsed: dict[str, str], default: str) -> str:
     return parsed.get("Type") or parsed.get("type") or default
 
 def suggest_entity_type(entity_type_lc: str, obj_name: str):
@@ -164,68 +151,73 @@ def suggest_entity_type(entity_type_lc: str, obj_name: str):
     matches = get_close_matches(entity_type_lc, all_classes, n=1, cutoff=0.7)
     if matches:
         suggestion = matches[0]
-        g_class.logError(
-            f"GAMEDATA ERROR: Unknown entity type '{entity_type_lc}' on {obj_name}. Did you mean '{suggestion}'?"
-        )
+        g_class.logError(f"GAMEDATA ERROR: Unknown entity type '{entity_type_lc}' on {obj_name}. Did you mean '{suggestion}'?")
     else:
         g_class.logError(f"GAMEDATA ERROR: Unknown entity type '{entity_type_lc}' on {obj_name}. No potential matches found.")
 
-def validate_gamedata(parsed: Dict[str, str], schema: Dict[str, Set[str]], obj_name: str, entity_type: str) -> List[str]:
+def validate_gamedata(parsed: dict[str, str], schema: GamedataSchema, obj_name: str, entity_type: str) -> list[str]:
+    def emit_gamedata(key, value, i):
+        out_items.append(f"{key}={value}")
+        if i < len(keys) - 1:
+            out_items.append("\r\n")
+
     out_items = []
+
+    all_keys = schema.all_keys
 
     keys = list(parsed.items())
     for i, (key, value) in enumerate(keys):
         key_lc = key.lower()
 
+        # Make an exception for gamedata keys that starts with goodie by parsing and continuing the loop early
+        if _GOODIE_PATTERN.match(key_lc):
+            emit_gamedata(key, value, i)
+            continue
+
         # Invalid key
-        if key_lc not in schema["all"]:
-            matches = get_close_matches(key_lc, schema["all"], n=1, cutoff=0.7)
-            if matches and matches[0] != "goodie":
+        if key_lc not in all_keys:
+            matches = get_close_matches(key_lc, all_keys, n=1, cutoff=0.7)
+            if matches:
                 log_gamedata_error(obj_name, key, entity_type, f"Unknown gamedata key. Did you mean '{matches[0]}'?")
-            elif not matches:
+            else:
                 log_gamedata_error(obj_name, key, entity_type, "Unknown gamedata key. No potential matches found.")
             continue
 
         # Deprecated key
-        if key_lc in schema["deprecated"]:
+        if key_lc in schema.deprecated:
             log_gamedata_error(obj_name, key, entity_type, "Key is deprecated and should be removed.")
             continue
 
         # Unimplemented key
-        if key_lc in schema["unimplemented"]:
+        if key_lc in schema.unimplemented:
             log_gamedata_error(obj_name, key, entity_type, "Key is not implemented in the game.")
             continue
 
         # Valid key
-        out_items.append(f"{key}={value}")
-        if i < len(keys) - 1:
-            out_items.append("\r\n")
+        emit_gamedata(key, value, i)
 
     return out_items
 
-def write_user_data(outObj, items: List[str]):
-    outObj.userData.extend(items)
-
-# Main Processing Function
-def ProcessGamedata(obj, entityType, outObj):
-    ma_str = obj.get("ma")
+def ProcessGamedata(in_obj, in_entity_type, out_obj):
+    ma_str = in_obj.get("ma")
     if not ma_str:
         return
 
     try:
-        parsed = parse_ma_string(ma_str)
+        parsed = parse_gamedata_string(ma_str)
     except Exception as e:
-        print(f"Failed to parse gamedata on {obj.name}: {e}")
+        g_class.logError(f"GAMEDATA ERROR: Failed to parse gamedata on {in_obj.name}: {e}")
         return
 
     if not parsed:
         return
 
-    entity_type_lc = get_entity_type(parsed, entityType).lower()
+    entity_type_lc = get_entity_type(parsed, in_entity_type).lower()
     schema = g_class.g_GDSchema.get(entity_type_lc)
     if not schema:
-        suggest_entity_type(entity_type_lc, obj.name)
+        suggest_entity_type(entity_type_lc, in_obj.name)
         return
 
-    validated_items = validate_gamedata(parsed, schema, obj.name, entity_type_lc)
-    write_user_data(outObj, validated_items)
+    validated_items = validate_gamedata(parsed, schema, in_obj.name, entity_type_lc)
+
+    out_obj.userData.extend(validated_items)

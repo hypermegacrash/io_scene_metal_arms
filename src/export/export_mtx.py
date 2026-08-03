@@ -7,6 +7,7 @@ import bpy
 from bpy_extras.io_utils import ExportHelper
 # FANG TOOLKIT
 from ..process import g_class
+from ..process.process_logger           import ErrorLogger
 from ..process.process_object_animation import ExportObjAnim
 from .help_footer import writeFooterInfo
 
@@ -29,7 +30,7 @@ class ExportMTX(bpy.types.Operator, ExportHelper):
     def execute(self, context):
         # Init our out file and error log in the global g_class for other modules to access
         with open(self.filepath, 'wb')     as g_class.g_FileOut, \
-                open(g_class.g_FileLogPath, 'a') as g_class.g_FileLog:
+                ErrorLogger() as g_class.g_Logger:
 
             g_class.g_ShowErrorLog = False
     
@@ -48,9 +49,6 @@ class ExportMTX(bpy.types.Operator, ExportHelper):
     
             # We export one animation per export
             ExportObjAnim(objects[0])
-
-        # Did we encounter any errors?
-        if(g_class.g_ShowErrorLog): os.startfile(g_class.g_FileLogPath)
                         
         self.report({'INFO'}, "MTX Export Finished!")
     

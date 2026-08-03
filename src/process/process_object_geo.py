@@ -13,15 +13,14 @@ from ..defs.file_def_ape_mesh import PASMMaterialFlag_e
 from ..star_commands.star_command_material import CMaterialStringParser
 from . import g_class
 
-FANG_MAT_VERSION  = 1
-FANG_COMP_VERSION = 1
+from ..operators.op_fmat_update import FANG_MATERIAL_SOCKET_MAP
 
 # Class for handling the conversion of a Blender Mesh to a PASM Segment
 # Acts like a container for all the input with functions for processing
 class CSegmentConverter:
     def __init__(self, inObj: bpy.types.Object = None, bExportBinarySkinning: bool = True, bExportHierarchy: bool = False) -> None:
         self.inObj      = inObj # Starting mesh we are operating for reference
-        self.inArmature = None # If our input is rigged this is the armature we are dealing with
+        self.inArmature = None  # If our input is rigged this is the armature we are dealing with
 
         self.eval_obj  = None
         self.eval_mesh = None
@@ -43,11 +42,17 @@ class CSegmentConverter:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        # Automatic cleanup
         if self.eval_obj:
             self.eval_obj.to_mesh_clear()
         self.eval_obj  = None
         self.eval_mesh = None
+
+    def geo_error(self, msg: str): 
+        g_class.g_Logger.log_error(f"GEOMETRY ERROR: object='{self.inObj.name}': {msg}")
+    def material_error(self, msg: str):
+        g_class.g_Logger.log_error(f"MATERIAL ERROR: object='{self.inObj.name}': {msg}")
+    def color_error(self, msg: str):
+        g_class.g_Logger.log_error(f"COLOR ATTRIBUTE ERROR: object='{self.inObj.name}': {msg}")
 
     def getWorkNameAndLODIndex(self) -> None:
         """Check for LOD*_ Prefix to determine potential segment name and LOD Index"""
@@ -72,18 +77,18 @@ class CSegmentConverter:
             name_prefix = attr.name.lower().split('.', 1)[0]
 
             if name_prefix not in ("color", "alpha"):
-                g_class.logError(f"COLOR ATTRIBUTE ERROR: Attribute '{attr.name}' must be prefixed with color. or alpha. in object {self.inObj.name}")
+                self.color_error(f"Attribute '{attr.name}' must be prefixed with color. or alpha.")
                 continue
 
             if name_prefix == "color":
                 if self.ColorAttribute:
-                    g_class.logError(f"Only 1 Color Attribute can be exported. Found {self.ColorAttribute.name} and {attr.name}")
+                    self.color_error(f"Only 1 Color Attribute can be exported. Found {self.ColorAttribute.name} and {attr.name}")
                 else:
                     self.ColorAttribute = attr
 
             elif name_prefix == "alpha":
                 if self.AlphaAttribute:
-                    g_class.logError(f"Only 1 Alpha Attribute can be exported. Found {self.AlphaAttribute.name} and {attr.name}")
+                    self.color_error(f"Only 1 Alpha Attribute can be exported. Found {self.AlphaAttribute.name} and {attr.name}")
                 else:
                     self.AlphaAttribute = attr
 
@@ -92,17 +97,19 @@ class CSegmentConverter:
         isValid = True
         if self.ColorAttribute:
             if self.ColorAttribute.data_type != 'FLOAT_COLOR':
-                g_class.logError(f"COLOR ATTRIBUTE ERROR: The Color Attribute {self.ColorAttribute.name} for object {self.inObj.name} is not set to Data Type Color. Please fix and retry exporting.")
+                self.color_error(f"The Color Attribute {self.ColorAttribute.name} is not set to Data Type Color.")
             
         if self.AlphaAttribute:
             if self.AlphaAttribute.data_type != 'FLOAT_COLOR':
-                g_class.logError(f"COLOR ATTRIBUTE ERROR: The Color Attribute {self.AlphaAttribute.name} for object {self.inObj.name} is not set to Data Type Color. Please fix and retry exporting.")
+                self.color_error(f"The Color Attribute {self.ColorAttribute.name} is not set to Data Type Color.")
 
         return isValid
 
     def getObjectStarCommands(self) -> None:
         """Get our input object star commands flags"""
         self.objStrParser = CMaterialStringParser()
+        self.objStrParser.obj = self.inObj.name
+        self.objStrParser.mat = self.inObj.name
         self.objStrParser.ResetToDefaults()
         self.objStrParser.Parse( self.inObj.name.lower() )
 
@@ -162,28 +169,40 @@ class CSegmentConverter:
             assigned_bone = self._get_dominant_bone(tri, vertex_groups, bone_names)
 
             if not assigned_bone: # If no bone found, warn
-                g_class.printWARNING( f"Face {tri.index} has no valid bone assignment, using fallback" )
+                self.geo_error( f"Face {tri.index} has no valid bone assignment, using fallback" )
                 assigned_bone = self.workName  # fallback bucket
 
             self.workLimbPolygons.setdefault(assigned_bone, []).append(tri)
 
         # Sort by bone hierarchy
         self.workLimbPolygons = { bone: self.workLimbPolygons[bone] for bone in bone_order if bone in self.workLimbPolygons }
-    
+        
     def isZeroAreaFace(self, triangle: bpy.types.MeshLoopTriangle) -> bool:
-        """Return True if triangle has zero or nearly zero area."""
         v0 = self.eval_mesh.vertices[triangle.vertices[0]].co
         v1 = self.eval_mesh.vertices[triangle.vertices[1]].co
         v2 = self.eval_mesh.vertices[triangle.vertices[2]].co
-
-        # Compute the cross product of edges
+    
         edge1 = v1 - v0
         edge2 = v2 - v0
         area = edge1.cross(edge2).length / 2
 
-        if area < 1e-8:  # Small epsilon to catch thin triangles
-            g_class.printWARNING(f"ATTENTION ARTIST: Triangle {triangle.index} has near-zero area!")
+        ZERO_AREA_EPSILON = 1e-8
+    
+        if area < ZERO_AREA_EPSILON:
+        
+            same01 = (v0 - v1).length < ZERO_AREA_EPSILON
+            same12 = (v1 - v2).length < ZERO_AREA_EPSILON
+            same20 = (v2 - v0).length < ZERO_AREA_EPSILON
+    
+            if same01 or same12 or same20:
+                reason = "multiple vertices share the same position"
+            else:
+                reason = "faces collapsed into a straight line"
+    
+            g_class.g_Logger.add_invalid_geometry( reason, self.inObj.name )
+    
             return True
+    
         return False
     
     def _get_uv_layers(self) -> Tuple[Optional[bpy.types.MeshUVLoopLayer], Optional[bpy.types.MeshUVLoopLayer]]:
@@ -328,6 +347,8 @@ class CSegmentConverter:
 
         # Parse layer / child material name for star commands
         layerStrParser = CMaterialStringParser()
+        layerStrParser.obj = self.inObj.name
+        layerStrParser.mat = matName
         layerStrParser.ResetToDefaults()
         # Use Star Commands from the Parent Material as a starting base for the layer material
         layerStrParser.m_ApeCommands = copy.deepcopy( self.objStrParser.m_ApeCommands )
@@ -367,6 +388,8 @@ class CSegmentConverter:
         mat.nLODIndex = self.nLodIdx
 
         parser = CMaterialStringParser()
+        parser.obj = self.inObj.name
+        parser.mat = mat_name
         parser.ResetToDefaults()
         parser.m_ApeCommands = copy.deepcopy(self.objStrParser.m_ApeCommands)
         parser.Parse(mat_name)
@@ -388,17 +411,11 @@ class CSegmentConverter:
         try:
             node = matOut.inputs["Surface"].links[0].from_node
         except (AttributeError, KeyError, IndexError):
-            g_class.logError(
-                f"MATERIAL ERROR: Material {mat_name} in object {self.inObj.name} "
-                "is not connected to a FANG Material / FANG Composite."
-            )
+            self.material_error(f"Material {mat_name} is not connected to a FANG Material / FANG Composite.")
             return None
 
         if node.type != "GROUP":
-            g_class.logError(
-                f"MATERIAL ERROR: Material {mat_name} in object {self.inObj.name} "
-                f"is connected to invalid node type {node.type}."
-            )
+            self.material_error(f"Material {mat_name} is connected to invalid node type {node.type}.")
             return None
 
         return node
@@ -430,10 +447,7 @@ class CSegmentConverter:
             return True
 
         if version != expected:
-            g_class.logError(
-                f"MATERIAL ERROR: {matType} {mat_name} in object {self.inObj.name} "
-                f"is out of date (found {version}, expected {expected})."
-            )
+            self.material_error(f"{matType} {mat_name} is out of date (found {version}, expected {expected}).")
             return False
 
         return True
@@ -497,6 +511,15 @@ class CSegmentConverter:
         #    return False
 
         if matType == "FANG Material":
+            required_inputs = list(FANG_MATERIAL_SOCKET_MAP.values())
+
+            missing = [name for name in required_inputs if name not in fang_group.inputs]
+
+            if missing:
+                g_class.logError(f"Material '{mat_name}' is missing required FANG inputs: {', '.join(missing)}")
+                return False
+
+        if matType == "FANG Material":
             self._parse_fang_material(mat, fang_group, mat_name)
         elif matType == "FANG Composite":
             self._parse_fang_composite(mat, fang_group)
@@ -550,7 +573,7 @@ class CSegmentConverter:
             mat = self.ParseMaterial(matIndex)
 
             if not isinstance(mat, file_def_ape.PASMMaterial):
-                g_class.logError(f"[MATERIAL ERROR] Failed to parse material {matIndex} on object {self.inObj.name}")
+                self.material_error(f"Failed to parse material {matIndex}")
                 return False
 
             mat.nFirstIndex = len(outSegment.aIndicies)
@@ -559,7 +582,7 @@ class CSegmentConverter:
             self.ParseMesh(tris, outSegment, vertexMap)
 
             if len(outSegment.aIndicies) - mat.nFirstIndex == 0:
-                g_class.logError(f"[MATERIAL ERROR] Failed to construct valid polygons for material {matIndex} on object {self.inObj.name}")
+                self.geo_error(f"Failed to construct valid polygons for material {matIndex} - {self.inObj.data.materials[matIndex].name}.")
                 continue
 
             mat.nNumIndices = len(outSegment.aIndicies) - mat.nFirstIndex
@@ -571,10 +594,7 @@ class CSegmentConverter:
             outSegment.header.nNumIndices = len(outSegment.aIndicies)
 
         if outSegment.header.nNumVerts == 0:
-            g_class.logError(
-                f"[GEO ERROR] Object '{self.inObj.name}' produced no vertices! "
-                "Check for empty material slots."
-            )
+            self.geo_error(f"Failed to produce vertices! Check for empty material slots.")
             return False
 
         return outSegment # We will write out this segment later
@@ -633,7 +653,7 @@ class CSegmentConverter:
                 else:
                     g_class.g_ApeSegments.append(outSegment)
             else:
-                g_class.printWARNING(f"[GEO ERROR]: Could not process {name}")
+                self.geo_error(f"Could not process.")
 
 def validateInput(inObj: Optional[bpy.types.Object]) -> bool:
     """Run checks to ensure this input should be processed into a segment"""
@@ -647,15 +667,15 @@ def validateInput(inObj: Optional[bpy.types.Object]) -> bool:
     if inObj.name[:6].lower() == "start_": return False # Ignore start_ meshes (i.e. objects using a Glitch mesh instead of an empty)
     
     if(len(inObj.data.materials) == 0):
-        g_class.printWARNING(f"[GEO ERROR]: The object {inObj.name} has no materials, skipping")
+        g_class.logError(f"GEOMETRY ERROR: object='{inObj.name}': No materials found, skipping.")
         return False
  
     if(len(inObj.data.loop_triangles) == 0):
-        g_class.printWARNING(f"[GEO ERROR]: The object {inObj.name} has no triangles, skipping")
+        g_class.logError(f"GEOMETRY ERROR: object='{inObj.name}': No triangles found, skipping.")
         return False
         
     if(len(inObj.data.vertices) == 0):
-        g_class.printWARNING(f"[GEO ERROR]: The object {inObj.name} has no vertices, skipping")
+        g_class.logError(f"GEOMETRY ERROR: object='{inObj.name}': No vertices found, skipping.")
         return False
         
     return True

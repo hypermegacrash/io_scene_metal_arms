@@ -5,6 +5,9 @@ from .star_command_parser     import *
 from..defs.file_def_ape_light import PASMLightFlag_e
 
 class CLightStringParser(BaseStarParser):
+
+    ERROR_PREFIX = "LIGHT STAR COMMAND ERROR"
+
     def __init__(self):
         self.m_ApeLightFlag      = 0
         self.m_fCoronaScale      = 1.0

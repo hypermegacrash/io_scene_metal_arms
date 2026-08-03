@@ -71,11 +71,23 @@ class BaseStarParser:
     - Dispatch to registered handlers
     - Provide helper parsing utilities
     """
+
+    ERROR_PREFIX = "STAR COMMAND ERROR"
+
     def __init__(self):
         self._commands: Dict[str, Command] = self._build_command_table()
 
-    def _error(self, msg): 
-        g_class.logError(f"STAR COMMAND ERROR: {msg}")
+    def _error_context(self) -> str:
+        """Optional subclass context appended to errors."""
+        return ""
+    
+    def _error(self, msg):
+        context = self._error_context()
+
+        if context:
+            g_class.logError(f"{self.ERROR_PREFIX}: {context}: {msg}")
+        else:
+            g_class.logError(f"{self.ERROR_PREFIX}: {msg}")
 
     # Override in subclasses
     def _build_command_table(self) -> Dict[str, Command]:
@@ -130,9 +142,7 @@ class BaseStarParser:
                 continue
 
             if len(args) not in cmd.arg_counts:
-                self._error(
-                    f"Command '*{name}' expects {cmd.arg_counts} args but got {len(args)}"
-                )
+                self._error( f"Command '*{name}' expects {cmd.arg_counts} args but got {len(args)}" )
                 continue
 
             try:

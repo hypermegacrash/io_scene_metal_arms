@@ -4,7 +4,10 @@
 from .star_command_parser       import *
 from ..defs.file_def_ape_volume import PASMPortalFlag_e
     
-class CPortalStringParser:
+class CPortalStringParser(BaseStarParser):
+
+    ERROR_PREFIX = "PORTAL STAR COMMAND ERROR"
+
     def __init__(self):
         self.m_ApePortalFlag = 0
 
