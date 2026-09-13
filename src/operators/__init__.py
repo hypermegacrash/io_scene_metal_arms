@@ -2,12 +2,13 @@
 # BLENDER
 import bpy
 # FANG TOOLKIT
-from .op_fmat_convert    import MA_FMat_Convert
-from .op_fmat_update     import MA_FMat_Update
-from .op_gamedata_copy   import MA_Gamedata_Copy
-from .op_gamedata_edit   import MA_Gamedata_Edit, MA_Gamedata_Edit_MenuFunc
-from .op_gamedata_draw   import MA_Gamedata_Draw
-from .ui_sidebar_helpers import MA_Panel_Helpers
+from .op_fmat_convert       import MA_FMat_Convert
+from .op_fmat_update        import MA_FMat_Update
+from .op_gamedata_copy      import MA_Gamedata_Copy
+from .op_gamedata_edit      import MA_Gamedata_Edit, MA_Gamedata_Edit_MenuFunc
+from .op_gamedata_draw_px   import MA_Gamedata_Draw_Px
+from .op_gamedata_draw_view import MA_Gamedata_Draw_View
+from .ui_sidebar_helpers    import MA_Panel_Helpers
 
 classes = (
     MA_FMat_Convert,
@@ -18,7 +19,8 @@ classes = (
 
 background_classes = (
     MA_Gamedata_Edit,
-    MA_Gamedata_Draw,
+    MA_Gamedata_Draw_Px,
+    MA_Gamedata_Draw_View,
 )
 
 def register():

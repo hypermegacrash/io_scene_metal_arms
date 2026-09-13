@@ -511,15 +511,6 @@ class CSegmentConverter:
         #    return False
 
         if matType == "FANG Material":
-            required_inputs = list(FANG_MATERIAL_SOCKET_MAP.values())
-
-            missing = [name for name in required_inputs if name not in fang_group.inputs]
-
-            if missing:
-                g_class.logError(f"Material '{mat_name}' is missing required FANG inputs: {', '.join(missing)}")
-                return False
-
-        if matType == "FANG Material":
             self._parse_fang_material(mat, fang_group, mat_name)
         elif matType == "FANG Composite":
             self._parse_fang_composite(mat, fang_group)

@@ -35,7 +35,8 @@ class MA_Panel_Helpers(bpy.types.Panel):
         box.label(text="Gamedata", icon='WORLD_DATA')
         col = box.column(align=True)
         col.operator("object.ma_copy_gamedata",   text = "Copy to Selected")
-        col.operator("object.ma_gd_view",         text = "View in World Space")
+        col.operator("object.ma_gd_view",         text = "Screen View")
+        col.operator("object.ma_gd_draw_view",    text = "3D Debug View")
 
         box = layout.box()
         row = box.row()
